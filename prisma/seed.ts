@@ -3,6 +3,32 @@ import { PrismaClient, Role, ResourceType, QuestionType } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+type SeedQuestion = {
+  id: string
+  type: QuestionType
+  prompt: string
+  optionsJson: string
+  answerKey: string
+  explanation: string
+}
+
+type ExtraLevelPlan = {
+  orderNo: number
+  title: string
+  topic: string
+  lawRef: string
+  safeAction: string
+  riskyAction: string
+  scenario: string
+}
+
+type ExtraUnitPlan = {
+  levelSlug: 'campus' | 'network' | 'family' | 'consumer' | 'traffic' | 'drug'
+  questionPrefix: 'c' | 'n' | 'f' | 's' | 't' | 'd'
+  unitId: string
+  levels: ExtraLevelPlan[]
+}
+
 async function main() {
   const teacherEmail = 'teacher@example.com'
   const studentEmail = 'student@example.com'
@@ -392,9 +418,476 @@ async function main() {
     }),
   ])
 
+  const extraUnitPlans: ExtraUnitPlan[] = [
+    {
+      levelSlug: 'campus',
+      questionPrefix: 'c',
+      unitId: unit1.id,
+      levels: [
+        {
+          orderNo: 5,
+          title: '第五关：同伴冲突中的旁观者责任',
+          topic: '校园冲突围观与起哄',
+          lawRef: '《未成年人保护法》',
+          safeAction: '立即通知老师并劝离围观同学',
+          riskyAction: '跟着起哄并拍视频传播',
+          scenario: '看到同学在走廊被多人围堵辱骂',
+        },
+        {
+          orderNo: 6,
+          title: '第六关：课堂录音录像边界',
+          topic: '课堂偷拍与随意传播',
+          lawRef: '《民法典》人格权编',
+          safeAction: '先征得同意，仅用于正当学习目的',
+          riskyAction: '未经同意上传社交平台',
+          scenario: '你拍到同学课堂失误画面并被怂恿发群',
+        },
+        {
+          orderNo: 7,
+          title: '第七关：宿舍矛盾与安全底线',
+          topic: '宿舍矛盾升级处理',
+          lawRef: '《未成年人保护法》',
+          safeAction: '保持距离并向宿管老师求助',
+          riskyAction: '深夜约架私下解决',
+          scenario: '宿舍因物品纠纷出现持续辱骂和推搡',
+        },
+        {
+          orderNo: 8,
+          title: '第八关：网络群聊辱骂应对',
+          topic: '班级群网暴与侮辱言论',
+          lawRef: '《民法典》人格权编',
+          safeAction: '截图取证并通过老师和平台渠道处理',
+          riskyAction: '拉人对骂升级冲突',
+          scenario: '班级群有人持续辱骂并制作表情包攻击同学',
+        },
+        {
+          orderNo: 9,
+          title: '第九关：证据整理与沟通表达',
+          topic: '校园侵害事件证据整理',
+          lawRef: '《未成年人保护法》',
+          safeAction: '按时间线整理证据后向学校反映',
+          riskyAction: '删除聊天记录避免麻烦',
+          scenario: '你准备向老师说明被欺凌经历但证据零散',
+        },
+        {
+          orderNo: 10,
+          title: '第十关：校园综合实战复盘',
+          topic: '校园安全综合决策',
+          lawRef: '《未成年人保护法》',
+          safeAction: '先保安全再求助并留证据',
+          riskyAction: '冲动对抗并公开传播隐私',
+          scenario: '你和同学同时遭遇线下冲突与线上辱骂',
+        },
+      ],
+    },
+    {
+      levelSlug: 'network',
+      questionPrefix: 'n',
+      unitId: unit2.id,
+      levels: [
+        {
+          orderNo: 5,
+          title: '第五关：短视频评论与法律边界',
+          topic: '短视频评论区恶意攻击',
+          lawRef: '《民法典》人格权编',
+          safeAction: '理性沟通并举报侮辱谣言内容',
+          riskyAction: '恶语回击并煽动围攻',
+          scenario: '你在评论区被陌生账号持续人身攻击',
+        },
+        {
+          orderNo: 6,
+          title: '第六关：社交账号安全与盗号防范',
+          topic: '验证码与账号安全',
+          lawRef: '《个人信息保护法》',
+          safeAction: '拒绝提供验证码并开启双重验证',
+          riskyAction: '把验证码发给“客服”核验',
+          scenario: '有人冒充平台客服私信索要短信验证码',
+        },
+        {
+          orderNo: 7,
+          title: '第七关：AI生成内容辨识与引用',
+          topic: 'AI换脸与虚假内容传播',
+          lawRef: '《个人信息保护法》',
+          safeAction: '停止传播并核验来源真实性',
+          riskyAction: '直接转发博流量',
+          scenario: '群里出现同学“AI换脸”视频并被大量转发',
+        },
+        {
+          orderNo: 8,
+          title: '第八关：网购链接钓鱼识别',
+          topic: '钓鱼链接与假客服退款',
+          lawRef: '《网络安全法》',
+          safeAction: '走官方App核验并保留记录',
+          riskyAction: '点击陌生链接输入银行卡信息',
+          scenario: '你收到“订单异常退款”短信附带链接',
+        },
+        {
+          orderNo: 9,
+          title: '第九关：网络谣言止损与澄清',
+          topic: '未经核实信息扩散',
+          lawRef: '《治安管理处罚法》',
+          safeAction: '先核实再转发，必要时公开更正',
+          riskyAction: '听说就发，不核实来源',
+          scenario: '同学让你转发一条“学校紧急通知”截图',
+        },
+        {
+          orderNo: 10,
+          title: '第十关：网络法治综合实战',
+          topic: '网络空间综合自护',
+          lawRef: '《个人信息保护法》',
+          safeAction: '保护隐私并使用平台正规投诉机制',
+          riskyAction: '私下交易敏感账号信息',
+          scenario: '你同时遇到盗号、网暴和谣言扩散风险',
+        },
+      ],
+    },
+    {
+      levelSlug: 'family',
+      questionPrefix: 'f',
+      unitId: unit3.id,
+      levels: [
+        {
+          orderNo: 5,
+          title: '第五关：家庭沟通中的权利边界',
+          topic: '家庭沟通中的情绪冲突',
+          lawRef: '《家庭教育促进法》',
+          safeAction: '冷静表达诉求并寻求老师协助沟通',
+          riskyAction: '摔门离家并断联',
+          scenario: '你与家长因学习安排争吵升级',
+        },
+        {
+          orderNo: 6,
+          title: '第六关：手机使用约定与守法意识',
+          topic: '手机使用与隐私边界',
+          lawRef: '《未成年人保护法》',
+          safeAction: '协商使用规则并尊重彼此隐私',
+          riskyAction: '偷看并公开家人聊天记录',
+          scenario: '家人因手机使用时间问题发生争执',
+        },
+        {
+          orderNo: 7,
+          title: '第七关：家务与学习冲突协商',
+          topic: '家庭责任分工协商',
+          lawRef: '《家庭教育促进法》',
+          safeAction: '提出可执行时间表并与监护人协商',
+          riskyAction: '拒绝沟通只靠情绪对抗',
+          scenario: '你因家务安排与学习时间产生冲突',
+        },
+        {
+          orderNo: 8,
+          title: '第八关：家庭隐私与社交分享',
+          topic: '家庭隐私信息发布',
+          lawRef: '《个人信息保护法》',
+          safeAction: '发布前征求同意并隐藏敏感信息',
+          riskyAction: '随手晒出家庭住址与行程',
+          scenario: '你想在社交平台发布家庭聚会照片',
+        },
+        {
+          orderNo: 9,
+          title: '第九关：监护支持与求助链路',
+          topic: '监护失灵时的求助路径',
+          lawRef: '《未成年人保护法》',
+          safeAction: '联系学校、妇联或12348等正规渠道',
+          riskyAction: '只在匿名论坛求助',
+          scenario: '你在家中长期感到压迫且无法有效沟通',
+        },
+        {
+          orderNo: 10,
+          title: '第十关：家庭法治综合实战',
+          topic: '家庭场景综合权益保护',
+          lawRef: '《未成年人保护法》',
+          safeAction: '稳定情绪后走正规渠道求助',
+          riskyAction: '冲动离家并与陌生人线下接触',
+          scenario: '你同时遇到隐私泄露、冲突升级和网络骚扰',
+        },
+      ],
+    },
+    {
+      levelSlug: 'consumer',
+      questionPrefix: 's',
+      unitId: unit4.id,
+      levels: [
+        {
+          orderNo: 5,
+          title: '第五关：预付消费与停业退款',
+          topic: '预付卡停业退费纠纷',
+          lawRef: '《消费者权益保护法实施条例》',
+          safeAction: '保留凭证并要求退还未消费余额',
+          riskyAction: '私下转账给“代退费中介”',
+          scenario: '培训机构突然停课并称“暂不退款”',
+        },
+        {
+          orderNo: 6,
+          title: '第六关：未成年人充值争议',
+          topic: '未成年人网络充值',
+          lawRef: '《民法典》',
+          safeAction: '联系平台客服并提交监护关系与流水证据',
+          riskyAction: '删除订单记录放弃维权',
+          scenario: '家长发现你账号出现大额游戏充值',
+        },
+        {
+          orderNo: 7,
+          title: '第七关：票务转卖与交易陷阱',
+          topic: '票务二手交易风险',
+          lawRef: '《消费者权益保护法》',
+          safeAction: '使用平台担保交易并核验票务真伪',
+          riskyAction: '脱离平台先款后票',
+          scenario: '你在社交群看到低价演唱会门票转让',
+        },
+        {
+          orderNo: 8,
+          title: '第八关：直播带货宣传辨别',
+          topic: '夸大宣传与冲动消费',
+          lawRef: '《广告法》',
+          safeAction: '核验商品信息并理性下单',
+          riskyAction: '被“限时秒杀”诱导立即转账',
+          scenario: '主播宣称商品“百分百治愈”并催促下单',
+        },
+        {
+          orderNo: 9,
+          title: '第九关：消费维权证据闭环',
+          topic: '订单与聊天记录取证',
+          lawRef: '《消费者权益保护法》',
+          safeAction: '整理订单、支付、沟通记录后正式投诉',
+          riskyAction: '只电话口头投诉不留记录',
+          scenario: '商家拒绝履约且客服反复推诿',
+        },
+        {
+          orderNo: 10,
+          title: '第十关：消费权益综合实战',
+          topic: '消费纠纷综合处理',
+          lawRef: '《消费者权益保护法》',
+          safeAction: '依法维权并警惕二次诈骗',
+          riskyAction: '在黑群里购买“内部维权渠道”',
+          scenario: '你同时遇到退款拖延、钓鱼短信和假客服',
+        },
+      ],
+    },
+    {
+      levelSlug: 'traffic',
+      questionPrefix: 't',
+      unitId: unit5.id,
+      levels: [
+        {
+          orderNo: 5,
+          title: '第五关：电动车骑行规范',
+          topic: '电动车与自行车骑行规则',
+          lawRef: '《道路交通安全法》',
+          safeAction: '按规定佩戴头盔并遵守信号灯',
+          riskyAction: '逆行闯灯抢行',
+          scenario: '你骑车上学赶时间，路口黄灯闪烁',
+        },
+        {
+          orderNo: 6,
+          title: '第六关：夜间出行风险防范',
+          topic: '夜间步行与骑行安全',
+          lawRef: '《道路交通安全法》',
+          safeAction: '走照明良好路段并告知家人行程',
+          riskyAction: '走偏僻近路并全程戴耳机',
+          scenario: '晚自习后你需要独自回家',
+        },
+        {
+          orderNo: 7,
+          title: '第七关：乘坐网约车安全细节',
+          topic: '网约车乘车核验',
+          lawRef: '《道路交通安全法》',
+          safeAction: '核对车牌司机信息并分享行程',
+          riskyAction: '不上车前核验，直接乘坐',
+          scenario: '平台显示车辆与现场车辆不一致',
+        },
+        {
+          orderNo: 8,
+          title: '第八关：路口通行优先规则',
+          topic: '复杂路口通行判断',
+          lawRef: '《道路交通安全法》',
+          safeAction: '减速观察并礼让行人',
+          riskyAction: '抢秒通行',
+          scenario: '无信号灯路口有行人和非机动车交织',
+        },
+        {
+          orderNo: 9,
+          title: '第九关：事故现场取证与报警',
+          topic: '轻微事故后的正确处理',
+          lawRef: '《道路交通安全法》',
+          safeAction: '先确保安全再报警并规范取证',
+          riskyAction: '争执推搡不报警',
+          scenario: '骑行与车辆擦碰后双方情绪激动',
+        },
+        {
+          orderNo: 10,
+          title: '第十关：交通法治综合实战',
+          topic: '交通风险综合应对',
+          lawRef: '《道路交通安全法》',
+          safeAction: '遵规守法并优先保护人身安全',
+          riskyAction: '抱侥幸心理违规通行',
+          scenario: '你在一周内连续遇到多种出行风险场景',
+        },
+      ],
+    },
+    {
+      levelSlug: 'drug',
+      questionPrefix: 'd',
+      unitId: unit6.id,
+      levels: [
+        {
+          orderNo: 5,
+          title: '第五关：同伴诱导下的拒绝表达',
+          topic: '同伴压力下拒绝不明物品',
+          lawRef: '《禁毒法》',
+          safeAction: '明确拒绝并迅速离开现场',
+          riskyAction: '碍于面子尝试一次',
+          scenario: '同伴以“提神糖”名义让你试用不明物品',
+        },
+        {
+          orderNo: 6,
+          title: '第六关：新型伪装毒品识别',
+          topic: '伪装成食品饮料的新型毒品',
+          lawRef: '《禁毒法》',
+          safeAction: '不食用来源不明物品并及时求助',
+          riskyAction: '觉得包装可爱就尝试',
+          scenario: '聚会中出现来路不明的饮料和糖果',
+        },
+        {
+          orderNo: 7,
+          title: '第七关：娱乐场所风险预警',
+          topic: '高风险场所自我保护',
+          lawRef: '《禁毒法》',
+          safeAction: '远离可疑环境并联系可信成年人',
+          riskyAction: '逞强留下围观',
+          scenario: '你在陌生场所看到可疑粉末和交易行为',
+        },
+        {
+          orderNo: 8,
+          title: '第八关：代收代寄风险识别',
+          topic: '不明包裹代收代寄',
+          lawRef: '《禁毒法》',
+          safeAction: '拒绝代收代寄不明包裹',
+          riskyAction: '为赚零花钱帮人转寄',
+          scenario: '网友承诺高报酬让你帮忙收寄包裹',
+        },
+        {
+          orderNo: 9,
+          title: '第九关：及时求助与同伴保护',
+          topic: '发现同伴疑似涉毒求助',
+          lawRef: '《禁毒法》',
+          safeAction: '先确保安全并尽快联系家长老师和警方',
+          riskyAction: '替同伴隐瞒不报',
+          scenario: '你发现同伴行为异常且疑似接触毒品',
+        },
+        {
+          orderNo: 10,
+          title: '第十关：禁毒法治综合实战',
+          topic: '禁毒场景综合应对',
+          lawRef: '《禁毒法》',
+          safeAction: '识别风险、拒绝诱导、及时求助',
+          riskyAction: '抱侥幸心理参与可疑活动',
+          scenario: '你连续遭遇陌生引诱、同伴怂恿和网络交易信息',
+        },
+      ],
+    },
+  ]
+
+  const extraLevels = await Promise.all(
+    extraUnitPlans.flatMap((unitPlan) =>
+      unitPlan.levels.map((level) =>
+        prisma.level.upsert({
+          where: { id: `level-${unitPlan.levelSlug}-${level.orderNo}` },
+          update: {},
+          create: {
+            id: `level-${unitPlan.levelSlug}-${level.orderNo}`,
+            unitId: unitPlan.unitId,
+            title: level.title,
+            orderNo: level.orderNo,
+            xpReward: 20 + (level.orderNo - 1) * 5,
+          },
+        }),
+      ),
+    ),
+  )
+
+  const allLevels = [...levels, ...extraLevels]
+
+  const tfOptions = JSON.stringify([
+    { key: 'T', text: '对' },
+    { key: 'F', text: '错' },
+  ])
+
+  function singleOptions(options: [string, string, string, string]) {
+    return JSON.stringify([
+      { key: 'A', text: options[0] },
+      { key: 'B', text: options[1] },
+      { key: 'C', text: options[2] },
+      { key: 'D', text: options[3] },
+    ])
+  }
+
+  function buildExtraQuestions(
+    questionPrefix: ExtraUnitPlan['questionPrefix'],
+    level: ExtraLevelPlan,
+  ): SeedQuestion[] {
+    const baseId = `q-${questionPrefix}${level.orderNo}`
+    return [
+      {
+        id: `${baseId}-1`,
+        type: QuestionType.SINGLE,
+        prompt: `在“${level.topic}”场景中，更稳妥的做法是？`,
+        optionsJson: singleOptions([
+          level.riskyAction,
+          level.safeAction,
+          '先拖着不处理，看看会不会自己结束',
+          '公开发布当事人隐私信息让大家评理',
+        ]),
+        answerKey: 'B',
+        explanation: `该场景应遵循“先保安全、再求助、再取证”原则，优先选择“${level.safeAction}”。`,
+      },
+      {
+        id: `${baseId}-2`,
+        type: QuestionType.TRUE_FALSE,
+        prompt: `“${level.topic}”只要没有身体伤害，就不涉及法律风险。`,
+        optionsJson: tfOptions,
+        answerKey: 'F',
+        explanation: `错误。${level.topic}也可能涉及人格权、信息保护或其他法律责任风险。`,
+      },
+      {
+        id: `${baseId}-3`,
+        type: QuestionType.SINGLE,
+        prompt: `关于${level.lawRef}相关实践，下列哪项更符合青少年自护原则？`,
+        optionsJson: singleOptions([
+          '为图省事，不核实信息直接照做',
+          '只在匿名群求助，不联系现实中的成年人',
+          '优先走学校/家庭/平台/警方等正规渠道',
+          '先删证据避免麻烦',
+        ]),
+        answerKey: 'C',
+        explanation: `涉及${level.lawRef}时，应优先采用可追踪、可协作的正规求助与处置渠道。`,
+      },
+      {
+        id: `${baseId}-4`,
+        type: QuestionType.SCENARIO,
+        prompt: `情景题：${level.scenario}。你首先应该？`,
+        optionsJson: singleOptions([
+          '私下硬碰硬解决，不告诉任何人',
+          `${level.safeAction}`,
+          '围观并把过程发到社交平台',
+          '拖延处理，等问题自然消失',
+        ]),
+        answerKey: 'B',
+        explanation: `该情景应先止损并保障安全，再通过正规渠道处理，避免风险扩大。`,
+      },
+      {
+        id: `${baseId}-5`,
+        type: QuestionType.TRUE_FALSE,
+        prompt: `面对“${level.topic}”，及时留存证据并寻求可信成年人帮助通常更有效。`,
+        optionsJson: tfOptions,
+        answerKey: 'T',
+        explanation: `正确。规范取证与及时求助有助于事实认定和后续处置，是青少年普法实践中的关键能力。`,
+      },
+    ]
+  }
+
   const questionBank: Record<
     string,
-    Array<{ id: string; type: QuestionType; prompt: string; optionsJson: string; answerKey: string; explanation: string }>
+    SeedQuestion[]
   > = {
     'level-campus-1': [
       {
@@ -1818,7 +2311,20 @@ async function main() {
     ],
   }
 
-  for (const [levelId, questions] of Object.entries(questionBank)) {
+  const extraQuestionBank: Record<string, SeedQuestion[]> = {}
+  for (const unitPlan of extraUnitPlans) {
+    for (const level of unitPlan.levels) {
+      const levelId = `level-${unitPlan.levelSlug}-${level.orderNo}`
+      extraQuestionBank[levelId] = buildExtraQuestions(unitPlan.questionPrefix, level)
+    }
+  }
+
+  const mergedQuestionBank: Record<string, SeedQuestion[]> = {
+    ...questionBank,
+    ...extraQuestionBank,
+  }
+
+  for (const [levelId, questions] of Object.entries(mergedQuestionBank)) {
     await prisma.question.deleteMany({ where: { levelId } })
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i]
@@ -1985,7 +2491,7 @@ async function main() {
     skipDuplicates: true,
   })
 
-  const targetLevel = levels.find((l) => l.id === 'level-campus-1')
+  const targetLevel = allLevels.find((l) => l.id === 'level-campus-1')
   if (targetLevel) {
     await prisma.assignment.upsert({
       where: { id: 'as-1' },

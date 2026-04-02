@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from 'express'
+﻿import { Router, type Request, type Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { requireAuth } from '../middleware/requireAuth.js'
@@ -9,35 +9,74 @@ const router = Router()
 router.use(requireAuth)
 router.use(requireRole('STUDENT'))
 
-function difficultyByOrder(orderNo: number): '基础' | '进阶' | '挑战' | '实战' {
-  if (orderNo <= 1) return '基础'
-  if (orderNo === 2) return '进阶'
-  if (orderNo === 3) return '挑战'
-  return '实战'
+function difficultyByOrder(orderNo: number): '鍩虹' | '杩涢樁' | '鎸戞垬' | '瀹炴垬' {
+  if (orderNo <= 1) return '鍩虹'
+  if (orderNo === 2) return '杩涢樁'
+  if (orderNo === 3) return '鎸戞垬'
+  return '瀹炴垬'
 }
 
 function lawRefsForLevel(levelId: string): string[] {
   if (levelId.startsWith('level-campus')) {
-    return ['《未成年人保护法》', '《民法典》人格权编']
+    return ['未成年人保护法', '民法典·人格权编']
   }
   if (levelId.startsWith('level-network')) {
-    return ['《网络安全法》', '《个人信息保护法》', '《民法典》人格权编']
+    return ['网络安全法', '个人信息保护法', '民法典·人格权编']
   }
   if (levelId.startsWith('level-family')) {
-    return ['《未成年人保护法》', '《家庭教育促进法》', '《民法典》人格权编']
+    return ['未成年人保护法', '家庭教育促进法', '民法典·人格权编']
   }
   if (levelId.startsWith('level-consumer')) {
-    return ['《消费者权益保护法》', '《民法典》合同编']
+    return ['消费者权益保护法', '民法典·合同编']
   }
   if (levelId.startsWith('level-traffic')) {
-    return ['《道路交通安全法》', '《民法典》侵权责任编']
+    return ['道路交通安全法', '民法典·侵权责任编']
   }
   if (levelId.startsWith('level-drug')) {
-    return ['《禁毒法》', '《治安管理处罚法》']
+    return ['禁毒法', '治安管理处罚法']
   }
   return ['青少年普法通识']
 }
+type ActiveLevelLite = {
+  id: string
+  unitId: string
+  title: string
+  xpReward: number
+  orderNo: number
+}
 
+type LockedLevelLite = {
+  id: string
+  title: string
+  orderNo: number
+}
+
+async function resolveUnlockedLevel(studentId: string, levelId: string): Promise<{
+  level: ActiveLevelLite | null
+  lockedByLevel: LockedLevelLite | null
+}> {
+  const level = await prisma.level.findFirst({
+    where: { id: levelId, isActive: true },
+    select: { id: true, unitId: true, title: true, xpReward: true, orderNo: true },
+  })
+  if (!level) return { level: null, lockedByLevel: null }
+  const unitLevels = await prisma.level.findMany({
+    where: { unitId: level.unitId, isActive: true },
+    orderBy: { orderNo: 'asc' },
+    select: { id: true, title: true, orderNo: true },
+  })
+  const progress = await prisma.userProgress.findMany({
+    where: { studentId, levelId: { in: unitLevels.map((l) => l.id) } },
+    select: { levelId: true, status: true },
+  })
+  const progressMap = new Map(progress.map((p) => [p.levelId, p.status]))
+  const firstIncomplete = unitLevels.find((l) => progressMap.get(l.id) !== 'COMPLETED')
+  if (!firstIncomplete) return { level, lockedByLevel: null }
+  const targetStatus = progressMap.get(level.id)
+  if (targetStatus === 'COMPLETED') return { level, lockedByLevel: null }
+  if (firstIncomplete.id === level.id) return { level, lockedByLevel: null }
+  return { level, lockedByLevel: firstIncomplete }
+}
 router.get('/units', async (req: Request, res: Response) => {
   const units = await prisma.learningUnit.findMany({
     where: { isActive: true },
@@ -85,13 +124,21 @@ router.get('/units', async (req: Request, res: Response) => {
 router.get('/levels/:levelId/questions', async (req: Request, res: Response) => {
   const levelId = req.params.levelId
 
-  const level = await prisma.level.findFirst({
-    where: { id: levelId, isActive: true },
-    select: { id: true, title: true, xpReward: true, orderNo: true },
-  })
+  const resolved = await resolveUnlockedLevel(req.user!.id, levelId)
+  const level = resolved.level
 
   if (!level) {
     res.status(404).json({ success: false, error: 'LEVEL_NOT_FOUND' })
+    return
+  }
+  if (resolved.lockedByLevel) {
+    res.status(403).json({
+      success: false,
+      error: 'LEVEL_LOCKED',
+      requiredLevelId: resolved.lockedByLevel.id,
+      requiredLevelTitle: resolved.lockedByLevel.title,
+      requiredLevelOrderNo: resolved.lockedByLevel.orderNo,
+    })
     return
   }
 
@@ -129,12 +176,20 @@ router.post('/levels/:levelId/submit', async (req: Request, res: Response) => {
     return
   }
 
-  const level = await prisma.level.findFirst({
-    where: { id: levelId, isActive: true },
-    select: { id: true, xpReward: true, orderNo: true },
-  })
+  const resolved = await resolveUnlockedLevel(req.user!.id, levelId)
+  const level = resolved.level
   if (!level) {
     res.status(404).json({ success: false, error: 'LEVEL_NOT_FOUND' })
+    return
+  }
+  if (resolved.lockedByLevel) {
+    res.status(403).json({
+      success: false,
+      error: 'LEVEL_LOCKED',
+      requiredLevelId: resolved.lockedByLevel.id,
+      requiredLevelTitle: resolved.lockedByLevel.title,
+      requiredLevelOrderNo: resolved.lockedByLevel.orderNo,
+    })
     return
   }
 
@@ -328,3 +383,4 @@ router.post('/tasks/:assignmentId/submit', async (req: Request, res: Response) =
 })
 
 export default router
+

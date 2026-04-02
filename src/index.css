@@ -4,10 +4,10 @@
 
 :root {
     --p-bg: #f0f4ff;
-    --p-primary: #3fc3fb;
-    --p-primary-dark: #1faae7;
-    --p-accent: #3fc3fb;
-    --p-accent-dark: #1faae7;
+    --p-primary: #61cbef;
+    --p-primary-dark: #39b4e0;
+    --p-accent: #61cbef;
+    --p-accent-dark: #39b4e0;
     --p-warning: #ffb020;
     --p-danger: #ff4b4b;
     --p-purple: #a855f7;
@@ -39,13 +39,60 @@ body {
             transparent 40%
         );
     background-attachment: fixed;
+    color: #1f2937;
+    letter-spacing: 0.0035em;
+    line-height: 1.64;
+    font-kerning: normal;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    letter-spacing: -0.012em;
+    line-height: 1.3;
+}
+
+/* 缓和“模板感”过强的粗体，让界面更接近真实产品排版 */
+.font-extrabold {
+    font-weight: 680;
+    letter-spacing: -0.012em;
+}
+
+.font-bold {
+    font-weight: 590;
+}
+
+.font-semibold {
+    font-weight: 560;
+}
+
+.text-xs,
+.text-sm {
+    letter-spacing: 0.006em;
+}
+
+.text-lg,
+.text-xl,
+.text-2xl {
+    letter-spacing: -0.01em;
 }
 
 :root {
     font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC",
-        "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
-        "Segoe UI Emoji";
+        "PingFang SC", "Hiragino Sans GB", "HarmonyOS Sans SC",
+        "Microsoft YaHei UI", "Noto Sans SC", "Source Han Sans SC",
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
+        Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     line-height: 1.5;
     font-weight: 400;
     font-synthesis: none;

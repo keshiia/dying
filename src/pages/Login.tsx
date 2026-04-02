@@ -640,7 +640,7 @@ export default function Login() {
               {mode === "login" ? "欢迎回来 👋" : "创建账号 🎉"}
             </div>
             <button
-              className="text-sm font-bold text-[var(--p-accent)] hover:underline"
+              className="text-sm font-semibold text-slate-600 hover:text-slate-700 hover:underline"
               type="button"
               onClick={() => setMode(mode === "login" ? "register" : "login")}
             >

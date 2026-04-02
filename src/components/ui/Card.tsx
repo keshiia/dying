@@ -26,7 +26,7 @@ export default function Card({
         "rounded-3xl bg-white border border-zinc-100 shadow-sm",
         glowMap,
         hover &&
-          "transition-all hover:shadow-md hover:-translate-y-0.5 Claude Code-pointer",
+          "transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer",
         className,
       )}
       {...props}

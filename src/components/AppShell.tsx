@@ -66,11 +66,11 @@ function StudentAvatar({ className }: { className?: string }) {
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.95),rgba(255,255,255,0))]" />
       <div className="relative grid h-full w-full place-items-center">
-        <div className="grid h-7 w-7 place-items-center rounded-full border border-sky-100/90 bg-white/95">
-          <GraduationCap className="h-4 w-4 text-sky-600" strokeWidth={2.2} />
+        <div className="grid h-7 w-7 place-items-center rounded-full border border-slate-200/90 bg-white/95">
+          <GraduationCap className="h-4 w-4 text-slate-600" strokeWidth={2.2} />
         </div>
       </div>
-      <span className="absolute bottom-1.5 right-1.5 h-2 w-2 rounded-full bg-sky-500 ring-2 ring-white" />
+      <span className="absolute bottom-1.5 right-1.5 h-2 w-2 rounded-full bg-slate-500 ring-2 ring-white" />
     </div>
   );
 }
@@ -85,8 +85,8 @@ function TeacherAvatar({ className }: { className?: string }) {
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.95),rgba(255,255,255,0))]" />
       <div className="relative grid h-full w-full place-items-center">
-        <div className="grid h-7 w-7 place-items-center rounded-full border border-sky-100/90 bg-white/95">
-          <UserRound className="h-4 w-4 text-sky-600" strokeWidth={2.2} />
+        <div className="grid h-7 w-7 place-items-center rounded-full border border-slate-200/90 bg-white/95">
+          <UserRound className="h-4 w-4 text-slate-600" strokeWidth={2.2} />
         </div>
       </div>
       <span className="absolute bottom-1.5 right-1.5 grid h-3.5 w-3.5 place-items-center rounded-full bg-white ring-1 ring-zinc-200">
@@ -156,7 +156,7 @@ export default function AppShell({ mode }: Props) {
           to={mode === "student" ? "/app/learn" : "/teacher/dashboard"}
           className="flex items-center gap-2.5 px-5 py-5 group border-b border-zinc-100/80"
         >
-          <BrandMark className="group-hover:shadow-blue-300 transition-shadow" />
+          <BrandMark className="group-hover:shadow-blue-200 transition-shadow" />
           <div className="min-w-0">
             <div className="text-sm font-extrabold text-zinc-900 leading-tight">
               青少年普法平台
@@ -168,7 +168,7 @@ export default function AppShell({ mode }: Props) {
         </Link>
 
         <div className="px-4 pt-5">
-          <div className="rounded-3xl border border-zinc-200/80 bg-white/90 p-3.5 shadow-sm shadow-zinc-100/70">
+          <div className="rounded-3xl border border-[#d8eaed] bg-[#ecf6f7] p-3.5 shadow-sm shadow-zinc-100/70">
             <div className="flex items-center gap-3">
               <RoleAvatar mode={mode} />
               <div className="min-w-0">
@@ -183,9 +183,9 @@ export default function AppShell({ mode }: Props) {
           </div>
 
           {mode === "student" && user && (
-            <div className="mt-3 rounded-3xl bg-gradient-to-br from-sky-50 to-blue-50 border border-blue-100 p-3.5 shadow-sm shadow-blue-100/70">
+            <div className="mt-3 rounded-3xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 p-3.5 shadow-sm shadow-slate-200/70">
               <div className="flex items-center justify-between">
-                <div className="text-xs font-bold text-blue-800">
+                <div className="text-xs font-semibold text-slate-700">
                   {getLevelTitle(user.level)}
                 </div>
                 <div className="flex items-center gap-1">
@@ -218,7 +218,7 @@ export default function AppShell({ mode }: Props) {
                 clsx(
                   "group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-bold transition-all",
                   isActive
-                    ? "bg-gradient-to-r from-[var(--p-primary)] to-[var(--p-primary-dark)] text-white shadow-md shadow-blue-100"
+                    ? "bg-gradient-to-r from-[#84d8ee] via-[#72cde8] to-[#63c0df] text-white/95 shadow-sm shadow-sky-100"
                     : "text-zinc-700 hover:bg-zinc-100/80",
                 )
               }
@@ -229,11 +229,15 @@ export default function AppShell({ mode }: Props) {
                     className={clsx(
                       "grid h-8 w-8 place-items-center rounded-xl text-base transition-colors",
                       isActive
-                        ? "bg-white/20 text-white"
+                        ? "bg-white/25 text-white/95"
                         : "bg-zinc-100 text-zinc-700 group-hover:bg-zinc-200",
                     )}
                   >
-                    {n.emoji}
+                    {mode === "student" && n.to === "/app/learn" ? (
+                      <Scale className="h-4 w-4" strokeWidth={2.2} />
+                    ) : (
+                      n.emoji
+                    )}
                   </span>
                   <span className="truncate">{n.label}</span>
                 </>
@@ -247,9 +251,9 @@ export default function AppShell({ mode }: Props) {
             <button
               type="button"
               onClick={() => navigate("/assistant")}
-              className="w-full flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-bold text-[var(--p-accent)] hover:bg-blue-50 transition-all"
+              className="w-full flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100/80 transition-all"
             >
-              <span className="grid h-7 w-7 place-items-center rounded-xl bg-blue-100/80 text-[var(--p-accent)]">
+              <span className="grid h-7 w-7 place-items-center rounded-xl bg-slate-100 text-slate-600">
                 <Bot className="h-4 w-4 shrink-0" />
               </span>
               AI普法助手
@@ -308,7 +312,7 @@ export default function AppShell({ mode }: Props) {
         <button
           type="button"
           onClick={() => navigate("/assistant")}
-          className="lg:hidden fixed bottom-6 right-5 rounded-full bg-gradient-to-br from-[var(--p-accent)] to-[var(--p-accent-dark)] text-white shadow-xl shadow-blue-200 px-5 py-3.5 text-sm font-extrabold animate-pulse-ring z-40"
+          className="lg:hidden fixed bottom-6 right-5 rounded-full bg-gradient-to-br from-[var(--p-accent)] to-[var(--p-accent-dark)] text-white shadow-xl shadow-blue-100 px-5 py-3.5 text-sm font-extrabold animate-pulse-ring z-40"
         >
           <span className="inline-flex items-center gap-2">
             <Bot className="h-4 w-4" />
@@ -318,7 +322,7 @@ export default function AppShell({ mode }: Props) {
       )}
 
       <Sheet open={navOpen} title="菜单" onClose={() => setNavOpen(false)}>
-        <div className="rounded-3xl border border-zinc-200/80 bg-zinc-50/70 p-3.5">
+        <div className="rounded-3xl border border-[#d8eaed] bg-[#ecf6f7] p-3.5">
           <div className="flex items-center gap-3">
             <RoleAvatar mode={mode} />
             <div className="min-w-0">
@@ -333,9 +337,9 @@ export default function AppShell({ mode }: Props) {
         </div>
 
         {mode === "student" && user && (
-          <div className="mt-4 rounded-3xl bg-gradient-to-br from-sky-50 to-blue-50 border border-blue-100 p-3.5">
+          <div className="mt-4 rounded-3xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 p-3.5">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-bold text-blue-800">
+              <div className="text-xs font-semibold text-slate-700">
                 {getLevelTitle(user.level)}
               </div>
               <span className="text-xs font-extrabold text-zinc-800">
@@ -362,7 +366,7 @@ export default function AppShell({ mode }: Props) {
                 clsx(
                   "group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-bold transition-all",
                   isActive
-                    ? "bg-gradient-to-r from-[var(--p-primary)] to-[var(--p-primary-dark)] text-white shadow-sm"
+                    ? "bg-gradient-to-r from-[#84d8ee] via-[#72cde8] to-[#63c0df] text-white/95 shadow-sm shadow-sky-100"
                     : "text-zinc-700 hover:bg-zinc-50",
                 )
               }
@@ -373,11 +377,15 @@ export default function AppShell({ mode }: Props) {
                     className={clsx(
                       "grid h-8 w-8 place-items-center rounded-xl text-base transition-colors",
                       isActive
-                        ? "bg-white/20 text-white"
+                        ? "bg-white/25 text-white/95"
                         : "bg-zinc-100 text-zinc-700 group-hover:bg-zinc-200",
                     )}
                   >
-                    {n.emoji}
+                    {mode === "student" && n.to === "/app/learn" ? (
+                      <Scale className="h-4 w-4" strokeWidth={2.2} />
+                    ) : (
+                      n.emoji
+                    )}
                   </span>
                   <span className="truncate">{n.label}</span>
                 </>

@@ -1,12 +1,9 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
-  BookOpen,
   CheckCircle2,
   ChevronRight,
   Flame,
   Scale,
-  Star,
   Trophy,
   Zap,
 } from "lucide-react";
@@ -17,7 +14,7 @@ import Tag from "@/components/ui/Tag";
 import ProgressBar from "@/components/ui/ProgressBar";
 import ChallengeModal from "@/components/student/ChallengeModal";
 import { apiFetch, errorMessage } from "@/utils/api";
-import type { LearningUnit, ResourceListItem } from "@/types";
+import type { LearningUnit } from "@/types";
 import { useAuthStore } from "@/stores/auth";
 
 const categoryMeta: Record<
@@ -39,9 +36,9 @@ const categoryMeta: Record<
 > = {
   校园安全: {
     emoji: "🏫",
-    color: "text-blue-700",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
+    color: "text-slate-700",
+    bg: "bg-slate-100",
+    border: "border-slate-200",
     tagColor: "blue",
   },
   网络安全: {
@@ -60,9 +57,9 @@ const categoryMeta: Record<
   },
   交通安全: {
     emoji: "🚦",
-    color: "text-blue-700",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
+    color: "text-slate-700",
+    bg: "bg-slate-100",
+    border: "border-slate-200",
     tagColor: "blue",
   },
   禁毒教育: {
@@ -93,48 +90,6 @@ function getCategoryMeta(cat: string) {
   return categoryMeta[cat] ?? fallbackMeta;
 }
 
-const legalTips = [
-  {
-    tip: "未成年人依法享有受教育权和人格尊严，任何组织和个人不得侵害。",
-    law: "《未成年人保护法》第3条、第27条",
-  },
-  {
-    tip: "校园欺凌不是“玩笑”，遇到持续侮辱、排挤、威胁时要及时求助。",
-    law: "《未成年人保护法》第39条",
-  },
-  {
-    tip: "个人信息受法律保护，验证码、身份证照片、家庭住址不要随意提供。",
-    law: "《个人信息保护法》第4条、第10条",
-  },
-  {
-    tip: "网络造谣、网暴、恶意传播隐私内容，可能侵犯名誉权和隐私权。",
-    law: "《民法典》人格权编",
-  },
-  {
-    tip: "网购纠纷要先留证据再维权：订单、支付记录、聊天记录都很关键。",
-    law: "《消费者权益保护法》",
-  },
-  {
-    tip: "面对“中奖链接”“退款客服”“先转账后处理”等说法，要提高警惕。",
-    law: "反诈普法常识",
-  },
-  {
-    tip: "交通规则的本质是保护生命，拒绝无证驾驶、醉驾和危险骑行。",
-    law: "《道路交通安全法》",
-  },
-  {
-    tip: "遇到高风险场景，先保证安全，再向老师、家长或警方求助。",
-    law: "110 / 12348 求助渠道",
-  },
-];
-
-const legalChecklist = [
-  "先保安全：优先离开高风险场景，避免冲突升级。",
-  "再留证据：截图、时间、链接、聊天记录尽量完整留存。",
-  "走正规渠道：平台举报、学校求助、家长沟通、必要时报警。",
-  "护好隐私：不公开身份证、住址、验证码等敏感信息。",
-];
-
 function barColor(cat: string): "green" | "blue" | "purple" | "orange" {
   if (cat === "网络安全") return "purple";
   if (cat === "消费者权益") return "orange";
@@ -149,35 +104,55 @@ function levelDifficulty(orderNo: number): "基础" | "进阶" | "挑战" | "实
   return "实战";
 }
 
+const unitLearningGuide: Record<string, { goal: string; law: string }> = {
+  "unit-campus": {
+    goal: "本单元重点：识别欺凌、保留证据、及时求助。",
+    law: "依据：《未成年人保护法》",
+  },
+  "unit-network": {
+    goal: "本单元重点：防诈骗、护隐私、理性表达。",
+    law: "依据：《个人信息保护法》",
+  },
+  "unit-family": {
+    goal: "本单元重点：监护沟通、隐私边界、求助链路。",
+    law: "依据：《未成年人保护法》",
+  },
+  "unit-consumer": {
+    goal: "本单元重点：留凭证、看规则、依法维权。",
+    law: "依据：《消费者权益保护法》",
+  },
+  "unit-traffic": {
+    goal: "本单元重点：守规则、避风险、先安全后处置。",
+    law: "依据：《道路交通安全法》",
+  },
+  "unit-drug": {
+    goal: "本单元重点：识别诱导、明确拒绝、及时求助。",
+    law: "依据：《禁毒法》",
+  },
+};
+
 export default function Learn() {
-  const navigate = useNavigate();
   const { user } = useAuthStore();
 
   const [units, setUnits] = useState<LearningUnit[]>([]);
-  const [cards, setCards] = useState<ResourceListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("全部");
+  const [showPendingOnly, setShowPendingOnly] = useState(true);
   const [openLevel, setOpenLevel] = useState<null | {
     id: string;
     title: string;
     xpReward: number;
   }>(null);
 
-  const todayTip = legalTips[new Date().getDate() % legalTips.length];
-
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const [u, r] = await Promise.all([
-        apiFetch<{ success: true; units: LearningUnit[] }>("/api/student/units"),
-        apiFetch<{ success: true; resources: ResourceListItem[] }>(
-          "/api/resources?type=LAW_SUMMARY",
-        ),
-      ]);
+      const u = await apiFetch<{ success: true; units: LearningUnit[] }>(
+        "/api/student/units",
+      );
       setUnits(u.units);
-      setCards(r.resources.slice(0, 8));
     } catch (e: unknown) {
       setError(errorMessage(e));
     } finally {
@@ -219,6 +194,34 @@ export default function Learn() {
     return units.filter((u) => u.category === filter);
   }, [filter, units]);
 
+  const filteredTotalLevels = useMemo(
+    () => filteredUnits.reduce((acc, u) => acc + u.levels.length, 0),
+    [filteredUnits],
+  );
+
+  const filteredPendingLevels = useMemo(
+    () =>
+      filteredUnits.reduce(
+        (acc, u) =>
+          acc + u.levels.filter((l) => l.progress?.status !== "COMPLETED").length,
+        0,
+      ),
+    [filteredUnits],
+  );
+
+  const displayUnits = useMemo(() => {
+    return filteredUnits
+      .map((u) => ({
+        ...u,
+        pendingLevels: u.levels.filter((l) => l.progress?.status !== "COMPLETED"),
+        visibleLevels:
+          showPendingOnly
+            ? u.levels.filter((l) => l.progress?.status !== "COMPLETED")
+            : u.levels,
+      }))
+      .filter((u) => u.visibleLevels.length > 0);
+  }, [filteredUnits, showPendingOnly]);
+
   const nextLevel = useMemo(() => {
     for (const u of units) {
       for (const l of u.levels) {
@@ -229,6 +232,12 @@ export default function Learn() {
     }
     return null;
   }, [units]);
+
+  function challengeActionLabel(done: boolean, isNext: boolean) {
+    if (done) return "再次练习";
+    if (isNext) return "继续挑战";
+    return "开始挑战";
+  }
 
   return (
     <div className="grid gap-5">
@@ -247,17 +256,13 @@ export default function Learn() {
             <div className="mt-1 text-zinc-600 text-base">刷关卡、攒经验、复盘错题</div>
             {user && (
               <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 rounded-full border border-blue-100 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
+                <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
                   <Trophy className="h-3.5 w-3.5 text-amber-500" />
                   Lv {user.level} · {user.xp} XP
                 </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-blue-100 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
+                <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
                   <Flame className="h-3.5 w-3.5 text-rose-500" />
                   连续学习 3 天
-                </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-blue-100 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
-                  <Star className="h-3.5 w-3.5 text-sky-500" />
-                  已完成 {completedLevels} 关
                 </div>
               </div>
             )}
@@ -301,46 +306,10 @@ export default function Learn() {
         </div>
       </div>
 
-      <div className="rounded-3xl bg-gradient-to-r from-white to-[#f3f8ff] px-5 py-4 flex items-start gap-3 border border-[#dbe7ff]">
-        <div className="h-9 w-9 rounded-2xl border border-blue-100 bg-white flex items-center justify-center shrink-0 text-lg">
-          <Scale className="h-4 w-4 text-slate-600" strokeWidth={2.2} />
-        </div>
-        <div className="min-w-0">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
-            今日法律知识
-          </div>
-          <div className="text-sm font-bold leading-snug text-zinc-800">
-            {todayTip.tip}
-          </div>
-          <div className="mt-1 text-xs text-zinc-500">— {todayTip.law}</div>
-        </div>
-      </div>
-
-      <Card className="p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-base font-extrabold text-zinc-900">法律行动清单</div>
-            <div className="text-xs text-zinc-500 mt-0.5">遇到风险时，按顺序执行更稳妥</div>
-          </div>
-          <Tag color="blue">实用步骤</Tag>
-        </div>
-        <div className="mt-3 grid gap-2">
-          {legalChecklist.map((item, idx) => (
-            <div
-              key={item}
-              className="rounded-2xl border border-zinc-100 bg-zinc-50 px-3 py-2 text-sm text-zinc-700"
-            >
-              <span className="mr-2 font-bold text-zinc-900">{idx + 1}.</span>
-              {item}
-            </div>
-          ))}
-        </div>
-      </Card>
-
       {!loading && nextLevel && (
         <button
           type="button"
-          className="rounded-3xl border-2 border-[var(--p-primary)] bg-blue-50 px-5 py-4 flex items-center justify-between gap-4 hover:bg-blue-100 transition-colors text-left"
+          className="min-h-[136px] rounded-3xl border-2 border-[var(--p-primary)] bg-slate-100 px-5 py-4 flex items-center justify-between gap-4 hover:bg-slate-200 transition-colors text-left"
           onClick={() =>
             setOpenLevel({
               id: nextLevel.level.id,
@@ -350,11 +319,11 @@ export default function Learn() {
           }
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-11 w-11 rounded-2xl bg-[var(--p-primary)] text-white flex items-center justify-center text-xl shrink-0 shadow-md shadow-blue-200">
+            <div className="h-11 w-11 rounded-2xl bg-[var(--p-primary)] text-white flex items-center justify-center text-xl shrink-0 shadow-md shadow-slate-200">
               {getCategoryMeta(nextLevel.unit.category).emoji}
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-bold text-blue-700 uppercase tracking-widest">
+              <div className="text-xs font-semibold text-slate-600 uppercase tracking-widest">
                 继续上次 · 下一关
               </div>
               <div className="text-base font-extrabold text-zinc-900 truncate mt-0.5">
@@ -370,82 +339,87 @@ export default function Learn() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0 text-blue-700 font-bold text-sm">
+          <div className="flex items-center gap-1.5 shrink-0 text-slate-700 font-semibold text-sm">
             <Zap className="h-4 w-4" />
-            开始挑战
+            继续挑战
             <ChevronRight className="h-4 w-4" />
           </div>
         </button>
       )}
 
-      {!loading && !error && cards.length > 0 && (
-        <Card className="p-5">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <div className="text-base font-extrabold text-zinc-900">今日法律知识卡</div>
-              <div className="text-xs text-zinc-500 mt-0.5">
-                先看知识卡，再闯关，更容易拿高分
-              </div>
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => navigate("/app/resources")}
-            >
-              <BookOpen className="h-3.5 w-3.5 mr-1.5" />
-              全部资源
-            </Button>
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-2">
-            {cards.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => navigate("/app/resources")}
-                className="text-left rounded-2xl border border-zinc-100 bg-zinc-50 p-4 hover:bg-zinc-100 transition-all"
-              >
-                <div className="text-sm font-bold text-zinc-900 leading-snug">
-                  {c.title}
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {c.tags.slice(0, 3).map((t) => (
-                    <span
-                      key={t}
-                      className="inline-block rounded-full bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-0.5"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </button>
-            ))}
-          </div>
-        </Card>
-      )}
-
       {!loading && !error && categories.length > 1 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-          {categories.map((c) => {
-            const meta = c === "全部" ? null : getCategoryMeta(c);
-            const isActive = filter === c;
-            return (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setFilter(c)}
-                className={clsx(
-                  "shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition-all",
-                  isActive
-                    ? "bg-[var(--p-primary)] text-white shadow-md shadow-blue-200"
-                    : "bg-white border border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
-                )}
-              >
-                {meta && <span>{meta.emoji}</span>}
-                {c}
-              </button>
-            );
-          })}
+        <div className="sticky top-2 z-20">
+          <div className="rounded-2xl border border-zinc-100/80 bg-white/80 backdrop-blur-sm px-3 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+            <div
+              className="flex items-center gap-2 overflow-x-auto pb-1"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {categories.map((c) => {
+                const meta = c === "全部" ? null : getCategoryMeta(c);
+                const isActive = filter === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setFilter(c)}
+                    className={clsx(
+                      "shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition-all",
+                      isActive
+                        ? "bg-[var(--p-primary)] text-white shadow-md shadow-slate-200"
+                        : "bg-white border border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
+                    )}
+                  >
+                    {meta && <span>{meta.emoji}</span>}
+                    {c}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-2 rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 px-3 py-3 shadow-sm">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="text-[11px] font-bold tracking-wide text-sky-700">
+                    闯关显示模式
+                  </div>
+                  <div className="text-sm font-semibold text-slate-700">
+                    未完成 {filteredPendingLevels} / 共 {filteredTotalLevels}
+                  </div>
+                </div>
+                <div className="inline-flex rounded-full border border-slate-200 bg-white/95 p-1.5 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setShowPendingOnly(false)}
+                    className={clsx(
+                      "rounded-full px-4 py-1.5 text-sm font-bold transition-colors",
+                      !showPendingOnly
+                        ? "bg-slate-700 text-white"
+                        : "text-zinc-600 hover:bg-zinc-50",
+                    )}
+                  >
+                    全部关卡
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPendingOnly(true)}
+                    className={clsx(
+                      "rounded-full px-4 py-1.5 text-sm font-bold transition-colors",
+                      showPendingOnly
+                        ? "bg-[var(--p-primary)] text-white"
+                        : "text-zinc-600 hover:bg-zinc-50",
+                    )}
+                  >
+                    只看未完成
+                  </button>
+                </div>
+              </div>
+              {showPendingOnly && (
+                <div className="mt-2 text-xs font-medium text-sky-700">
+                  已开启专注模式，仅展示未完成关卡。
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -473,10 +447,21 @@ export default function Learn() {
         </Card>
       )}
 
+      {!loading && !error && displayUnits.length === 0 && (
+        <Card className="p-5 text-sm text-zinc-600">
+          当前筛选下暂无关卡，试试切换分类或关闭“只看未完成”。
+        </Card>
+      )}
+
       {!loading &&
         !error &&
-        filteredUnits.map((u) => {
+        displayUnits.map((u) => {
           const meta = getCategoryMeta(u.category);
+          const guide =
+            unitLearningGuide[u.id] ?? {
+              goal: "本单元重点：场景判断、风险识别和合规求助。",
+              law: "依据：青少年普法通识",
+            };
           const unitCompleted = u.levels.filter(
             (l) => l.progress?.status === "COMPLETED",
           ).length;
@@ -484,6 +469,9 @@ export default function Learn() {
           const unitPct = unitTotal
             ? Math.round((unitCompleted / unitTotal) * 100)
             : 0;
+          const firstIncompleteId = u.levels.find(
+            (level) => level.progress?.status !== "COMPLETED",
+          )?.id;
 
           return (
             <Card key={u.id} className="overflow-hidden">
@@ -497,9 +485,13 @@ export default function Learn() {
                       <div className={clsx("text-base font-extrabold", meta.color)}>
                         {u.title}
                       </div>
+                      <div className="mt-1 text-xs font-medium text-zinc-600">
+                        {guide.goal}
+                      </div>
                       <div className="mt-1 flex items-center gap-2 flex-wrap">
                         <Tag color={meta.tagColor}>{u.category}</Tag>
                         <Tag color="zinc">{u.gradeRange}</Tag>
+                        <Tag color="zinc">{guide.law}</Tag>
                       </div>
                     </div>
                   </div>
@@ -520,14 +512,11 @@ export default function Learn() {
               </div>
 
               <div className="p-4 grid gap-2">
-                {u.levels.map((l, idx) => {
+                {u.visibleLevels.map((l) => {
                   const done = l.progress?.status === "COMPLETED";
                   const best = l.progress?.bestScore ?? 0;
-                  const isNext =
-                    !done &&
-                    u.levels
-                      .slice(0, idx)
-                      .every((prev) => prev.progress?.status === "COMPLETED");
+                  const isNext = !done && l.id === firstIncompleteId;
+                  const isLocked = !done && !isNext;
 
                   return (
                     <div
@@ -535,10 +524,10 @@ export default function Learn() {
                       className={clsx(
                         "h-[72px] flex items-center justify-between gap-3 rounded-2xl border px-4 transition-all",
                         done
-                          ? "border-blue-200 bg-blue-50"
+                          ? "border-slate-200 bg-slate-100"
                           : isNext
-                            ? "border-[var(--p-primary)] bg-blue-50/70"
-                            : "border-zinc-100 bg-white hover:border-zinc-200",
+                          ? "border-[var(--p-primary)] bg-slate-100/85"
+                          : "border-zinc-100 bg-zinc-50",
                       )}
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -546,13 +535,13 @@ export default function Learn() {
                           className={clsx(
                             "h-8 w-8 rounded-xl flex items-center justify-center text-xs font-extrabold shrink-0",
                             done
-                              ? "bg-blue-500 text-white"
+                              ? "bg-slate-500 text-white"
                               : isNext
-                                ? "bg-[var(--p-primary)] text-white"
-                                : "bg-zinc-100 text-zinc-500",
+                              ? "bg-[var(--p-primary)] text-white"
+                              : "bg-zinc-200 text-zinc-500",
                           )}
                         >
-                          {done ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
+                          {done ? <CheckCircle2 className="h-4 w-4" /> : l.orderNo}
                         </div>
                         <div className="min-w-0">
                           <div className="text-sm font-bold text-zinc-900 truncate">
@@ -564,7 +553,7 @@ export default function Learn() {
                               ? ` · 最佳${best}分`
                               : isNext
                                 ? " · 推荐挑战"
-                                : ""}
+                                : " · 完成上一关后解锁"}
                           </div>
                           <div className="mt-1">
                             <span className="inline-flex rounded-full bg-zinc-200 px-2 py-0.5 text-[11px] font-bold text-zinc-700">
@@ -578,6 +567,7 @@ export default function Learn() {
                         className="shrink-0"
                         size="sm"
                         variant={done ? "secondary" : isNext ? "primary" : "secondary"}
+                        disabled={isLocked}
                         onClick={() =>
                           setOpenLevel({
                             id: l.id,
@@ -586,7 +576,7 @@ export default function Learn() {
                           })
                         }
                       >
-                        {done ? "再来一局" : isNext ? "开始🔥" : "开始"}
+                        {isLocked ? "未解锁" : challengeActionLabel(done, isNext)}
                       </Button>
                     </div>
                   );

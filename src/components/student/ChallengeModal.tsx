@@ -188,7 +188,7 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
                   {level.lawRefs.map((law) => (
                     <span
                       key={law}
-                      className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700"
+                      className="rounded-full border border-slate-200/80 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600"
                     >
                       {law}
                     </span>
@@ -293,7 +293,7 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
                   {result.levelMeta.lawRefs.map((law) => (
                     <span
                       key={law}
-                      className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700"
+                      className="rounded-full border border-slate-200/80 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600"
                     >
                       {law}
                     </span>
@@ -339,7 +339,7 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
                           className={clsx(
                             'text-xs font-extrabold',
                             d.correct
-                              ? 'text-[color:var(--p-primary)]'
+                              ? 'text-slate-700'
                               : 'text-[color:var(--p-danger)]',
                           )}
                         >

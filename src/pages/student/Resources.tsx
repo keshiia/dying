@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Scale } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Tag from '@/components/ui/Tag'
@@ -6,6 +7,7 @@ import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import { apiFetch } from '@/utils/api'
 import type { ResourceDetail, ResourceListItem, ResourceType } from '@/types'
+import { legalChecklist, legalTips } from '@/data/legalContent'
 
 const types: Array<{ value: ResourceType | 'ALL'; label: string }> = [
   { value: 'ALL', label: '全部' },
@@ -22,6 +24,10 @@ export default function Resources() {
   const [loading, setLoading] = useState(true)
   const [openId, setOpenId] = useState<string | null>(null)
   const [detail, setDetail] = useState<ResourceDetail | null>(null)
+  const [showChecklist, setShowChecklist] = useState(false)
+  const [visibleResourceCount, setVisibleResourceCount] = useState(8)
+
+  const todayTip = legalTips[new Date().getDate() % legalTips.length]
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -30,6 +36,7 @@ export default function Resources() {
     if (type !== 'ALL') params.set('type', type)
     const data = await apiFetch<{ success: true; resources: ResourceListItem[] }>(`/api/resources?${params.toString()}`)
     setItems(data.resources)
+    setVisibleResourceCount(8)
     setLoading(false)
   }, [q, type])
 
@@ -42,6 +49,10 @@ export default function Resources() {
     return `资源中心 · ${t}`
   }, [type])
 
+  const visibleItems = useMemo(() => {
+    return items.slice(0, visibleResourceCount)
+  }, [items, visibleResourceCount])
+
   async function open(itemId: string) {
     setOpenId(itemId)
     setDetail(null)
@@ -52,6 +63,50 @@ export default function Resources() {
   return (
     <div className="grid gap-4">
       <Card className="p-5">
+        <div className="flex items-start gap-3">
+          <div className="h-9 w-9 rounded-2xl border border-slate-200 bg-white flex items-center justify-center shrink-0">
+            <Scale className="h-4 w-4 text-slate-600" strokeWidth={2.2} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-base font-extrabold tracking-tight text-zinc-900">今日学习提示</div>
+            <div className="mt-0.5 text-xs text-zinc-500">先看法律知识，再按清单行动会更稳妥</div>
+            <div className="mt-2 text-sm font-bold leading-snug text-zinc-800">{todayTip.tip}</div>
+            <div className="mt-1.5 text-xs text-zinc-500">— {todayTip.law}</div>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-zinc-100 bg-zinc-50 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-bold tracking-tight text-zinc-900">法律行动清单</div>
+              <div className="text-xs text-zinc-500 mt-0.5">遇到风险时，按顺序执行</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowChecklist((prev) => !prev)}
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              {showChecklist ? '收起清单' : '展开清单'}
+            </button>
+          </div>
+          {showChecklist && (
+            <div className="mt-3 grid gap-2">
+            {legalChecklist.map((item, idx) => (
+              <div
+                key={item}
+                className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700"
+              >
+                <span className="mr-2 font-bold text-zinc-900">{idx + 1}.</span>
+                {item}
+              </div>
+            ))}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      <div className="sticky top-2 z-20">
+        <Card className="p-5 border-zinc-100/80 bg-white/90 backdrop-blur-sm shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-lg font-extrabold text-zinc-900">{title}</div>
@@ -79,14 +134,14 @@ export default function Resources() {
               }
               onClick={() => {
                 setType(t.value)
-                setTimeout(() => void load(), 0)
               }}
             >
               {t.label}
             </button>
           ))}
         </div>
-      </Card>
+        </Card>
+      </div>
 
       <Card className="p-5">
         {loading ? (
@@ -96,7 +151,7 @@ export default function Resources() {
           </div>
         ) : (
           <div className="grid gap-2">
-            {items.map((r) => (
+            {visibleItems.map((r) => (
               <div key={r.id} className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-100 px-4 py-3">
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-zinc-900 truncate">{r.title}</div>
@@ -111,6 +166,21 @@ export default function Resources() {
                 </Button>
               </div>
             ))}
+            {!loading && items.length === 0 && (
+              <div className="rounded-2xl border border-zinc-100 bg-zinc-50 px-4 py-6 text-center text-sm text-zinc-500">
+                当前筛选下暂无资源，试试更换关键词或分类。
+              </div>
+            )}
+            {visibleResourceCount < items.length && (
+              <div className="pt-2 flex justify-center">
+                <Button
+                  variant="secondary"
+                  onClick={() => setVisibleResourceCount((prev) => prev + 8)}
+                >
+                  加载更多（剩余 {items.length - visibleResourceCount} 条）
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Card>
@@ -135,7 +205,7 @@ export default function Resources() {
             <div className="mt-3 text-xs text-zinc-500">作者：{detail.author}</div>
             {detail.contentUrl && (
               <div className="mt-3">
-                <a className="text-sm font-semibold text-[var(--p-accent)] hover:underline" href={detail.contentUrl} target="_blank" rel="noreferrer">
+                <a className="text-sm font-semibold text-slate-600 hover:text-slate-700 hover:underline" href={detail.contentUrl} target="_blank" rel="noreferrer">
                   打开链接
                 </a>
               </div>
