@@ -2491,6 +2491,478 @@ async function main() {
     skipDuplicates: true,
   })
 
+  await prisma.resource.createMany({
+    data: [
+      {
+        id: 'res-17',
+        title: '法条摘要：民法典人格权中的名誉权、隐私权与肖像权',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['网络法治', '民法典', '人格权', '法条摘要']),
+        contentMd:
+          '遇到侮辱、造谣、偷拍、擅自传播照片时，可按这三步处理：\n\n1) 先保全证据：截图、链接、时间、发布账号。\n2) 先平台处置：投诉举报并申请删除侵权内容。\n3) 再寻求支持：向老师、家长说明，必要时报警或咨询 12348。\n\n关键词：名誉权、隐私权、肖像权。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-18',
+        title: '法条摘要：未成年人保护法中的学校保护要点',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['校园安全', '未成年人保护', '法条摘要']),
+        contentMd:
+          '学校对未成年人负有教育与保护责任。面对校园欺凌、侮辱排挤时：\n\n- 第一时间报告班主任、德育老师或校方负责人。\n- 保留聊天记录、照片、证人信息等证据。\n- 要求学校启动处置与保护流程，避免二次伤害。\n\n重点不是“忍耐”，而是“及时报告 + 规范处置”。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-19',
+        title: '法条摘要：个人信息保护法中的最小必要原则',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['网络法治', '个人信息保护', '法条摘要']),
+        contentMd:
+          '任何平台收集信息都应遵循“最小必要”。你可以这样判断：\n\n- 与服务无关的信息，可拒绝提供。\n- 验证码、身份证照片、人脸信息等敏感信息要谨慎。\n- 发现异常索取时，先停止操作并核验官方渠道。\n\n记住：不给不必要信息，不等于“配合度低”，而是依法保护自己。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-20',
+        title: '法条摘要：预防未成年人犯罪法中的风险行为干预',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['校园安全', '预防未成年人犯罪法', '法条摘要']),
+        contentMd:
+          '法律强调“早发现、早干预、早矫治”。当出现逃学、打架、网络暴力等风险行为时：\n\n1) 先由家庭、学校共同干预。\n2) 明确行为边界与后果，避免事态升级。\n3) 对高风险情况及时引入专业机构协助。\n\n核心思路：不放任、不贴标签、重在矫治。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-21',
+        title: '法条摘要：消费者权益保护法中的网络消费维权四步',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['消费者权益', '维权', '法条摘要']),
+        contentMd:
+          '网络消费发生纠纷时，建议按“留证据-先协商-再投诉-再维权”处理：\n\n1) 留证据：订单、支付记录、聊天记录、商品页面。\n2) 先协商：走平台官方客服通道。\n3) 再投诉：平台投诉、12315 等渠道。\n4) 再维权：争议较大时走司法/仲裁路径。\n\n先留证再沟通，是成功维权关键。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-22',
+        title: '法条摘要：道路交通安全法中的骑行与乘车底线',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['交通安全', '道路交通安全法', '法条摘要']),
+        contentMd:
+          '青少年出行常见底线：\n\n- 骑行不逆行、不闯灯、不并排行驶。\n- 乘车系安全带，不坐无证、超员、酒驾车辆。\n- 发生事故先保障人身安全，再报警与求助。\n\n交通规则的本质是降低伤害，而不是“应付检查”。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-23',
+        title: '法条摘要：禁毒法中的青少年拒毒与求助',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['禁毒教育', '禁毒法', '法条摘要']),
+        contentMd:
+          '面对“免费试试”“提神不成瘾”等诱导话术，处理原则是：\n\n1) 明确拒绝，不拖延、不试探。\n2) 立即离开高风险场景。\n3) 及时向家长、老师或警方求助。\n\n拒绝不需要解释太多，离开和求助最重要。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-24',
+        title: '法条摘要：家庭教育促进法中的监护沟通边界',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['家庭权益', '家庭教育促进法', '法条摘要']),
+        contentMd:
+          '家庭教育强调“尊重、沟通、引导”。遇到冲突时：\n\n- 先说事实和感受，不做人身攻击。\n- 对隐私和设备使用制定清晰规则并协商执行。\n- 遇到持续冲突可引入班主任、心理老师等第三方支持。\n\n规则清晰 + 沟通稳定，能减少家庭冲突升级。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-25',
+        title: '法条摘要：反电信网络诈骗法中的青少年防骗要点',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['网络法治', '反诈', '法条摘要']),
+        contentMd:
+          '高频诈骗情境包括“退款客服”“游戏代充”“兼职刷单”。防骗建议：\n\n- 不点陌生链接，不下载来路不明 App。\n- 不向私人账户转账，不共享验证码。\n- 一旦被骗，立即冻结账户并报警，完整保留证据。\n\n快核验、慢转账，是关键习惯。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-26',
+        title: '法条摘要：治安管理处罚法中的打架斗殴与造谣风险',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['校园安全', '网络法治', '法条摘要']),
+        contentMd:
+          '打架斗殴、散布谣言、恶意辱骂等行为都可能触及法律责任。建议：\n\n1) 发生冲突时先脱离现场，避免升级。\n2) 对网络言论保持克制，不“跟风起哄”。\n3) 通过正规渠道反映问题，不采取报复行为。\n\n情绪上头时，先停一停，避免一步错步步错。',
+        createdBy: teacher.id,
+      },
+    ],
+    skipDuplicates: true,
+  })
+
+  await prisma.resource.createMany({
+    data: [
+      {
+        id: 'res-case-01',
+        title: '案例：同学偷拍视频并二次传播，如何合法止损',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['校园安全', '网络法治', '肖像权']),
+        contentMd:
+          '情境：课间被偷拍后，视频被发到群里并配有侮辱文字。\n\n处理建议：\n1) 立即截图保留证据（账号、时间、链接、评论）。\n2) 向班主任和年级负责人报告，要求学校启动处置流程。\n3) 在平台内投诉侵权内容并申请删除。\n4) 必要时由监护人协助报警或走法律咨询渠道。\n\n关键点：先止损、再追责，避免私下冲突升级。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-02',
+        title: '案例：群聊造谣“考试作弊”，名誉受损怎么办',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['网络法治', '名誉权', '证据保全']),
+        contentMd:
+          '情境：班级群中有人散布“作弊”谣言，导致被孤立。\n\n处理建议：\n1) 保存聊天记录与传播路径。\n2) 明确要求发布者停止传播并公开澄清。\n3) 向老师、家长说明并申请学校介入。\n4) 情节严重时由监护人咨询法律渠道。\n\n关键点：不要以辱骂回击，优先走规范渠道。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-03',
+        title: '案例：游戏代充被骗后，如何提高追回概率',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['消费者权益', '反诈', '平台交易']),
+        contentMd:
+          '情境：在社交平台找“低价代充”，付款后被拉黑。\n\n处理建议：\n1) 保存转账记录、聊天记录、对方账号信息。\n2) 第一时间联系支付平台尝试止付。\n3) 向平台投诉并提交证据。\n4) 必要时报警，说明被骗经过与证据清单。\n\n关键点：陌生代充高风险，优先官方渠道充值。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-04',
+        title: '案例：直播打赏冲动消费，家长发现后怎么处置',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['消费者权益', '未成年人保护', '直播平台']),
+        contentMd:
+          '情境：未成年人在直播平台连续打赏，金额较大。\n\n处理建议：\n1) 立即冻结相关支付与账号权限，避免继续消费。\n2) 汇总订单记录、支付流水、账号实名信息。\n3) 通过平台未成年人消费通道提交申诉。\n4) 与家长共同完善支付与设备管理规则。\n\n关键点：证据完整度决定申诉效率。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-05',
+        title: '案例：电动车违规载人发生擦碰，现场如何自护',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['交通安全', '事故处置', '求助']),
+        contentMd:
+          '情境：放学路上电动车擦碰行人，现场情绪激动。\n\n处理建议：\n1) 先确认人员安全，必要时拨打 120。\n2) 报警并等待交警到场，不私下草率“私了”。\n3) 合理拍照记录位置、车辆、时间与环境。\n4) 及时通知家长到场协助处理。\n\n关键点：先安全后责任，避免二次风险。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-06',
+        title: '案例：同伴怂恿“试一口”，如何拒绝并脱离',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['禁毒教育', '风险识别', '求助链路']),
+        contentMd:
+          '情境：聚会中有人递来不明电子烟，声称“没事”。\n\n处理建议：\n1) 明确拒绝，不进行“尝试验证”。\n2) 立刻离开相关场景，避免继续被劝诱。\n3) 及时向家长、老师说明情况。\n4) 若存在违法线索，协助向警方反映。\n\n关键点：拒绝不需要解释，离开是第一动作。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-07',
+        title: '案例：兼职“先交培训费”，是否属于高风险招聘',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['消费者权益', '劳动权益', '防骗']),
+        contentMd:
+          '情境：兼职中介要求先交押金和培训费，承诺“日结高薪”。\n\n处理建议：\n1) 核实企业主体信息和正规招聘渠道。\n2) 对“先交钱后上岗”保持高度警惕。\n3) 保留聊天记录与收款账户信息。\n4) 发现异常及时中止并向家长老师反馈。\n\n关键点：正规兼职不应以押金作为前置条件。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-08',
+        title: '案例：二手交易被诱导“脱离平台支付”后被骗',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['消费者权益', '平台交易', '反诈']),
+        contentMd:
+          '情境：卖家以“省手续费”为由让你私下转账。\n\n处理建议：\n1) 坚持平台内沟通与交易，不点陌生付款链接。\n2) 一旦转账异常，立即联系支付平台止付。\n3) 汇总交易证据并提交平台投诉。\n4) 情节严重及时报警。\n\n关键点：脱离平台保护是交易诈骗高发节点。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-09',
+        title: '案例：家庭冲突中被公开隐私，如何建立边界',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['家庭权益', '隐私保护', '沟通规则']),
+        contentMd:
+          '情境：家庭争执后，个人聊天记录被公开给亲友。\n\n处理建议：\n1) 先平稳表达“事实-感受-边界”而非对抗。\n2) 共同制定隐私边界与设备使用规则。\n3) 需要时请班主任或心理老师协助沟通。\n4) 避免把家庭矛盾扩散到网络平台。\n\n关键点：边界需要被明确、被记录、被执行。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-10',
+        title: '案例：收到“退款客服”电话后险些泄露验证码',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['网络法治', '反诈', '个人信息保护']),
+        contentMd:
+          '情境：自称平台客服来电称“商品异常需退款”，诱导报验证码。\n\n处理建议：\n1) 立即挂断，通过官方 App 客服核验。\n2) 验证码、支付密码绝不告知任何人。\n3) 若已泄露，马上修改密码并冻结支付能力。\n4) 保留通话与短信记录，必要时报警。\n\n关键点：凡涉及验证码，默认高风险。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-11',
+        title: '案例：校园冲突后被要求“删证据”，该怎么做',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['校园安全', '证据保全', '纠纷处置']),
+        contentMd:
+          '情境：冲突后有人要求删除聊天和视频“别把事闹大”。\n\n处理建议：\n1) 先备份证据，不随意删除原始记录。\n2) 通过老师和校方正规渠道处理。\n3) 避免私下谈判导致事实失真。\n4) 保持理性表达，聚焦事实和诉求。\n\n关键点：证据完整是公平处置前提。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-12',
+        title: '案例：短视频平台恶意剪辑同学片段，如何维权',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['网络法治', '肖像权', '平台举报']),
+        contentMd:
+          '情境：同学日常视频被恶意剪辑后引发网暴。\n\n处理建议：\n1) 完整保存原视频、剪辑视频、评论区证据。\n2) 发起平台侵权投诉并申请下架。\n3) 联系学校协同家长开展保护措施。\n4) 对持续侵权行为保留追责证据。\n\n关键点：先止传播，再谈追责，效率最高。',
+        createdBy: teacher.id,
+      },
+    ],
+    skipDuplicates: true,
+  })
+
+  await prisma.resource.createMany({
+    data: [
+      {
+        id: 'res-tool-01',
+        title: '工具：国家法律法规数据库（法条权威查询）',
+        type: ResourceType.ARTICLE,
+        tagsJson: JSON.stringify(['权威工具', '法条查询', '国家数据库']),
+        contentUrl: 'https://flk.npc.gov.cn/',
+        contentMd:
+          '适用场景：需要核对法条原文、最新修订信息。\n使用建议：优先按法律全称检索，再查看最新公布日期与效力状态。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-tool-02',
+        title: '工具：中国法律服务网（12348）',
+        type: ResourceType.ARTICLE,
+        tagsJson: JSON.stringify(['权威工具', '法律咨询', '求助渠道']),
+        contentUrl: 'https://www.12348.gov.cn/pub/12348/index.html',
+        contentMd:
+          '适用场景：遇到校园冲突、网络侵权、消费纠纷等问题需要咨询。\n使用建议：先整理时间线和证据，再提交咨询问题，回复会更高效。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-tool-03',
+        title: '工具：全国 12315 平台（消费维权）',
+        type: ResourceType.ARTICLE,
+        tagsJson: JSON.stringify(['权威工具', '消费维权', '投诉举报']),
+        contentUrl: 'https://www.12315.cn/',
+        contentMd:
+          '适用场景：网购纠纷、虚假宣传、售后拖延等消费问题。\n使用建议：提交投诉前准备订单号、聊天记录、付款凭证和商品页面截图。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-tool-04',
+        title: '工具：12377 违法和不良信息举报中心',
+        type: ResourceType.ARTICLE,
+        tagsJson: JSON.stringify(['权威工具', '网络举报', '网暴治理']),
+        contentUrl: 'https://www.12377.cn/',
+        contentMd:
+          '适用场景：网络暴力、造谣侮辱、未成年人有害信息传播。\n使用建议：举报时附带链接、账号、发布时间和截图，便于平台快速处置。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-tool-05',
+        title: '工具：公安机关互联网违法犯罪举报网站',
+        type: ResourceType.ARTICLE,
+        tagsJson: JSON.stringify(['权威工具', '公安举报', '网络犯罪']),
+        contentUrl: 'https://cyberpolice.mps.gov.cn/wfjb/',
+        contentMd:
+          '适用场景：遭遇诈骗、敲诈勒索、个人信息被非法买卖等违法线索。\n使用建议：优先保留转账记录、聊天证据和对方账号信息后再提交。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-tool-06',
+        title: '工具：12321 网络不良与垃圾信息举报受理中心',
+        type: ResourceType.ARTICLE,
+        tagsJson: JSON.stringify(['权威工具', '骚扰信息', '诈骗短信']),
+        contentUrl: 'https://www.12321.cn/',
+        contentMd:
+          '适用场景：骚扰电话、垃圾短信、钓鱼链接、诈骗信息。\n使用建议：不要回拨可疑号码，先截图和记录时间，再进行举报。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-tool-07',
+        title: '工具：中国互联网联合辟谣平台',
+        type: ResourceType.ARTICLE,
+        tagsJson: JSON.stringify(['权威工具', '辟谣核验', '信息素养']),
+        contentUrl: 'https://www.piyao.org.cn/',
+        contentMd:
+          '适用场景：遇到“紧急通知”“健康谣言”“考试政策谣言”等不确定信息。\n使用建议：先核验再转发，避免二次传播造成风险。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-tool-08',
+        title: '工具：中国裁判文书网（以案学法）',
+        type: ResourceType.ARTICLE,
+        tagsJson: JSON.stringify(['权威工具', '案例检索', '司法公开']),
+        contentUrl: 'https://wenshu.court.gov.cn/',
+        contentMd:
+          '适用场景：想了解类似案件在司法实践中的处理思路。\n使用建议：可按关键词组合检索，如“校园欺凌 + 未成年人 + 赔偿”。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-tool-09',
+        title: '工具：中国庭审公开网（庭审学习）',
+        type: ResourceType.ARTICLE,
+        tagsJson: JSON.stringify(['权威工具', '庭审公开', '法治学习']),
+        contentUrl: 'https://tingshen.court.gov.cn/',
+        contentMd:
+          '适用场景：课堂延展学习，了解真实庭审流程与法庭秩序。\n使用建议：结合老师布置的主题观看，更容易形成完整认知。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-tool-10',
+        title: '工具：中国执行信息公开网（执行查询）',
+        type: ResourceType.ARTICLE,
+        tagsJson: JSON.stringify(['权威工具', '执行信息', '司法公开']),
+        contentUrl: 'https://zxgk.court.gov.cn/',
+        contentMd:
+          '适用场景：了解法院执行公开信息与司法执行流程。\n使用建议：用于学习司法程序时，优先关注公开说明和操作指引。',
+        createdBy: teacher.id,
+      },
+    ],
+    skipDuplicates: true,
+  })
+
+  await prisma.resource.createMany({
+    data: [
+      {
+        id: 'res-law-plus-01',
+        title: '法条摘要：校园冲突中的人身边界与处置流程',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['校园安全', '未成年人保护', '法条摘要']),
+        contentMd:
+          '常见场景：\n- 推搡、围堵、起外号、在群里煽动排挤。\n- 课间冲突被拍视频并传播。\n\n正确做法：\n1) 先脱离现场，避免再次冲突。\n2) 及时向班主任/德育老师报告，并说明时间线。\n3) 通过学校正式流程申请介入处置。\n\n不要这么做：\n- 不私下“约架”或纠集同学报复。\n- 不在社交平台继续对骂放大矛盾。\n\n证据清单：\n- 聊天记录截图（含时间和账号）。\n- 现场照片/视频原件。\n- 证人姓名与可联系信息。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-law-plus-02',
+        title: '法条摘要：网络辱骂与造谣的止损路径',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['网络法治', '名誉权', '法条摘要']),
+        contentMd:
+          '常见场景：\n- 群聊里被辱骂、被贴标签、被恶意剪辑。\n- 未经同意发布照片并配侮辱性文字。\n\n正确做法：\n1) 固定证据：截图、链接、账号、发布时间。\n2) 在平台发起举报并申请删除侵权内容。\n3) 向老师和家长同步情况，必要时报警或咨询 12348。\n\n不要这么做：\n- 不回怼“开盒”对方隐私。\n- 不删除原始证据后再维权。\n\n证据清单：\n- 侵权内容全页截图（含评论区）。\n- 原帖链接与发布账号主页。\n- 平台投诉记录回执。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-law-plus-03',
+        title: '法条摘要：个人信息保护与账号安全',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['网络法治', '个人信息保护', '法条摘要']),
+        contentMd:
+          '常见场景：\n- 被要求提供身份证照片、人脸、验证码。\n- 收到“客服退款”电话诱导屏幕共享。\n\n正确做法：\n1) 仅在官方渠道提交最小必要信息。\n2) 涉及验证码、支付密码一律拒绝透露。\n3) 发现异常立刻改密、冻结支付并核验官方客服。\n\n不要这么做：\n- 不点来源不明链接，不下载陌生安装包。\n- 不将账号密码保存在聊天工具中。\n\n证据清单：\n- 可疑号码来电记录。\n- 短信/私信截图。\n- 账号异常登录提醒截图。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-law-plus-04',
+        title: '法条摘要：网络消费纠纷与维权步骤',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['消费者权益', '维权', '法条摘要']),
+        contentMd:
+          '常见场景：\n- 网购商品与描述不符、售后拖延。\n- 二手交易被诱导脱离平台转账。\n\n正确做法：\n1) 先留证据，再与平台客服协商。\n2) 协商无果走平台投诉与 12315 渠道。\n3) 金额较大或争议复杂时，请家长协助走司法路径。\n\n不要这么做：\n- 不私下扫码付款给陌生账户。\n- 不只电话沟通不留文字记录。\n\n证据清单：\n- 订单详情页和商品页面截图。\n- 支付凭证、物流信息。\n- 与商家/客服聊天记录。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-law-plus-05',
+        title: '法条摘要：交通事故后的未成年人自护',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['交通安全', '道路交通安全法', '法条摘要']),
+        contentMd:
+          '常见场景：\n- 骑行与行人或机动车发生擦碰。\n- 乘坐无证、超员或酒驾车辆。\n\n正确做法：\n1) 先确认人身安全，必要时拨打 120。\n2) 及时报警并等待交警到场处理。\n3) 通知家长到场，避免未成年人单独协商责任。\n\n不要这么做：\n- 不擅自离开现场。\n- 不在情绪激动时签署不明责任承诺。\n\n证据清单：\n- 现场全景与车辆位置照片。\n- 车牌号、时间地点记录。\n- 医疗记录与报警回执。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-law-plus-06',
+        title: '法条摘要：禁毒风险识别与拒绝话术',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['禁毒教育', '禁毒法', '法条摘要']),
+        contentMd:
+          '常见场景：\n- 聚会中被劝“试一口”“提神不成瘾”。\n- 接触来源不明电子烟、饮料或糖果。\n\n正确做法：\n1) 明确拒绝并立刻离开高风险场景。\n2) 及时联系家长、老师说明情况。\n3) 发现疑似违法线索时由成年人协助报警。\n\n不要这么做：\n- 不因“面子”勉强尝试。\n- 不替他人保管可疑物品。\n\n证据清单：\n- 可疑人员和地点信息。\n- 聊天邀约记录。\n- 相关物品照片（确保自身安全前提下）。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-law-plus-07',
+        title: '法条摘要：家庭沟通中的隐私边界',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['家庭权益', '家庭教育促进法', '法条摘要']),
+        contentMd:
+          '常见场景：\n- 聊天记录被未经同意查看或转发。\n- 因成绩、社交发生高频争执。\n\n正确做法：\n1) 用“事实-感受-请求”表达边界需求。\n2) 与监护人协商设备使用和隐私规则。\n3) 持续冲突时引入班主任或心理老师协助。\n\n不要这么做：\n- 不公开家庭矛盾到网络平台。\n- 不在冲突中进行侮辱性表达。\n\n证据清单：\n- 关键沟通记录与协商文本。\n- 规则约定截图或书面记录。\n- 需要学校协助时的时间线记录。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-law-plus-08',
+        title: '法条摘要：电信网络诈骗快速处置',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['网络法治', '反诈', '法条摘要']),
+        contentMd:
+          '常见场景：\n- “退款客服”“兼职刷单”“低价代充”诱导转账。\n- 通过短信链接或屏幕共享骗取验证码。\n\n正确做法：\n1) 立即停止操作并断开可疑通话/链接。\n2) 第一时间改密、冻结支付并联系官方平台。\n3) 保留证据后报警，必要时同步 12321/12377 举报。\n\n不要这么做：\n- 不向私人账户转账。\n- 不在陌生指引下共享屏幕或远程控制。\n\n证据清单：\n- 转账记录与对方账户信息。\n- 通话录音/短信截图。\n- 平台工单和报警回执。',
+        createdBy: teacher.id,
+      },
+    ],
+    skipDuplicates: true,
+  })
+
+  await prisma.resource.createMany({
+    data: [
+      {
+        id: 'res-case-plus-01',
+        title: '案例：被冒用头像和昵称后如何快速止损',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['网络法治', '名誉权', '个人信息保护']),
+        contentMd:
+          '情境：\n有人冒用你的头像和昵称在群里发言，造成同学误解，甚至引发嘲讽。\n\n处置建议：\n1) 先固定证据，保存冒用账号主页、发言记录和传播截图。\n2) 在平台发起冒用身份投诉并申请封禁或更正。\n3) 向班主任说明情况，及时澄清，避免误会继续扩大。\n4) 情节严重时由家长协助报警或咨询 12348。\n\n不要这么做：\n- 不使用小号对骂或“反向冒充”报复。\n- 不在没有证据时公开指认具体同学。\n\n证据清单：\n- 冒用账号主页截图。\n- 关键聊天记录和发布时间。\n- 平台投诉回执或工单号。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-plus-02',
+        title: '案例：作业群被恶意刷屏和辱骂的应对',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['校园安全', '网络法治', '证据保全']),
+        contentMd:
+          '情境：\n班级作业群有人连续刷屏、辱骂同学，影响正常学习秩序。\n\n处置建议：\n1) 第一时间截图保留关键页面和账号信息。\n2) 联系群管理人处理，必要时暂时开启群管理限制。\n3) 向老师反馈并由学校开展纪律和法治教育处置。\n4) 对持续侵害行为走平台举报和学校正式流程。\n\n不要这么做：\n- 不“群起围攻”扩大冲突。\n- 不泄露对方个人隐私进行报复。\n\n证据清单：\n- 刷屏时段完整截图。\n- 涉事账号 ID 和群名。\n- 群管理处置记录。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-plus-03',
+        title: '案例：游戏账号借给同学后被转卖',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['消费者权益', '网络法治', '账号安全']),
+        contentMd:
+          '情境：\n把游戏账号借给同学后，账号被改绑并在二手平台转卖。\n\n处置建议：\n1) 立刻通过官方渠道发起账号找回并冻结异常操作。\n2) 保留借号聊天记录、交易截图和对方账号信息。\n3) 向平台客服提交完整证据链，申请介入处理。\n4) 金额较大或拒不配合时，家长协助报警处理。\n\n不要这么做：\n- 不私下索要“赎号费”。\n- 不用非法手段找回账号。\n\n证据清单：\n- 借号聊天记录。\n- 改绑通知短信或邮件。\n- 二手平台链接与交易截图。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-plus-04',
+        title: '案例：线下冲突被录制并剪辑传播',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['校园安全', '肖像权', '平台举报']),
+        contentMd:
+          '情境：\n课后冲突视频被恶意剪辑后上传，评论区出现攻击性言论。\n\n处置建议：\n1) 保存原视频与剪辑视频对比证据。\n2) 通过平台侵权入口申请下架并限制传播。\n3) 向学校报告，由老师组织双方在规范场景沟通。\n4) 对持续侵权行为保留证据并由监护人追责。\n\n不要这么做：\n- 不在评论区继续互骂。\n- 不自行发布对方隐私“反制”。\n\n证据清单：\n- 原视频与剪辑视频。\n- 链接、发布时间和评论区截图。\n- 平台处理结果记录。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-plus-05',
+        title: '案例：兼职群里被诱导先交押金',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['消费者权益', '劳动权益', '防骗']),
+        contentMd:
+          '情境：\n兼职群发布高薪日结信息，要求先交押金和资料审核费。\n\n处置建议：\n1) 核实招聘主体信息，优先选择正规平台岗位。\n2) 对先交费再上岗的要求直接拒绝。\n3) 保存聊天记录和收款账户信息用于举报。\n4) 向老师和家长同步风险，必要时报警。\n\n不要这么做：\n- 不因“名额紧张”仓促转账。\n- 不把个人证件原件随意发给陌生人。\n\n证据清单：\n- 招聘文案截图。\n- 转账记录与收款账户。\n- 对方联系方式和群信息。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-plus-06',
+        title: '案例：二手交易到货后发现货不对板',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['消费者权益', '平台交易', '维权']),
+        contentMd:
+          '情境：\n收到商品后发现与描述不符，卖家拒绝退款并拉黑。\n\n处置建议：\n1) 立即拍照录像留存开箱与商品状态。\n2) 通过平台争议入口提交证据申请仲裁。\n3) 同步订单、聊天、付款记录形成完整证据链。\n4) 协商失败后走平台投诉和 12315 渠道。\n\n不要这么做：\n- 不脱离平台私下退款。\n- 不先确认收货再维权。\n\n证据清单：\n- 开箱视频和商品细节图。\n- 商品描述页截图。\n- 订单与聊天记录。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-plus-07',
+        title: '案例：校外活动中被强行劝酒',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['校园安全', '未成年人保护', '人身安全']),
+        contentMd:
+          '情境：\n在聚餐或生日会中被起哄劝酒，拒绝后遭言语施压。\n\n处置建议：\n1) 明确拒绝并远离高风险座位或场景。\n2) 及时联系同伴、家长或老师寻求支持。\n3) 出现人身威胁时立即报警。\n4) 活动结束后向学校反馈风险点，防止再次发生。\n\n不要这么做：\n- 不为“合群”勉强饮酒。\n- 不独自留在让你不安全的环境。\n\n证据清单：\n- 活动时间地点与参与人员信息。\n- 关键聊天邀约记录。\n- 现场可获取的照片或录音。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-case-plus-08',
+        title: '案例：收到陌生链接后账号被盗',
+        type: ResourceType.CASE,
+        tagsJson: JSON.stringify(['网络法治', '反诈', '账号安全']),
+        contentMd:
+          '情境：\n点击陌生链接并输入账号密码后，社交账号被异地登录和冒用。\n\n处置建议：\n1) 立刻改密并开启二次验证，踢下线异常设备。\n2) 通知联系人警惕异常消息，避免二次受害。\n3) 向平台提交被盗申诉并上传证据。\n4) 涉及财产损失时及时报警并保留转账流水。\n\n不要这么做：\n- 不继续在同一设备保存明文密码。\n- 不忽视异地登录提醒。\n\n证据清单：\n- 异地登录提醒截图。\n- 链接来源和聊天记录。\n- 账号恢复和平台工单记录。',
+        createdBy: teacher.id,
+      },
+    ],
+    skipDuplicates: true,
+  })
+
   const targetLevel = allLevels.find((l) => l.id === 'level-campus-1')
   if (targetLevel) {
     await prisma.assignment.upsert({

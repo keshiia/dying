@@ -9,11 +9,11 @@ const router = Router()
 router.use(requireAuth)
 router.use(requireRole('STUDENT'))
 
-function difficultyByOrder(orderNo: number): '鍩虹' | '杩涢樁' | '鎸戞垬' | '瀹炴垬' {
-  if (orderNo <= 1) return '鍩虹'
-  if (orderNo === 2) return '杩涢樁'
-  if (orderNo === 3) return '鎸戞垬'
-  return '瀹炴垬'
+function difficultyByOrder(orderNo: number): '基础' | '进阶' | '挑战' | '实战' {
+  if (orderNo <= 1) return '基础'
+  if (orderNo === 2) return '进阶'
+  if (orderNo === 3) return '挑战'
+  return '实战'
 }
 
 function lawRefsForLevel(levelId: string): string[] {
@@ -76,6 +76,52 @@ async function resolveUnlockedLevel(studentId: string, levelId: string): Promise
   if (targetStatus === 'COMPLETED') return { level, lockedByLevel: null }
   if (firstIncomplete.id === level.id) return { level, lockedByLevel: null }
   return { level, lockedByLevel: firstIncomplete }
+}
+
+function shanghaiDayKey(date: Date): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(date)
+}
+
+function shiftDayKey(dayKey: string, days: number): string {
+  const [year, month, day] = dayKey.split('-').map(Number)
+  const d = new Date(Date.UTC(year, month - 1, day + days))
+  return d.toISOString().slice(0, 10)
+}
+
+function computeLearningStreakDays(attemptTimes: Date[], now: Date = new Date()): number {
+  if (attemptTimes.length === 0) return 0
+
+  const learnedDays = new Set(attemptTimes.map((d) => shanghaiDayKey(d)))
+  const todayKey = shanghaiDayKey(now)
+  const yesterdayKey = shiftDayKey(todayKey, -1)
+
+  let cursor = todayKey
+  if (!learnedDays.has(cursor)) {
+    if (!learnedDays.has(yesterdayKey)) return 0
+    cursor = yesterdayKey
+  }
+
+  let streak = 0
+  while (learnedDays.has(cursor)) {
+    streak++
+    cursor = shiftDayKey(cursor, -1)
+  }
+  return streak
+}
+
+function buildLast7Trend(attemptTimes: Date[], now: Date = new Date()): Array<{ day: string; count: number }> {
+  const todayKey = shanghaiDayKey(now)
+  const dayKeys = Array.from({ length: 7 }, (_, idx) => shiftDayKey(todayKey, -6 + idx))
+  const dayKeySet = new Set(dayKeys)
+  const countByDay = new Map<string, number>()
+
+  for (const time of attemptTimes) {
+    const key = shanghaiDayKey(time)
+    if (!dayKeySet.has(key)) continue
+    countByDay.set(key, (countByDay.get(key) ?? 0) + 1)
+  }
+
+  return dayKeys.map((key) => ({ day: key.slice(5), count: countByDay.get(key) ?? 0 }))
 }
 router.get('/units', async (req: Request, res: Response) => {
   const units = await prisma.learningUnit.findMany({
@@ -282,11 +328,22 @@ router.get('/summary', async (req: Request, res: Response) => {
     select: { xp: true, level: true, nickname: true, grade: true },
   })
 
-  const [attemptCount, avgScoreAgg, completedCount] = await Promise.all([
+  const [attemptCount, avgScoreAgg, completedCount, recentAttempts] = await Promise.all([
     prisma.attempt.count({ where: { studentId: req.user!.id } }),
     prisma.attempt.aggregate({ where: { studentId: req.user!.id }, _avg: { score: true } }),
     prisma.userProgress.count({ where: { studentId: req.user!.id, status: 'COMPLETED' } }),
+    prisma.attempt.findMany({
+      where: { studentId: req.user!.id },
+      orderBy: { createdAt: 'desc' },
+      take: 180,
+      select: { createdAt: true },
+    }),
   ])
+  const attemptTimes = recentAttempts.map((a) => a.createdAt)
+  const streakDays = computeLearningStreakDays(attemptTimes)
+  const last7Trend = buildLast7Trend(attemptTimes)
+  const weeklyActiveDays = last7Trend.filter((item) => item.count > 0).length
+  const weeklyGoalTarget = 5
 
   res.json({
     success: true,
@@ -295,6 +352,10 @@ router.get('/summary', async (req: Request, res: Response) => {
       attemptCount,
       avgScore: Math.round(avgScoreAgg._avg.score ?? 0),
       completedLevels: completedCount,
+      streakDays,
+      weeklyActiveDays,
+      weeklyGoalTarget,
+      last7Trend,
     },
   })
 })

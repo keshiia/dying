@@ -125,6 +125,16 @@ h6 {
         opacity: 1;
     }
 }
+@keyframes chip-fade-up {
+    from {
+        transform: translateY(4px);
+        opacity: 0.45;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
 @keyframes pop {
     0% {
         transform: scale(1);
@@ -181,6 +191,9 @@ h6 {
 }
 .animate-slide-up {
     animation: slide-up 0.3s ease both;
+}
+.animate-chip-fade-up {
+    animation: chip-fade-up 0.16s ease-out both;
 }
 .animate-pop {
     animation: pop 0.3s ease both;

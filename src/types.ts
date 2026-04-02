@@ -47,6 +47,7 @@ export type ResourceListItem = {
   title: string
   type: ResourceType
   tags: string[]
+  excerpt?: string
   contentUrl: string | null
   createdAt: string
 }

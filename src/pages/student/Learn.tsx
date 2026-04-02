@@ -1,12 +1,16 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import {
+  BookOpen,
+  CircleHelp,
   CheckCircle2,
   ChevronRight,
   Flame,
+  RotateCcw,
   Scale,
   Trophy,
   Zap,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { clsx } from "clsx";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -132,11 +136,13 @@ const unitLearningGuide: Record<string, { goal: string; law: string }> = {
 };
 
 export default function Learn() {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
 
   const [units, setUnits] = useState<LearningUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [streakDays, setStreakDays] = useState(0);
   const [filter, setFilter] = useState<string>("全部");
   const [showPendingOnly, setShowPendingOnly] = useState(true);
   const [openLevel, setOpenLevel] = useState<null | {
@@ -149,10 +155,20 @@ export default function Learn() {
     setLoading(true);
     setError(null);
     try {
-      const u = await apiFetch<{ success: true; units: LearningUnit[] }>(
-        "/api/student/units",
-      );
+      const [u, summary] = await Promise.all([
+        apiFetch<{ success: true; units: LearningUnit[] }>("/api/student/units"),
+        apiFetch<{
+          success: true;
+          stats: {
+            attemptCount: number;
+            avgScore: number;
+            completedLevels: number;
+            streakDays: number;
+          };
+        }>("/api/student/summary"),
+      ]);
       setUnits(u.units);
+      setStreakDays(summary.stats.streakDays ?? 0);
     } catch (e: unknown) {
       setError(errorMessage(e));
     } finally {
@@ -262,7 +278,7 @@ export default function Learn() {
                 </div>
                 <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
                   <Flame className="h-3.5 w-3.5 text-rose-500" />
-                  连续学习 3 天
+                  {streakDays > 0 ? `连续学习 ${streakDays} 天` : "今日待打卡"}
                 </div>
               </div>
             )}
@@ -345,6 +361,78 @@ export default function Learn() {
             <ChevronRight className="h-4 w-4" />
           </div>
         </button>
+      )}
+
+      {!loading && !error && !nextLevel && (
+        <Card className="p-5 border-sky-100 bg-gradient-to-r from-sky-50 to-blue-50">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-base font-extrabold text-zinc-900">
+                已完成当前全部关卡，太棒了
+              </div>
+              <div className="mt-1 text-sm text-zinc-600">
+                下一步建议做一次错题复盘，或去资源中心扩展法条知识。
+              </div>
+            </div>
+            <Tag color="blue">全通关</Tag>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate("/app/tasks")}
+            >
+              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+              去错题复盘
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate("/app/resources")}
+            >
+              <BookOpen className="mr-1.5 h-3.5 w-3.5" />
+              去资源中心
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {!loading && !error && (
+        <div className="grid gap-2 sm:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => navigate("/app/tasks")}
+            className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors hover:bg-zinc-50"
+          >
+            <div className="flex items-center gap-2 text-sm font-bold text-zinc-900">
+              <CircleHelp className="h-4 w-4 text-slate-600" />
+              今日1题
+            </div>
+            <div className="mt-1 text-xs text-zinc-500">30 秒快速热身</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/app/tasks")}
+            className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors hover:bg-zinc-50"
+          >
+            <div className="flex items-center gap-2 text-sm font-bold text-zinc-900">
+              <RotateCcw className="h-4 w-4 text-slate-600" />
+              错题复盘
+            </div>
+            <div className="mt-1 text-xs text-zinc-500">查漏补缺更高效</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/app/resources")}
+            className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors hover:bg-zinc-50"
+          >
+            <div className="flex items-center gap-2 text-sm font-bold text-zinc-900">
+              <BookOpen className="h-4 w-4 text-slate-600" />
+              法条速查
+            </div>
+            <div className="mt-1 text-xs text-zinc-500">按主题快速查依据</div>
+          </button>
+        </div>
       )}
 
       {!loading && !error && categories.length > 1 && (
@@ -448,8 +536,28 @@ export default function Learn() {
       )}
 
       {!loading && !error && displayUnits.length === 0 && (
-        <Card className="p-5 text-sm text-zinc-600">
-          当前筛选下暂无关卡，试试切换分类或关闭“只看未完成”。
+        <Card className="p-5">
+          <div className="text-sm text-zinc-600">
+            当前筛选下暂无关卡，试试切换分类或关闭“只看未完成”。
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {showPendingOnly && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowPendingOnly(false)}
+              >
+                查看全部关卡
+              </Button>
+            )}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate("/app/tasks")}
+            >
+              去错题复盘
+            </Button>
+          </div>
         </Card>
       )}
 
