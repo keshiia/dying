@@ -436,7 +436,7 @@ export default function Learn() {
       )}
 
       {!loading && !error && categories.length > 1 && (
-        <div className="sticky top-2 z-20">
+        <div className="sticky top-[68px] lg:top-2 z-20">
           <div className="rounded-2xl border border-zinc-100/80 bg-white/80 backdrop-blur-sm px-3 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
             <div
               className="flex items-center gap-2 overflow-x-auto pb-1"

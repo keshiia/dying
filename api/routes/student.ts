@@ -360,6 +360,58 @@ router.get('/summary', async (req: Request, res: Response) => {
   })
 })
 
+router.get('/review-levels', async (req: Request, res: Response) => {
+  const recentAttempts = await prisma.attempt.findMany({
+    where: { studentId: req.user!.id },
+    orderBy: { createdAt: 'desc' },
+    take: 240,
+    select: {
+      levelId: true,
+      score: true,
+      createdAt: true,
+      level: {
+        select: {
+          id: true,
+          title: true,
+          xpReward: true,
+          isActive: true,
+          unit: {
+            select: {
+              title: true,
+              isActive: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  const latestByLevel = new Map<string, (typeof recentAttempts)[number]>()
+  for (const attempt of recentAttempts) {
+    if (latestByLevel.has(attempt.levelId)) continue
+    if (!attempt.level.isActive || !attempt.level.unit.isActive) continue
+    latestByLevel.set(attempt.levelId, attempt)
+  }
+
+  const reviewLevels = Array.from(latestByLevel.values())
+    .filter((attempt) => attempt.score < 100)
+    .sort((a, b) => {
+      if (a.score === b.score) return b.createdAt.getTime() - a.createdAt.getTime()
+      return a.score - b.score
+    })
+    .slice(0, 3)
+    .map((attempt) => ({
+      levelId: attempt.level.id,
+      title: attempt.level.title,
+      unitTitle: attempt.level.unit.title,
+      xpReward: attempt.level.xpReward,
+      latestScore: attempt.score,
+      attemptedAt: attempt.createdAt,
+    }))
+
+  res.json({ success: true, reviewLevels })
+})
+
 const JoinClassSchema = z.object({ joinCode: z.string().min(4) })
 
 router.post('/join-class', async (req: Request, res: Response) => {

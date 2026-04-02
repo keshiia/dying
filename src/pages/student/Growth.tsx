@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
@@ -10,6 +10,7 @@ import {
   Flame,
   ShieldCheck,
   Sparkles,
+  Target,
   TrendingUp,
 } from 'lucide-react'
 import Card from '@/components/ui/Card'
@@ -35,6 +36,7 @@ type GrowthStats = {
 }
 
 type TodayActionStatus = 'START' | 'SPRINT' | 'DONE'
+type BadgeFilter = 'ALL' | 'UNLOCKED' | 'LOCKED' | 'SOON'
 
 type BadgeModel = {
   id: string
@@ -44,6 +46,9 @@ type BadgeModel = {
   target: number
   unit: string
   icon: typeof Award
+  reward: string
+  actionLabel: string
+  actionTo: string
   unlocked: boolean
   progress: number
   remaining: number
@@ -83,6 +88,11 @@ export default function Growth() {
   const { user } = useAuthStore()
   const [stats, setStats] = useState<GrowthStats | null>(null)
   const [showAllBadges, setShowAllBadges] = useState(false)
+  const [showAllUpcomingSummary, setShowAllUpcomingSummary] = useState(false)
+  const [badgeFilter, setBadgeFilter] = useState<BadgeFilter>('ALL')
+  const [celebratingBadgeId, setCelebratingBadgeId] = useState<string | null>(null)
+  const initializedUnlockedRef = useRef(false)
+  const prevUnlockedIdsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     ;(async () => {
@@ -113,6 +123,9 @@ export default function Growth() {
         target: 1,
         unit: '次',
         icon: Award,
+        reward: '奖励：+20 XP',
+        actionLabel: '去闯关',
+        actionTo: '/app/learn',
       },
       {
         id: 'first-level',
@@ -122,15 +135,33 @@ export default function Growth() {
         target: 1,
         unit: '关',
         icon: ShieldCheck,
+        reward: '奖励：+20 XP',
+        actionLabel: '去闯关',
+        actionTo: '/app/learn',
       },
       {
-        id: 'streak',
+        id: 'streak-3',
         title: '持续进步',
         desc: '连续学习3天',
         current: streakDays,
         target: 3,
         unit: '天',
         icon: Flame,
+        reward: '奖励：+30 XP',
+        actionLabel: '去打卡',
+        actionTo: '/app/tasks',
+      },
+      {
+        id: 'streak-7',
+        title: '连学达人',
+        desc: '连续学习7天',
+        current: streakDays,
+        target: 7,
+        unit: '天',
+        icon: Flame,
+        reward: '奖励：+50 XP + 连学称号',
+        actionLabel: '去打卡',
+        actionTo: '/app/tasks',
       },
       {
         id: 'accuracy',
@@ -140,6 +171,9 @@ export default function Growth() {
         target: 85,
         unit: '分',
         icon: Sparkles,
+        reward: '奖励：+40 XP',
+        actionLabel: '去复盘',
+        actionTo: '/app/tasks',
       },
       {
         id: 'ten-levels',
@@ -149,6 +183,45 @@ export default function Growth() {
         target: 10,
         unit: '关',
         icon: Crown,
+        reward: '奖励：+60 XP',
+        actionLabel: '去闯关',
+        actionTo: '/app/learn',
+      },
+      {
+        id: 'twenty-attempts',
+        title: '练习坚持者',
+        desc: '累计完成20次闯关',
+        current: attemptCount,
+        target: 20,
+        unit: '次',
+        icon: Target,
+        reward: '奖励：+50 XP',
+        actionLabel: '去闯关',
+        actionTo: '/app/learn',
+      },
+      {
+        id: 'weekly-goal',
+        title: '周目标达成',
+        desc: `本周活跃达到${weeklyGoalTarget}天`,
+        current: weeklyActiveDays,
+        target: weeklyGoalTarget,
+        unit: '天',
+        icon: CalendarCheck2,
+        reward: '奖励：+40 XP',
+        actionLabel: '去打卡',
+        actionTo: '/app/tasks',
+      },
+      {
+        id: 'fifteen-levels',
+        title: '进阶法治力',
+        desc: '累计完成15关',
+        current: completedLevels,
+        target: 15,
+        unit: '关',
+        icon: Crown,
+        reward: '奖励：+80 XP + 进阶称号',
+        actionLabel: '去闯关',
+        actionTo: '/app/learn',
       },
     ]
 
@@ -163,20 +236,37 @@ export default function Growth() {
         remaining,
       }
     })
-  }, [attemptCount, avgScore, completedLevels, streakDays])
+  }, [attemptCount, avgScore, completedLevels, streakDays, weeklyActiveDays, weeklyGoalTarget])
 
   const unlockedBadges = badgeList.filter((item) => item.unlocked)
   const badgeCompletionPct = toPct(unlockedBadges.length, badgeList.length)
-  const badgePriorityList = useMemo(() => {
+  const badgePriorityList = useMemo<BadgeModel[]>(() => {
     return [...badgeList].sort((a, b) => {
       if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1
+      if (!a.unlocked && !b.unlocked && a.remaining !== b.remaining) return a.remaining - b.remaining
       if (a.progress !== b.progress) return b.progress - a.progress
-      return a.remaining - b.remaining
+      return a.title.localeCompare(b.title, 'zh-CN')
     })
   }, [badgeList])
-  const featuredBadges = badgePriorityList.slice(0, 3)
-  const restBadges = badgePriorityList.slice(3)
-  const visibleBadges = showAllBadges ? badgePriorityList : featuredBadges
+  const lockedBadges = badgePriorityList.filter((badge) => !badge.unlocked)
+  const nextBadge = lockedBadges[0] ?? null
+  const upcomingBadges = lockedBadges.slice(0, 2)
+  const summaryUpcomingBadges = showAllUpcomingSummary ? upcomingBadges : upcomingBadges.slice(0, 1)
+  const upcomingBadgeIds = useMemo(() => new Set(upcomingBadges.map((item) => item.id)), [upcomingBadges])
+
+  const filteredBadges = useMemo(() => {
+    if (badgeFilter === 'UNLOCKED') return badgePriorityList.filter((badge) => badge.unlocked)
+    if (badgeFilter === 'LOCKED') return badgePriorityList.filter((badge) => !badge.unlocked)
+    if (badgeFilter === 'SOON') return upcomingBadges
+    return badgePriorityList
+  }, [badgeFilter, badgePriorityList, upcomingBadges])
+
+  const defaultBadgeVisibleCount = 5
+  const canExpandAll = badgeFilter === 'ALL' && filteredBadges.length > defaultBadgeVisibleCount
+  const visibleBadges =
+    badgeFilter === 'ALL' && !showAllBadges
+      ? filteredBadges.slice(0, defaultBadgeVisibleCount)
+      : filteredBadges
 
   const nextStep = useMemo(() => {
     if (!stats) {
@@ -271,6 +361,37 @@ export default function Growth() {
 
   const todayStatus = todayStatusUI[todayAction.status]
 
+  useEffect(() => {
+    setShowAllBadges(false)
+  }, [badgeFilter])
+
+  useEffect(() => {
+    setShowAllUpcomingSummary(false)
+  }, [lockedBadges.length])
+
+  useEffect(() => {
+    const currentUnlockedIds = new Set(badgeList.filter((badge) => badge.unlocked).map((badge) => badge.id))
+
+    if (!initializedUnlockedRef.current) {
+      prevUnlockedIdsRef.current = currentUnlockedIds
+      initializedUnlockedRef.current = true
+      return
+    }
+
+    const newlyUnlockedIds = Array.from(currentUnlockedIds).filter((id) => !prevUnlockedIdsRef.current.has(id))
+    prevUnlockedIdsRef.current = currentUnlockedIds
+
+    if (newlyUnlockedIds.length === 0) return
+    const latestUnlockedId = newlyUnlockedIds[0]
+    setCelebratingBadgeId(latestUnlockedId)
+
+    const timer = window.setTimeout(() => {
+      setCelebratingBadgeId((prev) => (prev === latestUnlockedId ? null : prev))
+    }, 1200)
+
+    return () => window.clearTimeout(timer)
+  }, [badgeList])
+
   return (
     <div className="grid gap-4">
       <Card className="p-5">
@@ -278,10 +399,10 @@ export default function Growth() {
         <div className="mt-1 text-sm text-zinc-600">你的每一次学习和闯关都会转化为XP与等级。</div>
 
         <div className="mt-4 grid grid-cols-12 gap-4">
-          <div className="col-span-12 rounded-2xl border border-zinc-100 bg-zinc-50 p-4 md:col-span-7">
-            <div className="flex items-center justify-between">
+          <div className="col-span-12 rounded-2xl border border-zinc-100 bg-zinc-50 p-4 md:col-span-8">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-sm font-semibold text-zinc-900">等级</div>
+                <div className="text-sm font-semibold text-zinc-900">本周成长总览</div>
                 <div className="mt-1 text-3xl font-extrabold text-zinc-900">Lv {user?.level ?? 1}</div>
               </div>
               <div className="text-right">
@@ -292,18 +413,30 @@ export default function Growth() {
 
             <div className="mt-3">
               <ProgressBar value={pct} />
-              <div className="mt-2 text-xs text-zinc-500">再获得 {100 - pct} XP 升级</div>
+              <div className="mt-1 text-xs text-zinc-500">
+                升级还差 <span className="font-semibold text-sky-700">{100 - pct} XP</span>
+              </div>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Tag color="blue">连续学习 {streakDays} 天</Tag>
-              <Tag color="zinc">已完成 {weeklyActiveDays}/{weeklyGoalTarget} 次</Tag>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700">
+                连续学习 <span className="text-zinc-900">{streakDays}</span> 天
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700">
+                本周活跃 <span className="text-zinc-900">{weeklyActiveDays}</span>/{weeklyGoalTarget} 次
+              </div>
             </div>
 
-            <div className="mt-2">
+            <div className="mt-3">
               <ProgressBar value={weeklyPct} size="sm" color="blue" />
               <div className="mt-1 text-xs text-zinc-500">
-                {weeklyRemaining > 0 ? `还差 ${weeklyRemaining} 次，达成本周目标` : '已完成本周目标，继续保持'}
+                {weeklyRemaining > 0 ? (
+                  <>
+                    本周目标还差 <span className="font-semibold text-sky-700">{weeklyRemaining}</span> 次
+                  </>
+                ) : (
+                  '本周目标已达成，继续保持节奏'
+                )}
               </div>
             </div>
 
@@ -319,98 +452,236 @@ export default function Growth() {
               </div>
               <div className="mt-1 text-sm font-semibold text-zinc-900">{todayAction.title}</div>
               <div className="mt-1 text-xs text-zinc-500">{todayAction.desc}</div>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex items-center gap-3">
                 <Button size="sm" onClick={() => navigate(todayAction.primaryTo)}>
                   {todayAction.primaryLabel}
                 </Button>
-                <Button variant="secondary" size="sm" onClick={() => navigate(todayAction.secondaryTo)}>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline"
+                  onClick={() => navigate(todayAction.secondaryTo)}
+                >
                   {todayAction.secondaryLabel}
-                </Button>
+                </button>
               </div>
             </div>
           </div>
 
-          <div className="col-span-12 rounded-2xl border border-zinc-100 bg-white p-4 md:col-span-5">
+          <div className="col-span-12 rounded-2xl border border-zinc-100 bg-white p-4 md:col-span-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-zinc-900">徽章墙</div>
-                <div className="mt-0.5 text-xs text-zinc-500">已完成 {unlockedBadges.length}/{badgeList.length} 枚</div>
+                <div className="text-sm font-semibold text-zinc-900">徽章速览</div>
+                <div className="mt-0.5 text-xs text-zinc-500">已解锁 {unlockedBadges.length}/{badgeList.length} 枚</div>
               </div>
-              <div className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700">
-                完成度 {badgeCompletionPct}%
-              </div>
+              <Tag color="blue">完成度 {badgeCompletionPct}%</Tag>
             </div>
 
             <div className="mt-3">
               <ProgressBar value={badgeCompletionPct} size="sm" color="blue" />
             </div>
 
-            <div className="mt-3 grid gap-2">
-              {visibleBadges.length === 0 && (
-                <div className="rounded-2xl border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
-                  还没有点亮徽章，先完成一次闯关就能获得第一枚。
-                </div>
-              )}
-
-              {visibleBadges.map((badge) => {
-                const Icon = badge.icon
-                return (
-                  <div
-                    key={badge.id}
-                    className={
-                      badge.unlocked
-                        ? 'rounded-2xl border border-sky-100 bg-gradient-to-r from-sky-50 to-blue-50 px-3 py-2'
-                        : 'rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2'
-                    }
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={
-                          badge.unlocked
-                            ? 'grid h-7 w-7 place-items-center rounded-xl bg-white text-slate-700 ring-1 ring-sky-100'
-                            : 'grid h-7 w-7 place-items-center rounded-xl bg-white text-zinc-500 ring-1 ring-zinc-200'
-                        }
-                      >
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="text-xs font-extrabold text-zinc-900">{badge.title}</div>
-                        <div className="text-[11px] text-zinc-500">
-                          已完成 {Math.min(badge.current, badge.target)}/{badge.target}
-                          {badge.unit}
-                          {!badge.unlocked && `，还差 ${badge.remaining}${badge.unit}`}
-                        </div>
-                      </div>
-                      {badge.unlocked ? (
-                        <Tag className="ml-auto" color="blue">
-                          已解锁
-                        </Tag>
-                      ) : (
-                        <Tag className="ml-auto" color="zinc">
-                          进行中
-                        </Tag>
-                      )}
-                    </div>
-                    <div className="mt-2">
-                      <ProgressBar value={badge.progress} size="sm" color="blue" />
+            {nextBadge ? (
+              <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-emerald-800">下一枚可得</div>
+                    <div className="mt-0.5 text-sm font-semibold text-zinc-900">{nextBadge.title}</div>
+                    <div className="mt-0.5 text-[11px] text-zinc-600">
+                      还差 <span className="font-semibold text-emerald-800">{nextBadge.remaining}</span>
+                      {nextBadge.unit} · {nextBadge.desc}
                     </div>
                   </div>
-                )
-              })}
-            </div>
+                  <Tag color="green">进度 {nextBadge.progress}%</Tag>
+                </div>
+                <div className="mt-2">
+                  <ProgressBar value={nextBadge.progress} size="sm" color="green" />
+                </div>
+                <div className="mt-2">
+                  <Button size="sm" variant="secondary" onClick={() => navigate(nextBadge.actionTo)}>
+                    {nextBadge.actionLabel}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+                全部徽章已解锁，继续保持当前学习节奏。
+              </div>
+            )}
 
-            {restBadges.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowAllBadges((prev) => !prev)}
-                className="mt-3 inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100"
-              >
-                {showAllBadges ? '收起徽章' : `查看全部徽章（${badgeList.length}）`}
-                {showAllBadges ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              </button>
+            {upcomingBadges.length > 0 && (
+              <div className="mt-3 rounded-2xl border border-orange-100 bg-orange-50/70 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs font-bold text-orange-800">即将解锁</div>
+                  {upcomingBadges.length > 1 && (
+                    <button
+                      type="button"
+                      className="text-[11px] font-semibold text-orange-700 hover:text-orange-900"
+                      onClick={() => setShowAllUpcomingSummary((prev) => !prev)}
+                    >
+                      {showAllUpcomingSummary ? '收起' : '查看更多'}
+                    </button>
+                  )}
+                </div>
+                <div className="mt-2 grid gap-2">
+                  {summaryUpcomingBadges.map((badge) => (
+                    <div key={badge.id} className="rounded-xl border border-orange-200 bg-white px-3 py-2">
+                      <div className="text-xs font-semibold text-zinc-900">{badge.title}</div>
+                      <div className="text-[11px] text-zinc-500">
+                        还差 <span className="font-semibold text-orange-700">{badge.remaining}</span>
+                        {badge.unit} · {badge.desc}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </div>
+      </Card>
+
+      <Card className="p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-sm font-extrabold text-zinc-900">徽章详情</div>
+            <div className="mt-0.5 text-xs text-zinc-500">按状态查看全部徽章进度，首屏只保留一个主目标。</div>
+          </div>
+          {nextBadge && (
+            <Button size="sm" onClick={() => navigate(nextBadge.actionTo)}>
+              去完成下一枚
+            </Button>
+          )}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setBadgeFilter('ALL')}
+            className={
+              badgeFilter === 'ALL'
+                ? 'rounded-full bg-[var(--p-accent)] px-3 py-1 text-xs font-semibold text-white'
+                : 'rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700'
+            }
+          >
+            全部（{badgeList.length}）
+          </button>
+          <button
+            type="button"
+            onClick={() => setBadgeFilter('UNLOCKED')}
+            className={
+              badgeFilter === 'UNLOCKED'
+                ? 'rounded-full bg-[var(--p-accent)] px-3 py-1 text-xs font-semibold text-white'
+                : 'rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700'
+            }
+          >
+            已解锁（{unlockedBadges.length}）
+          </button>
+          <button
+            type="button"
+            onClick={() => setBadgeFilter('LOCKED')}
+            className={
+              badgeFilter === 'LOCKED'
+                ? 'rounded-full bg-[var(--p-accent)] px-3 py-1 text-xs font-semibold text-white'
+                : 'rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700'
+            }
+          >
+            待解锁（{lockedBadges.length}）
+          </button>
+          <button
+            type="button"
+            onClick={() => setBadgeFilter('SOON')}
+            className={
+              badgeFilter === 'SOON'
+                ? 'rounded-full bg-[var(--p-accent)] px-3 py-1 text-xs font-semibold text-white'
+                : 'rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700'
+            }
+          >
+            即将解锁（{upcomingBadges.length}）
+          </button>
+        </div>
+
+        <div className="mt-3 grid gap-2">
+          {visibleBadges.length === 0 && (
+            <div className="rounded-2xl border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+              还没有点亮徽章，先完成一次闯关就能获得第一枚。
+            </div>
+          )}
+
+          {visibleBadges.map((badge) => {
+            const Icon = badge.icon
+            const isSoon = !badge.unlocked && upcomingBadgeIds.has(badge.id)
+            const isCelebrating = celebratingBadgeId === badge.id
+            return (
+              <div
+                key={badge.id}
+                className={
+                  badge.unlocked
+                    ? `rounded-2xl border border-sky-100 bg-gradient-to-r from-sky-50 to-blue-50 px-3 py-2 ${isCelebrating ? 'animate-unlock-highlight ring-2 ring-emerald-200/70 shadow-[0_8px_24px_rgba(16,185,129,0.18)]' : ''}`
+                    : isSoon
+                      ? 'rounded-2xl border border-orange-200 bg-orange-50/70 px-3 py-2'
+                      : 'rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2'
+                }
+              >
+                <div className="flex items-start gap-2">
+                  <span
+                    className={
+                      badge.unlocked
+                        ? 'grid h-7 w-7 place-items-center rounded-xl bg-white text-slate-700 ring-1 ring-sky-100'
+                        : isSoon
+                          ? 'grid h-7 w-7 place-items-center rounded-xl bg-white text-orange-600 ring-1 ring-orange-200'
+                          : 'grid h-7 w-7 place-items-center rounded-xl bg-white text-zinc-500 ring-1 ring-zinc-200'
+                    }
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-extrabold text-zinc-900">{badge.title}</div>
+                    <div className="mt-0.5 text-[11px] text-zinc-500">{badge.desc}</div>
+                    <div className="mt-1 text-[11px] font-medium text-zinc-600">{badge.reward}</div>
+                    <div className="text-[11px] text-zinc-500">
+                      已完成 {Math.min(badge.current, badge.target)}/{badge.target}
+                      {badge.unit}
+                      {!badge.unlocked && (
+                        <>
+                          ，还差 <span className="font-semibold text-orange-700">{badge.remaining}</span>
+                          {badge.unit}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="ml-auto flex flex-col items-end gap-1.5">
+                    {isCelebrating && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                        <Sparkles className="h-3 w-3" />
+                        新解锁
+                      </span>
+                    )}
+                    {badge.unlocked ? (
+                      <Tag color="blue">已解锁</Tag>
+                    ) : isSoon ? (
+                      <Tag color="orange">即将解锁</Tag>
+                    ) : (
+                      <Tag color="zinc">进行中</Tag>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <ProgressBar value={badge.progress} size="sm" color="blue" />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {canExpandAll && (
+          <button
+            type="button"
+            onClick={() => setShowAllBadges((prev) => !prev)}
+            className="mt-3 inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100"
+          >
+            {showAllBadges ? '收起徽章' : `查看全部徽章（${badgeList.length}）`}
+            {showAllBadges ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+        )}
       </Card>
 
       <div className="grid grid-cols-12 gap-4">
@@ -421,14 +692,18 @@ export default function Growth() {
           </div>
           <div className="mt-2 text-base font-bold text-zinc-900">{nextStep.title}</div>
           <div className="mt-1 text-sm text-zinc-600">{nextStep.desc}</div>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex items-center gap-3">
             <Button size="sm" onClick={() => navigate(nextStep.primaryTo)}>
               {nextStep.primaryLabel}
               <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => navigate(nextStep.secondaryTo)}>
+            <button
+              type="button"
+              className="text-xs font-semibold text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline"
+              onClick={() => navigate(nextStep.secondaryTo)}
+            >
               {nextStep.secondaryLabel}
-            </Button>
+            </button>
           </div>
         </Card>
 

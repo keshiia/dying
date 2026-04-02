@@ -567,10 +567,12 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(165deg,#f7f9fc_0%,#eef2f7_100%)]">
+      <div className="pointer-events-none absolute -left-24 top-[-120px] h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
+      <div className="pointer-events-none absolute -right-20 bottom-[-120px] h-80 w-80 rounded-full bg-slate-200/45 blur-3xl" />
       {/* ── 左侧卡通区（桌面端） ── */}
       <div
-        className="hidden lg:block relative shrink-0 overflow-hidden"
+        className="hidden relative shrink-0 overflow-hidden"
         style={{
           width: "48%",
           background: "#f4f4f6",
@@ -580,8 +582,8 @@ export default function Login() {
       </div>
 
       {/* ── 右侧登录区 ── */}
-      <div className="flex-1 flex flex-col justify-center items-center px-8 py-10 bg-white min-h-screen">
-        <div className="w-full max-w-[400px]">
+      <div className="relative z-10 flex min-h-screen w-full flex-col items-center justify-center px-6 py-10">
+        <div className="w-full max-w-[400px] rounded-[24px] border border-white/70 bg-white/88 px-6 py-7 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.45)] backdrop-blur-xl sm:px-7 sm:py-8">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
             <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[var(--p-primary)] to-[var(--p-primary-dark)] text-white flex items-center justify-center shadow-md shadow-blue-100">

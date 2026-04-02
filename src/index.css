@@ -205,6 +205,25 @@ h6 {
     animation: pulse-ring 1.2s infinite;
 }
 
+@keyframes unlock-highlight {
+    0% {
+        transform: scale(0.985);
+        box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+    }
+    45% {
+        transform: scale(1.01);
+        box-shadow: 0 10px 26px rgba(16, 185, 129, 0.22);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.animate-unlock-highlight {
+    animation: unlock-highlight 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 /* 星星闪烁 */
 @keyframes star-twinkle {
     0%,
@@ -238,4 +257,48 @@ h6 {
 /* XP条发光 */
 .xp-bar-glow {
     box-shadow: 0 0 8px rgba(28, 176, 246, 0.45);
+}
+
+/* 资源中心专用字体优化：提升中文标题与小字号可读性 */
+.resource-center {
+    font-family:
+        "MiSans", "HarmonyOS Sans SC", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei UI", "Noto Sans SC",
+        "Source Han Sans SC", sans-serif;
+    font-kerning: normal;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+.resource-center .tracking-tight {
+    letter-spacing: 0;
+}
+
+.resource-center .tracking-wide {
+    letter-spacing: 0.02em;
+}
+
+.resource-center .font-extrabold {
+    font-weight: 640;
+    letter-spacing: 0;
+}
+
+.resource-center .font-bold {
+    font-weight: 580;
+    letter-spacing: 0;
+}
+
+.resource-center .font-semibold {
+    font-weight: 545;
+    letter-spacing: 0;
+}
+
+.resource-center .text-xs {
+    letter-spacing: 0.002em;
+    line-height: 1.55;
+}
+
+.resource-center .text-sm {
+    letter-spacing: 0.001em;
+    line-height: 1.68;
 }

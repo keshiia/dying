@@ -5,58 +5,31 @@ import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Tag from '@/components/ui/Tag'
-import ProgressBar from '@/components/ui/ProgressBar'
 import ChallengeModal from '@/components/student/ChallengeModal'
 import { apiFetch, errorMessage } from '@/utils/api'
-import type { LearningUnit, StudentTask } from '@/types'
-
-type DailyGoalState = {
-  challengeStarted: boolean
-  reviewStarted: boolean
-}
-
-function todayKey() {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
-function isToday(iso: string | null | undefined) {
-  if (!iso) return false
-  const d = new Date(iso)
-  const now = new Date()
-  return (
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate()
-  )
-}
+import type { LearningUnit, ReviewLevel, StudentTask } from '@/types'
 
 export default function Tasks() {
   const navigate = useNavigate()
-  const keyOfToday = `student-daily-goal-${todayKey()}`
   const [tasks, setTasks] = useState<StudentTask[]>([])
   const [units, setUnits] = useState<LearningUnit[]>([])
+  const [reviewLevels, setReviewLevels] = useState<ReviewLevel[]>([])
   const [joinCode, setJoinCode] = useState('')
   const [joinMsg, setJoinMsg] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [openLevel, setOpenLevel] = useState<null | { id: string; title: string; xpReward: number }>(null)
-  const [dailyGoal, setDailyGoal] = useState<DailyGoalState>({
-    challengeStarted: false,
-    reviewStarted: false,
-  })
 
   async function load() {
     setError(null)
     try {
-      const [taskData, unitData] = await Promise.all([
+      const [taskData, unitData, reviewData] = await Promise.all([
         apiFetch<{ success: true; tasks: StudentTask[] }>('/api/student/tasks'),
         apiFetch<{ success: true; units: LearningUnit[] }>('/api/student/units'),
+        apiFetch<{ success: true; reviewLevels: ReviewLevel[] }>('/api/student/review-levels'),
       ])
       setTasks(taskData.tasks)
       setUnits(unitData.units)
+      setReviewLevels(reviewData.reviewLevels)
     } catch (e: unknown) {
       setError(errorMessage(e))
     }
@@ -65,24 +38,6 @@ export default function Tasks() {
   useEffect(() => {
     void load()
   }, [])
-
-  useEffect(() => {
-    const raw = localStorage.getItem(keyOfToday)
-    if (!raw) return
-    try {
-      const parsed = JSON.parse(raw) as DailyGoalState
-      setDailyGoal({
-        challengeStarted: Boolean(parsed.challengeStarted),
-        reviewStarted: Boolean(parsed.reviewStarted),
-      })
-    } catch {
-      setDailyGoal({ challengeStarted: false, reviewStarted: false })
-    }
-  }, [keyOfToday])
-
-  useEffect(() => {
-    localStorage.setItem(keyOfToday, JSON.stringify(dailyGoal))
-  }, [dailyGoal, keyOfToday])
 
   const todo = useMemo(() => tasks.filter((t) => t.status === 'todo'), [tasks])
   const done = useMemo(() => tasks.filter((t) => t.status === 'done'), [tasks])
@@ -105,53 +60,6 @@ export default function Tasks() {
     if (!firstUnit || !firstLevel) return null
     return { unit: firstUnit, level: firstLevel }
   }, [nextLevel, units])
-
-  const reviewLevels = useMemo(() => {
-    return units
-      .flatMap((u) =>
-        u.levels.map((l) => ({
-          unitTitle: u.title,
-          level: l,
-        })),
-      )
-      .filter(
-        (item) =>
-          item.level.progress?.status === 'COMPLETED' &&
-          (item.level.progress?.bestScore ?? 100) < 100,
-      )
-      .sort(
-        (a, b) =>
-          (a.level.progress?.bestScore ?? 100) -
-          (b.level.progress?.bestScore ?? 100),
-      )
-      .slice(0, 3)
-  }, [units])
-
-  const hasTodayChallengeProgress = useMemo(
-    () =>
-      units.some((u) =>
-        u.levels.some((l) => l.progress?.status === 'COMPLETED' && isToday(l.progress?.updatedAt)),
-      ),
-    [units],
-  )
-
-  const hasTodayReviewProgress = useMemo(
-    () =>
-      units.some((u) =>
-        u.levels.some(
-          (l) =>
-            l.progress?.status === 'COMPLETED' &&
-            (l.progress?.bestScore ?? 100) < 100 &&
-            isToday(l.progress?.updatedAt),
-        ),
-      ),
-    [units],
-  )
-
-  const goalDoneChallenge = dailyGoal.challengeStarted || hasTodayChallengeProgress
-  const goalDoneReview = dailyGoal.reviewStarted || hasTodayReviewProgress
-  const goalDoneCount = Number(goalDoneChallenge) + Number(goalDoneReview)
-  const goalPct = Math.round((goalDoneCount / 2) * 100)
 
   async function join() {
     setJoinMsg(null)
@@ -180,32 +88,6 @@ export default function Tasks() {
         <div className="mt-1 text-sm text-zinc-600">每日练习、错题复盘和老师任务都集中在这里处理。</div>
       </Card>
 
-      <Card className="p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-base font-extrabold tracking-tight text-zinc-900">今日目标</div>
-            <div className="text-xs text-zinc-500 mt-0.5">完成 1 次挑战 + 1 次复盘</div>
-          </div>
-          <Tag color="blue">{goalDoneCount}/2</Tag>
-        </div>
-
-        <div className="mt-3">
-          <ProgressBar value={goalPct} color="blue" />
-          <div className="mt-2 text-xs text-zinc-500">今日进度 {goalPct}%</div>
-        </div>
-
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <div className="rounded-2xl border border-zinc-100 bg-zinc-50 px-3 py-2">
-            <div className="text-sm font-semibold text-zinc-900">今日挑战 1 次</div>
-            <div className="text-xs mt-0.5 text-zinc-500">{goalDoneChallenge ? '已完成' : '未完成'}</div>
-          </div>
-          <div className="rounded-2xl border border-zinc-100 bg-zinc-50 px-3 py-2">
-            <div className="text-sm font-semibold text-zinc-900">错题复盘 1 次</div>
-            <div className="text-xs mt-0.5 text-zinc-500">{goalDoneReview ? '已完成' : '未完成'}</div>
-          </div>
-        </div>
-      </Card>
-
       <Card className="p-5 min-h-[136px]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -231,7 +113,6 @@ export default function Tasks() {
               <Button
                 size="sm"
                 onClick={() => {
-                  setDailyGoal((prev) => ({ ...prev, challengeStarted: true }))
                   setOpenLevel({
                     id: todayQuestion.level.id,
                     title: todayQuestion.level.title,
@@ -246,7 +127,6 @@ export default function Tasks() {
               size="sm"
               variant="secondary"
               onClick={() => {
-                setDailyGoal((prev) => ({ ...prev, challengeStarted: true }))
                 navigate('/app/learn')
               }}
             >
@@ -276,24 +156,23 @@ export default function Tasks() {
           ) : (
             reviewLevels.map((item) => (
               <div
-                key={item.level.id}
+                key={item.levelId}
                 className="rounded-2xl border border-zinc-100 bg-zinc-50 px-3 py-2.5 flex items-center justify-between gap-3"
               >
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-zinc-900 truncate">{item.level.title}</div>
+                  <div className="text-sm font-semibold text-zinc-900 truncate">{item.title}</div>
                   <div className="text-xs text-zinc-500 mt-0.5 truncate">
-                    {item.unitTitle} · 最佳 {item.level.progress?.bestScore ?? 0} 分
+                    {item.unitTitle} · 最近 {item.latestScore} 分
                   </div>
                 </div>
                 <Button
                   size="sm"
                   variant="secondary"
                   onClick={() => {
-                    setDailyGoal((prev) => ({ ...prev, reviewStarted: true }))
                     setOpenLevel({
-                      id: item.level.id,
-                      title: item.level.title,
-                      xpReward: item.level.xpReward,
+                      id: item.levelId,
+                      title: item.title,
+                      xpReward: item.xpReward,
                     })
                   }}
                 >

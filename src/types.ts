@@ -68,6 +68,15 @@ export type StudentTask = {
   submittedAt: string | null
 }
 
+export type ReviewLevel = {
+  levelId: string
+  title: string
+  unitTitle: string
+  xpReward: number
+  latestScore: number
+  attemptedAt: string
+}
+
 export type TeacherClass = {
   id: string
   name: string

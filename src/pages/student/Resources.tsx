@@ -168,7 +168,7 @@ export default function Resources() {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="resource-center grid gap-4">
       <Card className="p-5">
         <div className="flex items-start gap-3">
           <div className="h-9 w-9 rounded-2xl border border-slate-200 bg-white flex items-center justify-center shrink-0">
@@ -212,7 +212,7 @@ export default function Resources() {
         </div>
       </Card>
 
-      <div className="sticky top-2 z-20">
+      <div className="sticky top-[68px] lg:top-2 z-20">
         <Card className="p-5 border-zinc-100/80 bg-white/90 backdrop-blur-sm shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
         <div className="flex items-start justify-between gap-4">
           <div>
