@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+enum ResourceType {
+  CASE
+  LAW_SUMMARY
+  VIDEO
+  ARTICLE
+}
+
+enum QuestionType {
+  SINGLE
+  TRUE_FALSE
+  SCENARIO
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum AssignmentTargetType {
+  LEVEL
+  RESOURCE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role
+  nickname     String
+  grade        String?
+  xp           Int      @default(0)
+  level        Int      @default(1)
+  createdAt    DateTime @default(now())
+
+  teachingClasses Class[]       @relation("TeacherClasses")
+  classMemberships ClassMember[]
+  attempts         Attempt[]
+  progress         UserProgress[]
+  resources        Resource[]
+  submissions      AssignmentSubmission[]
+}
+
+model Class {
+  id        String   @id @default(cuid())
+  teacherId String
+  name      String
+  joinCode  String   @unique
+  createdAt DateTime @default(now())
+
+  teacher     User          @relation("TeacherClasses", fields: [teacherId], references: [id])
+  members     ClassMember[]
+  assignments Assignment[]
+
+  @@index([teacherId])
+}
+
+model ClassMember {
+  id        String   @id @default(cuid())
+  classId   String
+  studentId String
+  createdAt DateTime @default(now())
+
+  class   Class @relation(fields: [classId], references: [id])
+  student User  @relation(fields: [studentId], references: [id])
+
+  @@unique([classId, studentId])
+  @@index([studentId])
+}
+
+model LearningUnit {
+  id         String  @id @default(cuid())
+  title      String
+  category   String
+  gradeRange String
+  orderNo    Int
+  isActive   Boolean @default(true)
+
+  levels Level[]
+
+  @@index([orderNo])
+}
+
+model Level {
+  id        String  @id @default(cuid())
+  unitId    String
+  title     String
+  orderNo   Int
+  xpReward  Int     @default(10)
+  isActive  Boolean @default(true)
+
+  unit      LearningUnit   @relation(fields: [unitId], references: [id])
+  questions Question[]
+  attempts  Attempt[]
+  progress  UserProgress[]
+
+  @@index([unitId, orderNo])
+}
+
+model Question {
+  id          String       @id @default(cuid())
+  levelId     String
+  type        QuestionType
+  prompt      String       @db.Text
+  optionsJson String?      @db.Text
+  answerKey   String
+  explanation String?      @db.Text
+  orderNo     Int
+
+  level Level @relation(fields: [levelId], references: [id])
+
+  @@index([levelId, orderNo])
+}
+
+model Attempt {
+  id           String   @id @default(cuid())
+  studentId    String
+  levelId      String
+  score        Int
+  correctCount Int
+  totalCount   Int
+  createdAt    DateTime @default(now())
+
+  student User  @relation(fields: [studentId], references: [id])
+  level   Level @relation(fields: [levelId], references: [id])
+
+  @@index([studentId, createdAt])
+  @@index([levelId])
+}
+
+model UserProgress {
+  id        String         @id @default(cuid())
+  studentId String
+  levelId   String
+  status    ProgressStatus @default(NOT_STARTED)
+  bestScore Int            @default(0)
+  updatedAt DateTime       @updatedAt
+
+  student User  @relation(fields: [studentId], references: [id])
+  level   Level @relation(fields: [levelId], references: [id])
+
+  @@unique([studentId, levelId])
+  @@index([levelId])
+}
+
+model Resource {
+  id        String       @id @default(cuid())
+  title     String
+  type      ResourceType
+  tagsJson  String       @db.Text
+  contentUrl String?     @db.Text
+  contentMd String?      @db.Text
+  createdBy String
+  createdAt DateTime     @default(now())
+
+  author User @relation(fields: [createdBy], references: [id])
+
+  @@index([type])
+  @@index([createdBy])
+}
+
+model Assignment {
+  id         String              @id @default(cuid())
+  classId    String
+  targetType AssignmentTargetType
+  targetId   String
+  dueAt      DateTime?
+  createdAt  DateTime            @default(now())
+
+  class       Class                 @relation(fields: [classId], references: [id])
+  submissions AssignmentSubmission[]
+
+  @@index([classId, createdAt])
+}
+
+model AssignmentSubmission {
+  id           String   @id @default(cuid())
+  assignmentId String
+  studentId    String
+  submittedAt  DateTime @default(now())
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  student    User       @relation(fields: [studentId], references: [id])
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId, submittedAt])
+}
