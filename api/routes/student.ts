@@ -9,6 +9,35 @@ const router = Router()
 router.use(requireAuth)
 router.use(requireRole('STUDENT'))
 
+function difficultyByOrder(orderNo: number): '基础' | '进阶' | '挑战' | '实战' {
+  if (orderNo <= 1) return '基础'
+  if (orderNo === 2) return '进阶'
+  if (orderNo === 3) return '挑战'
+  return '实战'
+}
+
+function lawRefsForLevel(levelId: string): string[] {
+  if (levelId.startsWith('level-campus')) {
+    return ['《未成年人保护法》', '《民法典》人格权编']
+  }
+  if (levelId.startsWith('level-network')) {
+    return ['《网络安全法》', '《个人信息保护法》', '《民法典》人格权编']
+  }
+  if (levelId.startsWith('level-family')) {
+    return ['《未成年人保护法》', '《家庭教育促进法》', '《民法典》人格权编']
+  }
+  if (levelId.startsWith('level-consumer')) {
+    return ['《消费者权益保护法》', '《民法典》合同编']
+  }
+  if (levelId.startsWith('level-traffic')) {
+    return ['《道路交通安全法》', '《民法典》侵权责任编']
+  }
+  if (levelId.startsWith('level-drug')) {
+    return ['《禁毒法》', '《治安管理处罚法》']
+  }
+  return ['青少年普法通识']
+}
+
 router.get('/units', async (req: Request, res: Response) => {
   const units = await prisma.learningUnit.findMany({
     where: { isActive: true },
@@ -44,6 +73,7 @@ router.get('/units', async (req: Request, res: Response) => {
           id: l.id,
           title: l.title,
           orderNo: l.orderNo,
+          difficulty: difficultyByOrder(l.orderNo),
           xpReward: l.xpReward,
           progress: p ? { status: p.status, bestScore: p.bestScore, updatedAt: p.updatedAt } : null,
         }
@@ -57,7 +87,7 @@ router.get('/levels/:levelId/questions', async (req: Request, res: Response) => 
 
   const level = await prisma.level.findFirst({
     where: { id: levelId, isActive: true },
-    select: { id: true, title: true, xpReward: true },
+    select: { id: true, title: true, xpReward: true, orderNo: true },
   })
 
   if (!level) {
@@ -71,7 +101,15 @@ router.get('/levels/:levelId/questions', async (req: Request, res: Response) => 
     select: { id: true, type: true, prompt: true, optionsJson: true, orderNo: true },
   })
 
-  res.json({ success: true, level, questions })
+  res.json({
+    success: true,
+    level: {
+      ...level,
+      difficulty: difficultyByOrder(level.orderNo),
+      lawRefs: lawRefsForLevel(level.id),
+    },
+    questions,
+  })
 })
 
 const SubmitSchema = z.object({
@@ -93,7 +131,7 @@ router.post('/levels/:levelId/submit', async (req: Request, res: Response) => {
 
   const level = await prisma.level.findFirst({
     where: { id: levelId, isActive: true },
-    select: { id: true, xpReward: true },
+    select: { id: true, xpReward: true, orderNo: true },
   })
   if (!level) {
     res.status(404).json({ success: false, error: 'LEVEL_NOT_FOUND' })
@@ -173,6 +211,10 @@ router.post('/levels/:levelId/submit', async (req: Request, res: Response) => {
       totalCount: total,
       xpGain,
       status,
+    },
+    levelMeta: {
+      difficulty: difficultyByOrder(level.orderNo),
+      lawRefs: lawRefsForLevel(level.id),
     },
     details,
     user: updatedUser,

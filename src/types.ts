@@ -14,6 +14,7 @@ export type LearningLevel = {
   id: string
   title: string
   orderNo: number
+  difficulty?: '基础' | '进阶' | '挑战' | '实战'
   xpReward: number
   progress: null | {
     status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED'
@@ -88,4 +89,3 @@ export type AiCitation = {
   id: string
   label: string
 }
-

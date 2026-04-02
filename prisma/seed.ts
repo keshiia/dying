@@ -243,6 +243,18 @@ async function main() {
     }),
 
     prisma.level.upsert({
+      where: { id: 'level-family-4' },
+      update: {},
+      create: {
+        id: 'level-family-4',
+        unitId: unit3.id,
+        title: '第四关：网络言论边界与家庭沟通',
+        orderNo: 4,
+        xpReward: 35,
+      },
+    }),
+
+    prisma.level.upsert({
       where: { id: 'level-consumer-1' },
       update: {},
       create: {
@@ -273,6 +285,18 @@ async function main() {
         title: '第三关：网购退换与售后沟通',
         orderNo: 3,
         xpReward: 30,
+      },
+    }),
+
+    prisma.level.upsert({
+      where: { id: 'level-consumer-4' },
+      update: {},
+      create: {
+        id: 'level-consumer-4',
+        unitId: unit4.id,
+        title: '第四关：二手交易与平台规则',
+        orderNo: 4,
+        xpReward: 35,
       },
     }),
 
@@ -311,6 +335,18 @@ async function main() {
     }),
 
     prisma.level.upsert({
+      where: { id: 'level-traffic-4' },
+      update: {},
+      create: {
+        id: 'level-traffic-4',
+        unitId: unit5.id,
+        title: '第四关：出行事故后的自护与求助',
+        orderNo: 4,
+        xpReward: 35,
+      },
+    }),
+
+    prisma.level.upsert({
       where: { id: 'level-drug-1' },
       update: {},
       create: {
@@ -341,6 +377,17 @@ async function main() {
         title: '第三关：新型毒品与“伪装”陷阱',
         orderNo: 3,
         xpReward: 30,
+      },
+    }),
+    prisma.level.upsert({
+      where: { id: 'level-drug-4' },
+      update: {},
+      create: {
+        id: 'level-drug-4',
+        unitId: unit6.id,
+        title: '第四关：诱导链路识别与及时求助',
+        orderNo: 4,
+        xpReward: 35,
       },
     }),
   ])
@@ -1021,6 +1068,64 @@ async function main() {
       },
     ],
 
+    'level-family-4': [
+      {
+        id: 'q-f4-1',
+        type: QuestionType.SINGLE,
+        prompt: '在家庭群或朋友圈发言时，哪项更符合“边界意识”？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '随手公开家人身份证和住址' },
+          { key: 'B', text: '先征得同意，不公开敏感隐私' },
+          { key: 'C', text: '为了热度发布家人冲突视频' },
+          { key: 'D', text: '转发未经核实的家庭谣言' },
+        ]),
+        answerKey: 'B',
+        explanation: '尊重他人隐私和同意权，是家庭沟通与网络表达的底线。',
+      },
+      {
+        id: 'q-f4-2',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '在网络上“随口造谣家人”也可能侵犯名誉权并引发法律风险。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '网络表达不是法外之地，传播不实信息有风险。',
+      },
+      {
+        id: 'q-f4-3',
+        type: QuestionType.SCENARIO,
+        prompt: '情景题：你和家人发生争执，朋友建议“把聊天记录发网上让大家评评理”。你更稳妥的做法是？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '全部公开，越细越好' },
+          { key: 'B', text: '不公开隐私，优先线下沟通或向可信成年人求助' },
+          { key: 'C', text: '把对方隐私打码一半后公开' },
+          { key: 'D', text: '剪辑片段误导舆论' },
+        ]),
+        answerKey: 'B',
+        explanation: '家庭矛盾优先通过可信渠道处理，避免“网络扩散+二次伤害”。',
+      },
+      {
+        id: 'q-f4-4',
+        type: QuestionType.SINGLE,
+        prompt: '以下哪项最适合向老师或社工说明家庭求助需求？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '只说“我很难受”' },
+          { key: 'B', text: '清楚说明时间、事件、风险和希望得到的帮助' },
+          { key: 'C', text: '只发情绪化语音' },
+          { key: 'D', text: '提供不实信息' },
+        ]),
+        answerKey: 'B',
+        explanation: '结构化信息有助于快速评估风险并提供有效帮助。',
+      },
+      {
+        id: 'q-f4-5',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '沟通冲突时，保留证据和保护隐私可以同时做到。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '证据保留用于求助，隐私保护用于减少二次风险，二者并不冲突。',
+      },
+    ],
+
     'level-consumer-1': [
       {
         id: 'q-s1-1',
@@ -1191,6 +1296,64 @@ async function main() {
         optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
         answerKey: 'T',
         explanation: '12348 可提供普法与法律服务指引。',
+      },
+    ],
+
+    'level-consumer-4': [
+      {
+        id: 'q-s4-1',
+        type: QuestionType.SINGLE,
+        prompt: '二手交易中，哪种交易方式更安全？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '脱离平台私下转账' },
+          { key: 'B', text: '走平台担保交易并留存记录' },
+          { key: 'C', text: '把验证码发给对方' },
+          { key: 'D', text: '先付款再让对方“补链接”' },
+        ]),
+        answerKey: 'B',
+        explanation: '平台担保和留痕是降低纠纷风险的关键。',
+      },
+      {
+        id: 'q-s4-2',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '对方要求你扫码“解除风控”并输入银行卡信息，通常要高度警惕。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '这是常见诈骗套路，可能导致账号和资金风险。',
+      },
+      {
+        id: 'q-s4-3',
+        type: QuestionType.SCENARIO,
+        prompt: '情景题：你在二手平台卖书，对方称“付不了款”发来陌生链接让你操作。你应当？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '马上点开按提示操作' },
+          { key: 'B', text: '拒绝外链操作，只在平台内沟通与交易' },
+          { key: 'C', text: '把账号密码给对方代操作' },
+          { key: 'D', text: '让同学先试一下链接' },
+        ]),
+        answerKey: 'B',
+        explanation: '交易环节尽量不离开平台，陌生链接风险高。',
+      },
+      {
+        id: 'q-s4-4',
+        type: QuestionType.SINGLE,
+        prompt: '发生二手交易纠纷后，第一步更推荐做什么？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '删除聊天记录' },
+          { key: 'B', text: '保存证据并发起平台申诉' },
+          { key: 'C', text: '在群里公布对方隐私' },
+          { key: 'D', text: '找陌生“维权代办”' },
+        ]),
+        answerKey: 'B',
+        explanation: '保留证据 + 平台申诉是处理纠纷的基本路径。',
+      },
+      {
+        id: 'q-s4-5',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '维权时，证据完整性（订单、聊天、支付、物流）会影响结果。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '证据越完整，越有利于还原事实与处理争议。',
       },
     ],
 
@@ -1367,6 +1530,64 @@ async function main() {
       },
     ],
 
+    'level-traffic-4': [
+      {
+        id: 'q-t4-1',
+        type: QuestionType.SINGLE,
+        prompt: '发生轻微交通碰撞后，哪种做法更合适？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '立即离开现场' },
+          { key: 'B', text: '先确保安全，再联系交警并保留现场信息' },
+          { key: 'C', text: '先在网上直播' },
+          { key: 'D', text: '删掉行车记录避免麻烦' },
+        ]),
+        answerKey: 'B',
+        explanation: '先安全、再处置、再留证，是事故处置基本顺序。',
+      },
+      {
+        id: 'q-t4-2',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '事故现场拍照取证时，应避免妨碍交通并注意自身安全。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '取证重要，但不能以牺牲现场安全为代价。',
+      },
+      {
+        id: 'q-t4-3',
+        type: QuestionType.SCENARIO,
+        prompt: '情景题：同伴受伤倒地，围观者起哄拍视频。你优先应做什么？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '继续拍视频留纪念' },
+          { key: 'B', text: '立即求助120/110并组织让出救援通道' },
+          { key: 'C', text: '把视频发群里找人' },
+          { key: 'D', text: '先争论责任再说' },
+        ]),
+        answerKey: 'B',
+        explanation: '人身救助优先于围观与争论。',
+      },
+      {
+        id: 'q-t4-4',
+        type: QuestionType.SINGLE,
+        prompt: '关于“事故后发短视频曝光”更稳妥的说法是？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '细节越全越好，包括车牌和身份证' },
+          { key: 'B', text: '谨慎传播，避免泄露隐私和引发二次伤害' },
+          { key: 'C', text: '先造谣吸引关注' },
+          { key: 'D', text: '只要流量高就可以' },
+        ]),
+        answerKey: 'B',
+        explanation: '事故信息传播应遵守隐私和事实边界。',
+      },
+      {
+        id: 'q-t4-5',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '事故处置中，冷静沟通与合法求助通常比冲突对骂更有效。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '冲突升级只会增加风险，规范流程更能解决问题。',
+      },
+    ],
+
     'level-drug-1': [
       {
         id: 'q-d1-1',
@@ -1538,6 +1759,63 @@ async function main() {
         explanation: '这三步能显著降低误触高风险情境的概率。',
       },
     ],
+    'level-drug-4': [
+      {
+        id: 'q-d4-1',
+        type: QuestionType.SINGLE,
+        prompt: '遇到“免费试一口就知道”的诱导时，最正确的第一反应是？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '尝一下再判断' },
+          { key: 'B', text: '明确拒绝并远离现场' },
+          { key: 'C', text: '录视频发平台' },
+          { key: 'D', text: '转给同学“帮忙尝”' },
+        ]),
+        answerKey: 'B',
+        explanation: '拒绝 + 离开是高风险情境的基本保护动作。',
+      },
+      {
+        id: 'q-d4-2',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '“帮忙送个包裹/小药片”也可能让你卷入违法风险。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '不明物品的转运、保管都可能具有法律风险。',
+      },
+      {
+        id: 'q-d4-3',
+        type: QuestionType.SCENARIO,
+        prompt: '情景题：同伴被人威胁“保密，不然报复”。你更推荐？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '绝对保密，谁也不说' },
+          { key: 'B', text: '保证安全后尽快联系可信成年人和警方' },
+          { key: 'C', text: '私下约对方谈判' },
+          { key: 'D', text: '网上曝光对方隐私' },
+        ]),
+        answerKey: 'B',
+        explanation: '威胁情境属于高风险信号，应走正规求助链路。',
+      },
+      {
+        id: 'q-d4-4',
+        type: QuestionType.SINGLE,
+        prompt: '下列哪项属于“及时求助链路”的正确顺序？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '先围观传播，再考虑求助' },
+          { key: 'B', text: '先保安全，再联系老师/家长，必要时报警' },
+          { key: 'C', text: '先删证据，避免麻烦' },
+          { key: 'D', text: '只问匿名网友' },
+        ]),
+        answerKey: 'B',
+        explanation: '高风险场景中，安全与可信成人支持优先。',
+      },
+      {
+        id: 'q-d4-5',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '禁毒与自护教育的关键不是“硬刚”，而是识别风险、及时求助。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '稳定处置和求助协作比冲动对抗更安全有效。',
+      },
+    ],
   }
 
   for (const [levelId, questions] of Object.entries(questionBank)) {
@@ -1640,6 +1918,42 @@ async function main() {
         tagsJson: JSON.stringify(['网络法治', '名誉权', '隐私保护']),
         contentMd:
           '面对网络谣言可以这样做：\n\n1) 及时截图、保留链接和时间信息。\n2) 在平台内进行举报并申请删除不实内容。\n3) 视情况向学校、监护人和相关机构求助，避免线下冲突升级。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-13',
+        title: '法律知识卡：校园网暴取证与举报步骤',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['校园安全', '网络法治', '取证']),
+        contentMd:
+          '遇到网暴时建议按顺序处理：\n\n1) 截图保存账号、时间、链接和上下文。\n2) 在平台内举报并申请删除不实内容。\n3) 向老师、家长说明情况，必要时报警求助。\n4) 避免“以暴制暴”导致风险升级。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-14',
+        title: '法律知识卡：二手交易防骗清单',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['消费者权益', '防骗', '平台交易']),
+        contentMd:
+          '二手交易四条底线：\n\n- 不脱离平台担保交易\n- 不点陌生“付款/退款”链接\n- 不泄露验证码、银行卡敏感信息\n- 纠纷先留证据再申诉',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-15',
+        title: '法律知识卡：出行事故后的自护口诀',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['交通安全', '应急', '求助']),
+        contentMd:
+          '口诀：先安全、再求助、再取证。\n\n- 优先转移到安全位置\n- 及时联系 120/110 或交警\n- 合理拍照留证，避免泄露他人隐私',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-16',
+        title: '法律知识卡：识别毒品诱导常见话术',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['禁毒教育', '风险识别', '求助链路']),
+        contentMd:
+          '常见诱导话术包括“免费试试”“提神不成瘾”“帮忙带一下”。\n\n应对策略：\n1) 明确拒绝\n2) 立即远离\n3) 向可信成年人求助，必要时报警',
         createdBy: teacher.id,
       },
       {

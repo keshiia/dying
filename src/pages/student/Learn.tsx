@@ -127,11 +127,25 @@ const legalTips = [
   },
 ];
 
+const legalChecklist = [
+  "先保安全：优先离开高风险场景，避免冲突升级。",
+  "再留证据：截图、时间、链接、聊天记录尽量完整留存。",
+  "走正规渠道：平台举报、学校求助、家长沟通、必要时报警。",
+  "护好隐私：不公开身份证、住址、验证码等敏感信息。",
+];
+
 function barColor(cat: string): "green" | "blue" | "purple" | "orange" {
   if (cat === "网络安全") return "purple";
   if (cat === "消费者权益") return "orange";
   if (cat === "校园安全") return "blue";
   return "green";
+}
+
+function levelDifficulty(orderNo: number): "基础" | "进阶" | "挑战" | "实战" {
+  if (orderNo <= 1) return "基础";
+  if (orderNo === 2) return "进阶";
+  if (orderNo === 3) return "挑战";
+  return "实战";
 }
 
 export default function Learn() {
@@ -296,6 +310,27 @@ export default function Learn() {
         </div>
       </div>
 
+      <Card className="p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-base font-extrabold text-zinc-900">法律行动清单</div>
+            <div className="text-xs text-zinc-500 mt-0.5">遇到风险时，按顺序执行更稳妥</div>
+          </div>
+          <Tag color="blue">实用步骤</Tag>
+        </div>
+        <div className="mt-3 grid gap-2">
+          {legalChecklist.map((item, idx) => (
+            <div
+              key={item}
+              className="rounded-2xl border border-zinc-100 bg-zinc-50 px-3 py-2 text-sm text-zinc-700"
+            >
+              <span className="mr-2 font-bold text-zinc-900">{idx + 1}.</span>
+              {item}
+            </div>
+          ))}
+        </div>
+      </Card>
+
       {!loading && nextLevel && (
         <button
           type="button"
@@ -321,6 +356,11 @@ export default function Learn() {
               </div>
               <div className="text-xs text-zinc-500 mt-0.5">
                 {nextLevel.unit.title} · 奖励 {nextLevel.level.xpReward} XP
+              </div>
+              <div className="mt-1">
+                <span className="inline-flex rounded-full bg-zinc-200 px-2 py-0.5 text-[11px] font-bold text-zinc-700">
+                  难度：{nextLevel.level.difficulty ?? levelDifficulty(nextLevel.level.orderNo)}
+                </span>
               </div>
             </div>
           </div>
@@ -519,6 +559,11 @@ export default function Learn() {
                               : isNext
                                 ? " · 推荐挑战"
                                 : ""}
+                          </div>
+                          <div className="mt-1">
+                            <span className="inline-flex rounded-full bg-zinc-200 px-2 py-0.5 text-[11px] font-bold text-zinc-700">
+                              难度：{l.difficulty ?? levelDifficulty(l.orderNo)}
+                            </span>
                           </div>
                         </div>
                       </div>
