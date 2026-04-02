@@ -1,25 +1,24 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  BookOpen,
+  CheckCircle2,
+  ChevronRight,
+  Flame,
+  Star,
+  Trophy,
+  Zap,
+} from "lucide-react";
+import { clsx } from "clsx";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Tag from "@/components/ui/Tag";
 import ProgressBar from "@/components/ui/ProgressBar";
+import ChallengeModal from "@/components/student/ChallengeModal";
 import { apiFetch, errorMessage } from "@/utils/api";
 import type { LearningUnit, ResourceListItem } from "@/types";
-import ChallengeModal from "@/components/student/ChallengeModal";
-import {
-  BookOpen,
-  Flame,
-  Zap,
-  Trophy,
-  Star,
-  ChevronRight,
-  CheckCircle2,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
-import { clsx } from "clsx";
 
-/* ── 主题配色 ── */
 const categoryMeta: Record<
   string,
   {
@@ -52,7 +51,7 @@ const categoryMeta: Record<
     tagColor: "purple",
   },
   消费者权益: {
-    emoji: "🛒",
+    emoji: "🛍️",
     color: "text-orange-700",
     bg: "bg-orange-50",
     border: "border-orange-200",
@@ -80,42 +79,54 @@ const categoryMeta: Record<
     tagColor: "yellow",
   },
 };
+
 const fallbackMeta = {
-  emoji: "📖",
+  emoji: "📘",
   color: "text-zinc-700",
   bg: "bg-zinc-50",
   border: "border-zinc-200",
   tagColor: "zinc" as const,
 };
+
 function getCategoryMeta(cat: string) {
   return categoryMeta[cat] ?? fallbackMeta;
 }
 
-/* ── 每日法律金句 ── */
 const legalTips = [
   {
-    tip: "未成年人享有受教育权，任何组织和个人不得侵害。",
-    law: "《未成年人保护法》第 27 条",
+    tip: "未成年人依法享有受教育权和人格尊严，任何组织和个人不得侵害。",
+    law: "《未成年人保护法》第3条、第27条",
   },
   {
-    tip: "网络暴力是违法行为，截图保存证据是维权第一步。",
-    law: "《网络安全法》第 46 条",
+    tip: "校园欺凌不是“玩笑”，遇到持续侮辱、排挤、威胁时要及时求助。",
+    law: "《未成年人保护法》第39条",
   },
   {
-    tip: "个人信息受法律保护，未经同意不得泄露或买卖。",
-    law: "《个人信息保护法》第 13 条",
+    tip: "个人信息受法律保护，验证码、身份证照片、家庭住址不要随意提供。",
+    law: "《个人信息保护法》第4条、第10条",
   },
   {
-    tip: "消费者有权要求退换货，七天无理由退货是基本权利。",
-    law: "《消费者权益保护法》第 25 条",
+    tip: "网络造谣、网暴、恶意传播隐私内容，可能侵犯名誉权和隐私权。",
+    law: "《民法典》人格权编",
   },
   {
-    tip: "校园欺凌不是小事，受害者有权向学校和警方求助。",
-    law: "《未成年人保护法》第 39 条",
+    tip: "网购纠纷要先留证据再维权：订单、支付记录、聊天记录都很关键。",
+    law: "《消费者权益保护法》",
+  },
+  {
+    tip: "面对“中奖链接”“退款客服”“先转账后处理”等说法，要提高警惕。",
+    law: "反诈普法常识",
+  },
+  {
+    tip: "交通规则的本质是保护生命，拒绝无证驾驶、醉驾和危险骑行。",
+    law: "《道路交通安全法》",
+  },
+  {
+    tip: "遇到高风险场景，先保证安全，再向老师、家长或警方求助。",
+    law: "110 / 12348 求助渠道",
   },
 ];
 
-/* ── 进度条颜色映射── */
 function barColor(cat: string): "green" | "blue" | "purple" | "orange" {
   if (cat === "网络安全") return "purple";
   if (cat === "消费者权益") return "orange";
@@ -126,6 +137,7 @@ function barColor(cat: string): "green" | "blue" | "purple" | "orange" {
 export default function Learn() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+
   const [units, setUnits] = useState<LearningUnit[]>([]);
   const [cards, setCards] = useState<ResourceListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,15 +156,13 @@ export default function Learn() {
     setError(null);
     try {
       const [u, r] = await Promise.all([
-        apiFetch<{ success: true; units: LearningUnit[] }>(
-          "/api/student/units",
-        ),
+        apiFetch<{ success: true; units: LearningUnit[] }>("/api/student/units"),
         apiFetch<{ success: true; resources: ResourceListItem[] }>(
           "/api/resources?type=LAW_SUMMARY",
         ),
       ]);
       setUnits(u.units);
-      setCards(r.resources.slice(0, 6));
+      setCards(r.resources.slice(0, 8));
     } catch (e: unknown) {
       setError(errorMessage(e));
     } finally {
@@ -168,6 +178,7 @@ export default function Learn() {
     () => units.reduce((acc, u) => acc + u.levels.length, 0),
     [units],
   );
+
   const completedLevels = useMemo(
     () =>
       units.reduce(
@@ -178,6 +189,7 @@ export default function Learn() {
       ),
     [units],
   );
+
   const pct = totalLevels
     ? Math.round((completedLevels / totalLevels) * 100)
     : 0;
@@ -192,11 +204,12 @@ export default function Learn() {
     return units.filter((u) => u.category === filter);
   }, [filter, units]);
 
-  /* 推荐下一个未完成关卡 */
   const nextLevel = useMemo(() => {
     for (const u of units) {
       for (const l of u.levels) {
-        if (l.progress?.status !== "COMPLETED") return { unit: u, level: l };
+        if (l.progress?.status !== "COMPLETED") {
+          return { unit: u, level: l };
+        }
       }
     }
     return null;
@@ -204,32 +217,14 @@ export default function Learn() {
 
   return (
     <div className="grid gap-5">
-      {/* ── Hero Banner ── */}
-      <div
-        className="rounded-3xl overflow-hidden bg-gradient-to-r from-[#58cc02] via-[#4ab800] to-[#3a9600] p-6 text-white relative"
-        style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}
-      >
-        <div
-          className="absolute right-0 top-0 bottom-0 w-56 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(circle at 80% 50%, rgba(255,255,255,0.12) 0%, transparent 70%)",
-          }}
-        />
+      <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-[#58cc02] via-[#4ab800] to-[#3a9600] p-6 text-white relative">
+        <div className="absolute right-0 top-0 bottom-0 w-56 pointer-events-none bg-[radial-gradient(circle_at_80%_50%,rgba(255,255,255,0.12)_0%,transparent_70%)]" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div
-              className="text-2xl font-extrabold leading-tight"
-              style={{
-                fontFamily: "system-ui,-apple-system,sans-serif",
-                letterSpacing: "-0.03em",
-              }}
-            >
-              学习闯关中心 ⚔️
+            <div className="text-2xl font-extrabold leading-tight">
+              学习闯关中心 ⚖️
             </div>
-            <div className="mt-1 text-white/80" style={{ fontSize: "16px" }}>
-              刷关卡·攒经验·复盘错题
-            </div>
+            <div className="mt-1 text-white/80 text-base">刷关卡、攒经验、复盘错题</div>
             {user && (
               <div className="mt-3 flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-xs font-bold">
@@ -238,17 +233,16 @@ export default function Learn() {
                 </div>
                 <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-xs font-bold">
                   <Flame className="h-3.5 w-3.5 text-orange-300" />
-                  连续学习 3 天{" "}
+                  连续学习 3 天
                 </div>
                 <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-xs font-bold">
                   <Star className="h-3.5 w-3.5 text-yellow-200" />
-                  {completedLevels} 关已完成
+                  已完成 {completedLevels} 关
                 </div>
               </div>
             )}
           </div>
 
-          {/* 进度环 */}
           <div className="shrink-0 flex flex-col items-center gap-1.5">
             <div className="relative h-20 w-20">
               <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
@@ -287,14 +281,7 @@ export default function Learn() {
         </div>
       </div>
 
-      {/* ── 每日法律金句 ── */}
-      <div
-        className="rounded-3xl bg-gradient-to-r from-amber-50 to-yellow-50 px-5 py-4 flex items-start gap-3"
-        style={{
-          border: "1px solid #f0f0f0",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-        }}
-      >
+      <div className="rounded-3xl bg-gradient-to-r from-amber-50 to-yellow-50 px-5 py-4 flex items-start gap-3 border border-zinc-100">
         <div className="h-9 w-9 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 text-lg select-none">
           ⚖️
         </div>
@@ -302,20 +289,17 @@ export default function Learn() {
           <div className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-1">
             今日法律知识
           </div>
-          <div
-            className="text-sm font-bold leading-snug"
-            style={{ color: "#333" }}
-          >
-            "{todayTip.tip}"
+          <div className="text-sm font-bold leading-snug text-zinc-800">
+            {todayTip.tip}
           </div>
-          <div className="mt-1 text-xs text-zinc-500">—{todayTip.law}</div>
+          <div className="mt-1 text-xs text-zinc-500">— {todayTip.law}</div>
         </div>
       </div>
 
-      {/* ── 推荐继续学习 ── */}
       {!loading && nextLevel && (
-        <div
-          className="rounded-3xl border-2 border-[var(--p-primary)] bg-green-50 px-5 py-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-green-100 transition-colors"
+        <button
+          type="button"
+          className="rounded-3xl border-2 border-[var(--p-primary)] bg-green-50 px-5 py-4 flex items-center justify-between gap-4 hover:bg-green-100 transition-colors text-left"
           onClick={() =>
             setOpenLevel({
               id: nextLevel.level.id,
@@ -330,12 +314,9 @@ export default function Learn() {
             </div>
             <div className="min-w-0">
               <div className="text-xs font-bold text-green-700 uppercase tracking-widest">
-                继续上次 · 下一关{" "}
+                继续上次 · 下一关
               </div>
-              <div
-                className="text-base font-extrabold text-zinc-900 truncate mt-0.5"
-                style={{ letterSpacing: "-0.02em" }}
-              >
+              <div className="text-base font-extrabold text-zinc-900 truncate mt-0.5">
                 {nextLevel.level.title}
               </div>
               <div className="text-xs text-zinc-500 mt-0.5">
@@ -343,48 +324,21 @@ export default function Learn() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <div
-              className="flex items-center gap-1 text-white rounded-full px-3 py-1.5 text-xs font-bold transition-all"
-              style={{
-                background: "#58cc02",
-                boxShadow: "0 2px 6px rgba(16,185,129,0.15)",
-                cursor: "pointer",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.background =
-                  "#10b981";
-                (e.currentTarget as HTMLDivElement).style.boxShadow =
-                  "0 4px 12px rgba(16,185,129,0.3)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.background =
-                  "#58cc02";
-                (e.currentTarget as HTMLDivElement).style.boxShadow =
-                  "0 2px 6px rgba(16,185,129,0.15)";
-              }}
-            >
-              <Zap className="h-3.5 w-3.5" />
-              开始挑战{" "}
-            </div>
-            <ChevronRight className="h-5 w-5 text-green-600" />
+          <div className="flex items-center gap-1.5 shrink-0 text-green-700 font-bold text-sm">
+            <Zap className="h-4 w-4" />
+            开始挑战
+            <ChevronRight className="h-4 w-4" />
           </div>
-        </div>
+        </button>
       )}
 
-      {/* ── 今日知识卡── */}
       {!loading && !error && cards.length > 0 && (
         <Card className="p-5">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <div
-                className="text-base font-extrabold text-zinc-900"
-                style={{ letterSpacing: "-0.02em" }}
-              >
-                📇 今日法律知识卡{" "}
-              </div>
+              <div className="text-base font-extrabold text-zinc-900">今日法律知识卡</div>
               <div className="text-xs text-zinc-500 mt-0.5">
-                先看卡片再闯关，更容易拿高分
+                先看知识卡，再闯关，更容易拿高分
               </div>
             </div>
             <Button
@@ -396,46 +350,23 @@ export default function Learn() {
               全部资源
             </Button>
           </div>
+
           <div className="grid gap-2 sm:grid-cols-2">
             {cards.map((c) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => navigate("/app/resources")}
-                className="text-left rounded-2xl p-4 transition-all group"
-                style={{ border: "1px solid #f0f0f0", background: "#fafafa" }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    "#f0f0f0";
-                  (e.currentTarget as HTMLButtonElement).style.border =
-                    "1px solid #e0e0e0";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    "#fafafa";
-                  (e.currentTarget as HTMLButtonElement).style.border =
-                    "1px solid #f0f0f0";
-                }}
+                className="text-left rounded-2xl border border-zinc-100 bg-zinc-50 p-4 hover:bg-zinc-100 transition-all"
               >
-                <div
-                  className="text-sm font-bold text-zinc-900 leading-snug group-hover:text-[var(--p-primary)] transition-colors"
-                  style={{ letterSpacing: "-0.01em" }}
-                >
+                <div className="text-sm font-bold text-zinc-900 leading-snug">
                   {c.title}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {c.tags.slice(0, 3).map((t) => (
                     <span
                       key={t}
-                      style={{
-                        background: "#e6f7ef",
-                        color: "#10b981",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        borderRadius: "9999px",
-                        padding: "2px 10px",
-                        display: "inline-block",
-                      }}
+                      className="inline-block rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold px-2.5 py-0.5"
                     >
                       {t}
                     </span>
@@ -447,12 +378,8 @@ export default function Learn() {
         </Card>
       )}
 
-      {/* ── 主题分类筛选── */}
       {!loading && !error && categories.length > 1 && (
-        <div
-          className="flex items-center gap-2 overflow-x-auto pb-1"
-          style={{ scrollbarWidth: "none" }}
-        >
+        <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => {
             const meta = c === "全部" ? null : getCategoryMeta(c);
             const isActive = filter === c;
@@ -467,14 +394,6 @@ export default function Learn() {
                     ? "bg-[var(--p-primary)] text-white shadow-md shadow-green-200"
                     : "bg-white border border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
                 )}
-                style={
-                  isActive
-                    ? {
-                        borderBottom: "2px solid #10b981",
-                        paddingBottom: "calc(0.5rem - 2px)",
-                      }
-                    : {}
-                }
               >
                 {meta && <span>{meta.emoji}</span>}
                 {c}
@@ -484,7 +403,6 @@ export default function Learn() {
         </div>
       )}
 
-      {/* ── 骨架屏── */}
       {loading && (
         <div className="grid gap-4">
           {[1, 2].map((i) => (
@@ -509,7 +427,6 @@ export default function Learn() {
         </Card>
       )}
 
-      {/* ── 关卡单元列表 ── */}
       {!loading &&
         !error &&
         filteredUnits.map((u) => {
@@ -524,20 +441,14 @@ export default function Learn() {
 
           return (
             <Card key={u.id} className="overflow-hidden">
-              {/* 单元头部 */}
-              <div
-                className={clsx("px-5 py-4 border-b border-zinc-100", meta.bg)}
-              >
+              <div className={clsx("px-5 py-4 border-b border-zinc-100", meta.bg)}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-11 w-11 rounded-2xl bg-white flex items-center justify-center text-2xl shrink-0 shadow-sm">
                       {meta.emoji}
                     </div>
                     <div>
-                      <div
-                        className={clsx("text-base font-extrabold", meta.color)}
-                        style={{ letterSpacing: "-0.02em" }}
-                      >
+                      <div className={clsx("text-base font-extrabold", meta.color)}>
                         {u.title}
                       </div>
                       <div className="mt-1 flex items-center gap-2 flex-wrap">
@@ -547,7 +458,6 @@ export default function Learn() {
                     </div>
                   </div>
 
-                  {/* 单元进度 */}
                   <div className="shrink-0 text-right hidden sm:block">
                     <div className="text-xs font-bold text-zinc-500 mb-1.5">
                       {unitCompleted}/{unitTotal} 完成
@@ -563,7 +473,6 @@ export default function Learn() {
                 </div>
               </div>
 
-              {/* 关卡列表 · 统一高度 */}
               <div className="p-4 grid gap-2">
                 {u.levels.map((l, idx) => {
                   const done = l.progress?.status === "COMPLETED";
@@ -586,7 +495,6 @@ export default function Learn() {
                             : "border-zinc-100 bg-white hover:border-zinc-200",
                       )}
                     >
-                      {/* 左侧：序号 + 标题 */}
                       <div className="flex items-center gap-3 min-w-0">
                         <div
                           className={clsx(
@@ -598,17 +506,10 @@ export default function Learn() {
                                 : "bg-zinc-100 text-zinc-500",
                           )}
                         >
-                          {done ? (
-                            <CheckCircle2 className="h-4 w-4" />
-                          ) : (
-                            idx + 1
-                          )}
+                          {done ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
                         </div>
                         <div className="min-w-0">
-                          <div
-                            className="text-sm font-bold text-zinc-900 truncate"
-                            style={{ letterSpacing: "-0.01em" }}
-                          >
+                          <div className="text-sm font-bold text-zinc-900 truncate">
                             {l.title}
                           </div>
                           <div className="text-xs text-zinc-400 mt-0.5">
@@ -622,13 +523,10 @@ export default function Learn() {
                         </div>
                       </div>
 
-                      {/* 右侧：按钮*/}
                       <Button
                         className="shrink-0"
                         size="sm"
-                        variant={
-                          done ? "secondary" : isNext ? "primary" : "secondary"
-                        }
+                        variant={done ? "secondary" : isNext ? "primary" : "secondary"}
                         onClick={() =>
                           setOpenLevel({
                             id: l.id,
@@ -637,7 +535,7 @@ export default function Learn() {
                           })
                         }
                       >
-                        {done ? "再来一局" : isNext ? "开始🚀" : "开始"}
+                        {done ? "再来一局" : isNext ? "开始🔥" : "开始"}
                       </Button>
                     </div>
                   );

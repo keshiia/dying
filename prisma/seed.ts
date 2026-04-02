@@ -1136,6 +1136,64 @@ async function main() {
       },
     ],
 
+    'level-consumer-3': [
+      {
+        id: 'q-s3-1',
+        type: QuestionType.SINGLE,
+        prompt: '网购商品与宣传严重不符时，哪种做法更稳妥？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '直接在群里辱骂商家' },
+          { key: 'B', text: '保留证据并通过平台发起售后/投诉' },
+          { key: 'C', text: '把账号密码给“客服”代处理' },
+          { key: 'D', text: '继续下单看看会不会好' },
+        ]),
+        answerKey: 'B',
+        explanation: '先固定证据，再走平台规则处理，风险更低、成功率更高。',
+      },
+      {
+        id: 'q-s3-2',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '“先私下转账再退款更快”通常存在较高诈骗风险。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '脱离平台保障交易，容易被“二次收割”。',
+      },
+      {
+        id: 'q-s3-3',
+        type: QuestionType.SINGLE,
+        prompt: '下列哪项通常不是处理消费纠纷的一手证据？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '订单记录和支付凭证' },
+          { key: 'B', text: '与商家沟通截图' },
+          { key: 'C', text: '物流签收信息' },
+          { key: 'D', text: '朋友的主观猜测' },
+        ]),
+        answerKey: 'D',
+        explanation: '主观判断证明力弱，客观记录更关键。',
+      },
+      {
+        id: 'q-s3-4',
+        type: QuestionType.SCENARIO,
+        prompt: '情景题：你买到疑似“三无产品”，身体不适。更合适的下一步是？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '先删除订单记录' },
+          { key: 'B', text: '保留包装与票据，及时就医并向平台/监管渠道反映' },
+          { key: 'C', text: '私下和商家“和解”并放弃证据' },
+          { key: 'D', text: '在网上公开对方隐私' },
+        ]),
+        answerKey: 'B',
+        explanation: '人身安全优先，其次是证据保存和正规渠道维权。',
+      },
+      {
+        id: 'q-s3-5',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '遇到复杂消费争议，可以拨打 12348 了解法律咨询渠道。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '12348 可提供普法与法律服务指引。',
+      },
+    ],
+
     'level-traffic-1': [
       {
         id: 'q-t1-1',
@@ -1248,6 +1306,64 @@ async function main() {
         optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
         answerKey: 'T',
         explanation: '规则不是为了刁难，而是为了安全。',
+      },
+    ],
+
+    'level-traffic-3': [
+      {
+        id: 'q-t3-1',
+        type: QuestionType.SINGLE,
+        prompt: '朋友准备酒后驾车，以下哪项最合适？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '让他慢点开就行' },
+          { key: 'B', text: '坚决劝阻并拒绝乘坐，必要时联系家长/报警' },
+          { key: 'C', text: '拍视频发社交平台' },
+          { key: 'D', text: '跟车“看着点”' },
+        ]),
+        answerKey: 'B',
+        explanation: '醉驾风险极高，第一原则是阻止与避险。',
+      },
+      {
+        id: 'q-t3-2',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '明知司机酒驾仍强行搭乘，也可能把自己置于法律与安全风险中。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '即使不是驾驶人，也可能因行为不当承担后果。',
+      },
+      {
+        id: 'q-t3-3',
+        type: QuestionType.SINGLE,
+        prompt: '关于电动自行车合规出行，哪项更正确？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '改装提速更省时间' },
+          { key: 'B', text: '遵守车道规则，避免闯灯和逆行' },
+          { key: 'C', text: '边骑边刷短视频' },
+          { key: 'D', text: '双手离把“耍酷”' },
+        ]),
+        answerKey: 'B',
+        explanation: '守规则是降低事故风险的核心。',
+      },
+      {
+        id: 'q-t3-4',
+        type: QuestionType.SCENARIO,
+        prompt: '情景题：夜间回家，同伴提议“抄近路”翻越护栏过马路。你应当？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '跟着翻越，节省时间' },
+          { key: 'B', text: '拒绝并建议走人行横道或过街设施' },
+          { key: 'C', text: '让同伴先试试' },
+          { key: 'D', text: '边跑边过，不看来车' },
+        ]),
+        answerKey: 'B',
+        explanation: '过街设施是最基本的安全保障。',
+      },
+      {
+        id: 'q-t3-5',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '交通规则的底层目标是降低伤害、保护生命安全。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '规则并非“麻烦”，而是公共安全底线。',
       },
     ],
 
@@ -1365,6 +1481,63 @@ async function main() {
         explanation: '一次尝试也可能带来成瘾与法律风险。',
       },
     ],
+    'level-drug-3': [
+      {
+        id: 'q-d3-1',
+        type: QuestionType.SINGLE,
+        prompt: '“电子烟油里加点东西更上头”这类说法，你应如何判断？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '只是玩笑，不用管' },
+          { key: 'B', text: '高度警惕，拒绝接触并远离相关场景' },
+          { key: 'C', text: '先尝一点再说' },
+          { key: 'D', text: '帮忙转给朋友' },
+        ]),
+        answerKey: 'B',
+        explanation: '新型毒品常以“上头”“提神”包装，必须警惕。',
+      },
+      {
+        id: 'q-d3-2',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '“帮人保管不明粉末/药片”可能带来严重法律风险。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '不明物品流转风险极高，切勿参与。',
+      },
+      {
+        id: 'q-d3-3',
+        type: QuestionType.SINGLE,
+        prompt: '发现同伴疑似接触毒品后，第一优先应是？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '私下传播对方隐私' },
+          { key: 'B', text: '先保证安全，再联系可信成年人或报警求助' },
+          { key: 'C', text: '围观起哄' },
+          { key: 'D', text: '装作没看见' },
+        ]),
+        answerKey: 'B',
+        explanation: '及时求助与安全处置，比“自行处理”更可靠。',
+      },
+      {
+        id: 'q-d3-4',
+        type: QuestionType.SCENARIO,
+        prompt: '情景题：陌生人递给你“提神饮料”并要求你转送给同学。你应当？',
+        optionsJson: JSON.stringify([
+          { key: 'A', text: '顺手帮忙，举手之劳' },
+          { key: 'B', text: '当场拒绝，不接触不转交，尽快离开并报告老师/家长' },
+          { key: 'C', text: '先收下再判断' },
+          { key: 'D', text: '分给同学一起试' },
+        ]),
+        answerKey: 'B',
+        explanation: '拒绝、离开、报告是高风险情境的标准动作。',
+      },
+      {
+        id: 'q-d3-5',
+        type: QuestionType.TRUE_FALSE,
+        prompt: '禁毒教育的核心之一是“识别伪装、明确拒绝、及时求助”。',
+        optionsJson: JSON.stringify([{ key: 'T', text: '对' }, { key: 'F', text: '错' }]),
+        answerKey: 'T',
+        explanation: '这三步能显著降低误触高风险情境的概率。',
+      },
+    ],
   }
 
   for (const [levelId, questions] of Object.entries(questionBank)) {
@@ -1440,6 +1613,33 @@ async function main() {
         tagsJson: JSON.stringify(['禁毒法律', '拒绝技巧', '知识卡']),
         contentMd:
           '禁毒口诀：\n\n- 不明饮料/糖果/电子烟不尝试\n- 明确拒绝，立刻离开\n- 遇到疑似情况及时求助成年人\n',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-10',
+        title: '法律知识卡：未成年人兼职与劳动权益（避坑版）',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['劳动权益', '未成年人保护', '防骗']),
+        contentMd:
+          '兼职前先做三件事：\n\n1) 核实招聘主体与联系方式，拒绝“先交押金/培训费”。\n2) 明确工作内容、时间、报酬和结算方式，尽量留存书面记录。\n3) 遇到拖欠工资或人身风险，及时向家长、老师和正规渠道求助。',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-11',
+        title: '法律知识卡：校园冲突中的边界意识',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['校园安全', '冲突处理', '证据意识']),
+        contentMd:
+          '冲突处理中记住“四不一要”：\n\n- 不围观起哄\n- 不以暴制暴\n- 不传播隐私影像\n- 不私下报复\n- 要第一时间求助可信成年人并保留证据',
+        createdBy: teacher.id,
+      },
+      {
+        id: 'res-12',
+        title: '法律知识卡：网络造谣与名誉权',
+        type: ResourceType.LAW_SUMMARY,
+        tagsJson: JSON.stringify(['网络法治', '名誉权', '隐私保护']),
+        contentMd:
+          '面对网络谣言可以这样做：\n\n1) 及时截图、保留链接和时间信息。\n2) 在平台内进行举报并申请删除不实内容。\n3) 视情况向学校、监护人和相关机构求助，避免线下冲突升级。',
         createdBy: teacher.id,
       },
       {
