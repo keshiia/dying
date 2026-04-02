@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Flame,
+  Scale,
   Star,
   Trophy,
   Zap,
@@ -59,10 +60,10 @@ const categoryMeta: Record<
   },
   交通安全: {
     emoji: "🚦",
-    color: "text-green-700",
-    bg: "bg-green-50",
-    border: "border-green-200",
-    tagColor: "green",
+    color: "text-blue-700",
+    bg: "bg-blue-50",
+    border: "border-blue-200",
+    tagColor: "blue",
   },
   禁毒教育: {
     emoji: "🚫",
@@ -231,26 +232,31 @@ export default function Learn() {
 
   return (
     <div className="grid gap-5">
-      <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-[#58cc02] via-[#4ab800] to-[#3a9600] p-6 text-white relative">
-        <div className="absolute right-0 top-0 bottom-0 w-56 pointer-events-none bg-[radial-gradient(circle_at_80%_50%,rgba(255,255,255,0.12)_0%,transparent_70%)]" />
+      <div className="rounded-3xl overflow-hidden border border-[#dbe7ff] bg-gradient-to-r from-[#e8f2ff] via-[#eef6ff] to-[#e6f4ff] p-6 text-zinc-900 relative">
+        <div className="absolute -left-12 -top-10 h-36 w-36 rounded-full bg-sky-200/45 blur-2xl pointer-events-none" />
+        <div className="absolute right-8 -bottom-14 h-32 w-32 rounded-full bg-cyan-200/45 blur-2xl pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-56 pointer-events-none bg-[radial-gradient(circle_at_80%_50%,rgba(255,255,255,0.45)_0%,transparent_70%)]" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="text-2xl font-extrabold leading-tight">
-              学习闯关中心 ⚖️
+            <div className="flex items-center gap-2.5 text-2xl font-extrabold leading-tight">
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-white/80 ring-1 ring-blue-100">
+                <Scale className="h-4 w-4 text-slate-700" strokeWidth={2.3} />
+              </span>
+              学习闯关中心
             </div>
-            <div className="mt-1 text-white/80 text-base">刷关卡、攒经验、复盘错题</div>
+            <div className="mt-1 text-zinc-600 text-base">刷关卡、攒经验、复盘错题</div>
             {user && (
               <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-xs font-bold">
-                  <Trophy className="h-3.5 w-3.5 text-yellow-300" />
+                <div className="flex items-center gap-1.5 rounded-full border border-blue-100 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
+                  <Trophy className="h-3.5 w-3.5 text-amber-500" />
                   Lv {user.level} · {user.xp} XP
                 </div>
-                <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-xs font-bold">
-                  <Flame className="h-3.5 w-3.5 text-orange-300" />
+                <div className="flex items-center gap-1.5 rounded-full border border-blue-100 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
+                  <Flame className="h-3.5 w-3.5 text-rose-500" />
                   连续学习 3 天
                 </div>
-                <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-xs font-bold">
-                  <Star className="h-3.5 w-3.5 text-yellow-200" />
+                <div className="flex items-center gap-1.5 rounded-full border border-blue-100 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
+                  <Star className="h-3.5 w-3.5 text-sky-500" />
                   已完成 {completedLevels} 关
                 </div>
               </div>
@@ -265,7 +271,7 @@ export default function Learn() {
                   cy="40"
                   r="32"
                   fill="none"
-                  stroke="rgba(255,255,255,0.2)"
+                  stroke="rgba(59,130,246,0.18)"
                   strokeWidth="8"
                 />
                 <circle
@@ -273,7 +279,7 @@ export default function Learn() {
                   cy="40"
                   r="32"
                   fill="none"
-                  stroke="white"
+                  stroke="var(--p-primary)"
                   strokeWidth="8"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 32}`}
@@ -282,25 +288,25 @@ export default function Learn() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xl font-extrabold text-white leading-none">
+                <span className="text-xl font-extrabold text-zinc-900 leading-none">
                   {pct}%
                 </span>
-                <span className="text-xs text-white/70">完成</span>
+                <span className="text-xs text-zinc-500">完成</span>
               </div>
             </div>
-            <div className="text-xs text-white/80 font-semibold">
+            <div className="text-xs text-zinc-600 font-semibold">
               {completedLevels}/{totalLevels} 关卡
             </div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-3xl bg-gradient-to-r from-amber-50 to-yellow-50 px-5 py-4 flex items-start gap-3 border border-zinc-100">
-        <div className="h-9 w-9 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 text-lg select-none">
-          ⚖️
+      <div className="rounded-3xl bg-gradient-to-r from-white to-[#f3f8ff] px-5 py-4 flex items-start gap-3 border border-[#dbe7ff]">
+        <div className="h-9 w-9 rounded-2xl border border-blue-100 bg-white flex items-center justify-center shrink-0 text-lg">
+          <Scale className="h-4 w-4 text-slate-600" strokeWidth={2.2} />
         </div>
         <div className="min-w-0">
-          <div className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-1">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
             今日法律知识
           </div>
           <div className="text-sm font-bold leading-snug text-zinc-800">
@@ -334,7 +340,7 @@ export default function Learn() {
       {!loading && nextLevel && (
         <button
           type="button"
-          className="rounded-3xl border-2 border-[var(--p-primary)] bg-green-50 px-5 py-4 flex items-center justify-between gap-4 hover:bg-green-100 transition-colors text-left"
+          className="rounded-3xl border-2 border-[var(--p-primary)] bg-blue-50 px-5 py-4 flex items-center justify-between gap-4 hover:bg-blue-100 transition-colors text-left"
           onClick={() =>
             setOpenLevel({
               id: nextLevel.level.id,
@@ -344,11 +350,11 @@ export default function Learn() {
           }
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-11 w-11 rounded-2xl bg-[var(--p-primary)] text-white flex items-center justify-center text-xl shrink-0 shadow-md shadow-green-200">
+            <div className="h-11 w-11 rounded-2xl bg-[var(--p-primary)] text-white flex items-center justify-center text-xl shrink-0 shadow-md shadow-blue-200">
               {getCategoryMeta(nextLevel.unit.category).emoji}
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-bold text-green-700 uppercase tracking-widest">
+              <div className="text-xs font-bold text-blue-700 uppercase tracking-widest">
                 继续上次 · 下一关
               </div>
               <div className="text-base font-extrabold text-zinc-900 truncate mt-0.5">
@@ -364,7 +370,7 @@ export default function Learn() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0 text-green-700 font-bold text-sm">
+          <div className="flex items-center gap-1.5 shrink-0 text-blue-700 font-bold text-sm">
             <Zap className="h-4 w-4" />
             开始挑战
             <ChevronRight className="h-4 w-4" />
@@ -406,7 +412,7 @@ export default function Learn() {
                   {c.tags.slice(0, 3).map((t) => (
                     <span
                       key={t}
-                      className="inline-block rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold px-2.5 py-0.5"
+                      className="inline-block rounded-full bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-0.5"
                     >
                       {t}
                     </span>
@@ -431,7 +437,7 @@ export default function Learn() {
                 className={clsx(
                   "shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition-all",
                   isActive
-                    ? "bg-[var(--p-primary)] text-white shadow-md shadow-green-200"
+                    ? "bg-[var(--p-primary)] text-white shadow-md shadow-blue-200"
                     : "bg-white border border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
                 )}
               >
@@ -529,9 +535,9 @@ export default function Learn() {
                       className={clsx(
                         "h-[72px] flex items-center justify-between gap-3 rounded-2xl border px-4 transition-all",
                         done
-                          ? "border-green-200 bg-green-50"
+                          ? "border-blue-200 bg-blue-50"
                           : isNext
-                            ? "border-[var(--p-primary)] bg-green-50/60"
+                            ? "border-[var(--p-primary)] bg-blue-50/70"
                             : "border-zinc-100 bg-white hover:border-zinc-200",
                       )}
                     >
@@ -540,7 +546,7 @@ export default function Learn() {
                           className={clsx(
                             "h-8 w-8 rounded-xl flex items-center justify-center text-xs font-extrabold shrink-0",
                             done
-                              ? "bg-green-500 text-white"
+                              ? "bg-blue-500 text-white"
                               : isNext
                                 ? "bg-[var(--p-primary)] text-white"
                                 : "bg-zinc-100 text-zinc-500",

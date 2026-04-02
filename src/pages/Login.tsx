@@ -584,7 +584,7 @@ export default function Login() {
         <div className="w-full max-w-[400px]">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
-            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#58cc02] to-[#46a302] text-white flex items-center justify-center shadow-md shadow-green-200">
+            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[var(--p-primary)] to-[var(--p-primary-dark)] text-white flex items-center justify-center shadow-md shadow-blue-100">
               <Shield className="h-6 w-6" />
             </div>
             <div>

@@ -14,7 +14,7 @@ export default function Card({
 }: Props) {
   const glowMap = {
     none: "",
-    green: "shadow-[0_4px_24px_rgba(88,204,2,0.18)] border-green-200",
+    green: "shadow-[0_4px_24px_rgba(28,176,246,0.18)] border-blue-200",
     blue: "shadow-[0_4px_24px_rgba(28,176,246,0.18)] border-blue-200",
     purple: "shadow-[0_4px_24px_rgba(168,85,247,0.18)] border-purple-200",
     orange: "shadow-[0_4px_24px_rgba(249,115,22,0.18)] border-orange-200",

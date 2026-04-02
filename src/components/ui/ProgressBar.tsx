@@ -22,7 +22,7 @@ export default function ProgressBar({
   const heights = { sm: "h-2", md: "h-3", lg: "h-4" }[size];
 
   const fills = {
-    green: "bg-gradient-to-r from-[#58cc02] to-[#89e219]",
+    green: "bg-gradient-to-r from-[#1cb0f6] to-[#57cbff]",
     blue: "bg-gradient-to-r from-[#1cb0f6] to-[#57cbff]",
     purple: "bg-gradient-to-r from-[#a855f7] to-[#c084fc]",
     orange: "bg-gradient-to-r from-[#f97316] to-[#fb923c]",

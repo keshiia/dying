@@ -4,10 +4,10 @@
 
 :root {
     --p-bg: #f0f4ff;
-    --p-primary: #58cc02;
-    --p-primary-dark: #46a302;
-    --p-accent: #1cb0f6;
-    --p-accent-dark: #0a8fd1;
+    --p-primary: #3fc3fb;
+    --p-primary-dark: #1faae7;
+    --p-accent: #3fc3fb;
+    --p-accent-dark: #1faae7;
     --p-warning: #ffb020;
     --p-danger: #ff4b4b;
     --p-purple: #a855f7;
@@ -30,7 +30,7 @@ body {
     background-image:
         radial-gradient(
             circle at 20% 20%,
-            rgba(88, 204, 2, 0.08) 0%,
+            rgba(28, 176, 246, 0.1) 0%,
             transparent 40%
         ),
         radial-gradient(
@@ -119,13 +119,13 @@ body {
 }
 @keyframes pulse-ring {
     0% {
-        box-shadow: 0 0 0 0 rgba(88, 204, 2, 0.4);
+        box-shadow: 0 0 0 0 rgba(28, 176, 246, 0.4);
     }
     70% {
-        box-shadow: 0 0 0 10px rgba(88, 204, 2, 0);
+        box-shadow: 0 0 0 10px rgba(28, 176, 246, 0);
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(88, 204, 2, 0);
+        box-shadow: 0 0 0 0 rgba(28, 176, 246, 0);
     }
 }
 
@@ -163,7 +163,7 @@ body {
 
 /* 渐变文字 */
 .text-gradient-green {
-    background: linear-gradient(135deg, #58cc02, #46a302);
+    background: linear-gradient(135deg, #1cb0f6, #0a8fd1);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -177,5 +177,5 @@ body {
 
 /* XP条发光 */
 .xp-bar-glow {
-    box-shadow: 0 0 8px rgba(88, 204, 2, 0.5);
+    box-shadow: 0 0 8px rgba(28, 176, 246, 0.45);
 }

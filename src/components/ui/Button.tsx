@@ -21,7 +21,7 @@ export default function Button({
   }[size];
   const variants = {
     primary:
-      "bg-[var(--p-primary)] text-white shadow-md shadow-green-200 hover:bg-[var(--p-primary-dark)] hover:shadow-green-300",
+      "bg-[var(--p-primary)] text-white shadow-md shadow-blue-200 hover:bg-[var(--p-primary-dark)] hover:shadow-blue-300",
     secondary:
       "bg-white text-zinc-800 border-2 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 shadow-sm",
     ghost: "bg-transparent text-zinc-700 hover:bg-zinc-100",
