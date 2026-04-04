@@ -1,38 +1,38 @@
 -- DropForeignKey
-ALTER TABLE `assignment` DROP FOREIGN KEY `Assignment_classId_fkey`;
+ALTER TABLE `Assignment` DROP FOREIGN KEY `Assignment_classId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `assignmentsubmission` DROP FOREIGN KEY `AssignmentSubmission_assignmentId_fkey`;
+ALTER TABLE `AssignmentSubmission` DROP FOREIGN KEY `AssignmentSubmission_assignmentId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `assignmentsubmission` DROP FOREIGN KEY `AssignmentSubmission_studentId_fkey`;
+ALTER TABLE `AssignmentSubmission` DROP FOREIGN KEY `AssignmentSubmission_studentId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `attempt` DROP FOREIGN KEY `Attempt_levelId_fkey`;
+ALTER TABLE `Attempt` DROP FOREIGN KEY `Attempt_levelId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `attempt` DROP FOREIGN KEY `Attempt_studentId_fkey`;
+ALTER TABLE `Attempt` DROP FOREIGN KEY `Attempt_studentId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `classmember` DROP FOREIGN KEY `ClassMember_classId_fkey`;
+ALTER TABLE `ClassMember` DROP FOREIGN KEY `ClassMember_classId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `classmember` DROP FOREIGN KEY `ClassMember_studentId_fkey`;
+ALTER TABLE `ClassMember` DROP FOREIGN KEY `ClassMember_studentId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `level` DROP FOREIGN KEY `Level_unitId_fkey`;
+ALTER TABLE `Level` DROP FOREIGN KEY `Level_unitId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `question` DROP FOREIGN KEY `Question_levelId_fkey`;
+ALTER TABLE `Question` DROP FOREIGN KEY `Question_levelId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `resource` DROP FOREIGN KEY `Resource_createdBy_fkey`;
+ALTER TABLE `Resource` DROP FOREIGN KEY `Resource_createdBy_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `userprogress` DROP FOREIGN KEY `UserProgress_levelId_fkey`;
+ALTER TABLE `UserProgress` DROP FOREIGN KEY `UserProgress_levelId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `userprogress` DROP FOREIGN KEY `UserProgress_studentId_fkey`;
+ALTER TABLE `UserProgress` DROP FOREIGN KEY `UserProgress_studentId_fkey`;
 
 -- CreateTable
 CREATE TABLE `ComicRead` (
