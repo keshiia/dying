@@ -414,6 +414,27 @@ router.get('/review-levels', async (req: Request, res: Response) => {
 
 const JoinClassSchema = z.object({ joinCode: z.string().min(4) })
 
+const ComicReadSchema = z.object({ storyId: z.string().min(1) })
+
+router.post('/comic-read', async (req: Request, res: Response) => {
+  const parsed = ComicReadSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ success: false, error: 'BAD_REQUEST' })
+    return
+  }
+
+  const xpGain = 10
+  const newXp = req.user!.xp + xpGain
+  const newLevel = 1 + Math.floor(newXp / 100)
+  const user = await prisma.user.update({
+    where: { id: req.user!.id },
+    data: { xp: newXp, level: newLevel },
+    select: { id: true, xp: true, level: true },
+  })
+
+  res.json({ success: true, user })
+})
+
 router.post('/join-class', async (req: Request, res: Response) => {
   const parsed = JoinClassSchema.safeParse(req.body)
   if (!parsed.success) {

@@ -16,6 +16,7 @@ import Tag from "@/components/ui/Tag";
 import BannerCarousel from "@/components/ui/BannerCarousel";
 import { useToast } from "@/components/ui/Toast";
 import { apiFetch } from "@/utils/api";
+import { useAuthStore } from "@/stores/auth";
 
 interface ComicPanel {
   image: string;
@@ -100,17 +101,38 @@ export default function Comics() {
   const [readingStory, setReadingStory] = useState<ComicStory | null>(null);
   const [currentPanel, setCurrentPanel] = useState(0);
   const [xpAnim, setXpAnim] = useState(false);
-  const rewardedRef = useRef<Set<string>>(new Set(JSON.parse(localStorage.getItem("comic_read") ?? "[]")));
+  const userId = useAuthStore((s) => s.user?.id);
+  const [readSet, setReadSet] = useState<Set<string>>(() =>
+    new Set(JSON.parse(localStorage.getItem(`comic_read_${userId ?? ""}`) ?? "[]")),
+  );
   const { toast } = useToast();
 
+  useEffect(() => {
+    setReadSet(new Set(JSON.parse(localStorage.getItem(`comic_read_${userId ?? ""}`) ?? "[]")));
+  }, [userId]);
+
   function markRead(storyId: string) {
-    if (rewardedRef.current.has(storyId)) return;
-    rewardedRef.current.add(storyId);
-    localStorage.setItem("comic_read", JSON.stringify([...rewardedRef.current]));
+    if (readSet.has(storyId)) return;
+    const next = new Set(readSet);
+    next.add(storyId);
+    setReadSet(next);
+    localStorage.setItem(`comic_read_${userId ?? ""}`, JSON.stringify([...next]));
     toast("阅读完成，+10 XP", "success");
     setXpAnim(true);
     setTimeout(() => setXpAnim(false), 2000);
-    apiFetch("/api/student/comic-read", { method: "POST", body: JSON.stringify({ storyId }) }).catch(() => {});
+    apiFetch<{ success: true; user: { id: string; xp: number; level: number } }>("/api/student/comic-read", {
+      method: "POST",
+      body: JSON.stringify({ storyId }),
+    })
+      .then((res) => {
+        const { user: updatedUser } = res;
+        useAuthStore.getState().setAuth(useAuthStore.getState().token!, {
+          ...useAuthStore.getState().user!,
+          xp: updatedUser.xp,
+          level: updatedUser.level,
+        });
+      })
+      .catch(() => {});
   }
 
   function openStory(story: ComicStory) {
@@ -230,7 +252,7 @@ export default function Comics() {
               />
               <div className="absolute top-3 left-3 flex items-center gap-1.5">
                 <Tag color={story.tagColor}>{story.topic}</Tag>
-                {rewardedRef.current.has(story.id) && (
+                {readSet.has(story.id) && (
                   <span className="flex items-center gap-1 rounded-full bg-emerald-500/90 backdrop-blur-sm px-2.5 py-1 text-xs font-bold text-white">
                     <CheckCircle2 className="h-3 w-3" />
                     已读
@@ -240,7 +262,7 @@ export default function Comics() {
               <div className="absolute bottom-3 right-3 rounded-full bg-black/50 backdrop-blur-sm px-2.5 py-1 text-xs font-bold text-white">
                 {story.panels.length} 页
               </div>
-              {!rewardedRef.current.has(story.id) && (
+              {!readSet.has(story.id) && (
                 <div className="absolute bottom-3 left-3 rounded-full bg-amber-500/90 backdrop-blur-sm px-2.5 py-1 text-xs font-bold text-white flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
                   +10 XP
@@ -338,7 +360,7 @@ export default function Comics() {
               ) : (
                 /* Law Tip Summary (shown after last panel) */
                 <div className="p-4 grid gap-3">
-                  {rewardedRef.current.has(readingStory.id) && (
+                  {readSet.has(readingStory.id) && (
                     <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 px-4 py-3 flex items-center gap-2.5">
                       <span className="text-2xl">🎉</span>
                       <div>
