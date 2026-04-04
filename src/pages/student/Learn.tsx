@@ -579,7 +579,15 @@ export default function Learn() {
       <ChallengeModal
         openLevel={openLevel}
         onClose={() => setOpenLevel(null)}
-        onCompleted={load}
+        onCompleted={async (data) => {
+          if (data.user) {
+            const store = useAuthStore.getState()
+            if (store.token && store.user) {
+              store.setAuth(store.token, { ...store.user, xp: data.user.xp, level: data.user.level })
+            }
+          }
+          await load()
+        }}
       />
     </div>
   );

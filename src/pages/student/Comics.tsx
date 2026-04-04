@@ -102,13 +102,17 @@ export default function Comics() {
   const [currentPanel, setCurrentPanel] = useState(0);
   const [xpAnim, setXpAnim] = useState(false);
   const userId = useAuthStore((s) => s.user?.id);
-  const [readSet, setReadSet] = useState<Set<string>>(() =>
-    new Set(JSON.parse(localStorage.getItem(`comic_read_${userId ?? ""}`) ?? "[]")),
-  );
+  const [readSet, setReadSet] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
-    setReadSet(new Set(JSON.parse(localStorage.getItem(`comic_read_${userId ?? ""}`) ?? "[]")));
+    if (!userId) return;
+    apiFetch<{ success: true; storyIds: string[] }>("/api/student/comic-reads")
+      .then((res) => setReadSet(new Set(res.storyIds)))
+      .catch(() => {
+        // fallback to localStorage cache
+        setReadSet(new Set(JSON.parse(localStorage.getItem(`comic_read_${userId}`) ?? "[]")));
+      });
   }, [userId]);
 
   function markRead(storyId: string) {
@@ -117,22 +121,24 @@ export default function Comics() {
     next.add(storyId);
     setReadSet(next);
     localStorage.setItem(`comic_read_${userId ?? ""}`, JSON.stringify([...next]));
-    toast("阅读完成，+10 XP", "success");
     setXpAnim(true);
     setTimeout(() => setXpAnim(false), 2000);
-    apiFetch<{ success: true; user: { id: string; xp: number; level: number } }>("/api/student/comic-read", {
+    apiFetch<{ success: true; xpGain: number; user: { id: string; xp: number; level: number } }>("/api/student/comic-read", {
       method: "POST",
       body: JSON.stringify({ storyId }),
     })
       .then((res) => {
-        const { user: updatedUser } = res;
-        useAuthStore.getState().setAuth(useAuthStore.getState().token!, {
-          ...useAuthStore.getState().user!,
-          xp: updatedUser.xp,
-          level: updatedUser.level,
-        });
+        toast(`阅读完成，+${res.xpGain} XP`, "success");
+        if (res.xpGain > 0) {
+          const store = useAuthStore.getState();
+          if (store.token && store.user) {
+            store.setAuth(store.token, { ...store.user, xp: res.user.xp, level: res.user.level });
+          }
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        toast("阅读完成", "success");
+      });
   }
 
   function openStory(story: ComicStory) {

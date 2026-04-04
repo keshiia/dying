@@ -265,9 +265,8 @@ router.post('/levels/:levelId/submit', async (req: Request, res: Response) => {
   const total = questions.length
   const score = total === 0 ? 0 : Math.round((correct / total) * 100)
   const status = score >= 60 ? 'COMPLETED' : 'IN_PROGRESS'
-  const xpGain = Math.max(1, Math.round(level.xpReward * (score / 100)))
 
-  const [attempt, updatedUser] = await prisma.$transaction(async (tx) => {
+  const [attempt, updatedUser, xpGain] = await prisma.$transaction(async (tx) => {
     const attemptCreated = await tx.attempt.create({
       data: {
         studentId: req.user!.id,
@@ -278,11 +277,17 @@ router.post('/levels/:levelId/submit', async (req: Request, res: Response) => {
       },
     })
 
+    const existing = await tx.userProgress.findUnique({
+      where: { studentId_levelId: { studentId: req.user!.id, levelId } },
+    })
+    const wasCompleted = existing?.status === 'COMPLETED'
+    const bestScore = existing ? Math.max(existing.bestScore, score) : score
+
     await tx.userProgress.upsert({
       where: { studentId_levelId: { studentId: req.user!.id, levelId } },
       update: {
         status,
-        bestScore: score,
+        bestScore,
       },
       create: {
         studentId: req.user!.id,
@@ -292,15 +297,24 @@ router.post('/levels/:levelId/submit', async (req: Request, res: Response) => {
       },
     })
 
-    const newXp = req.user!.xp + xpGain
-    const newLevel = 1 + Math.floor(newXp / 100)
-    const user = await tx.user.update({
+    let user = await tx.user.findUnique({
       where: { id: req.user!.id },
-      data: { xp: newXp, level: newLevel },
       select: { id: true, xp: true, level: true },
     })
 
-    return [attemptCreated, user] as const
+    if (!wasCompleted) {
+      const xpGain = Math.max(1, Math.round(level.xpReward * (score / 100)))
+      const newXp = req.user!.xp + xpGain
+      const newLevel = 1 + Math.floor(newXp / 100)
+      user = await tx.user.update({
+        where: { id: req.user!.id },
+        data: { xp: newXp, level: newLevel },
+        select: { id: true, xp: true, level: true },
+      })
+      return [attemptCreated, user, xpGain] as const
+    }
+
+    return [attemptCreated, user!, 0] as const
   })
 
   res.json({
@@ -423,16 +437,45 @@ router.post('/comic-read', async (req: Request, res: Response) => {
     return
   }
 
-  const xpGain = 10
-  const newXp = req.user!.xp + xpGain
-  const newLevel = 1 + Math.floor(newXp / 100)
-  const user = await prisma.user.update({
-    where: { id: req.user!.id },
-    data: { xp: newXp, level: newLevel },
-    select: { id: true, xp: true, level: true },
+  const { storyId } = parsed.data
+
+  const existing = await prisma.comicRead.findUnique({
+    where: { studentId_storyId: { studentId: req.user!.id, storyId } },
   })
 
-  res.json({ success: true, user })
+  if (existing) {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: { id: true, xp: true, level: true },
+    })
+    res.json({ success: true, xpGain: 0, user })
+    return
+  }
+
+  const xpGain = 10
+  const [, user] = await prisma.$transaction([
+    prisma.comicRead.create({
+      data: { studentId: req.user!.id, storyId },
+    }),
+    prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        xp: { increment: xpGain },
+        level: 1 + Math.floor((req.user!.xp + xpGain) / 100),
+      },
+      select: { id: true, xp: true, level: true },
+    }),
+  ])
+
+  res.json({ success: true, xpGain, user })
+})
+
+router.get('/comic-reads', async (req: Request, res: Response) => {
+  const reads = await prisma.comicRead.findMany({
+    where: { studentId: req.user!.id },
+    select: { storyId: true },
+  })
+  res.json({ success: true, storyIds: reads.map((r) => r.storyId) })
 })
 
 router.post('/join-class', async (req: Request, res: Response) => {

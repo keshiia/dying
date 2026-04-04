@@ -18,7 +18,7 @@ type LevelLite = {
 type Props = {
   openLevel: LevelLite | null
   onClose: () => void
-  onCompleted: () => Promise<void>
+  onCompleted: (data: SubmitData) => Promise<void>
 }
 
 type LevelDetail = {
@@ -56,6 +56,7 @@ type SubmitData = {
     correct: boolean
     explanation: string
   }>
+  user?: { id: string; xp: number; level: number }
 }
 
 export default function ChallengeModal({ openLevel, onClose, onCompleted }: Props) {
@@ -132,7 +133,7 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
         body: JSON.stringify({ answers }),
       })
       setResult(data)
-      await onCompleted()
+      await onCompleted(data)
     } catch (e: unknown) {
       setError(errorMessage(e))
     } finally {

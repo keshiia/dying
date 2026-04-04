@@ -842,7 +842,13 @@ export default function Growth() {
       <ChallengeModal
         openLevel={openLevel}
         onClose={() => setOpenLevel(null)}
-        onCompleted={async () => {
+        onCompleted={async (data) => {
+          if (data.user) {
+            const store = useAuthStore.getState()
+            if (store.token && store.user) {
+              store.setAuth(store.token, { ...store.user, xp: data.user.xp, level: data.user.level })
+            }
+          }
           const [summaryData, unitsData] = await Promise.all([
             apiFetch<{ success: true; stats: GrowthStats }>('/api/student/summary'),
             apiFetch<{ success: true; units: LearningUnit[] }>('/api/student/units'),
