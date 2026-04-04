@@ -19,7 +19,6 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
-  const [grade, setGrade] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +54,6 @@ export default function Login() {
         return;
       }
 
-      const trimmedGrade = grade.trim();
       const data = await apiFetch<{
         success: true;
         token: string;
@@ -67,7 +65,6 @@ export default function Login() {
           password,
           role: tab,
           nickname: nickname.trim(),
-          grade: tab === "student" && trimmedGrade ? trimmedGrade : undefined,
         }),
       });
 
@@ -202,19 +199,6 @@ export default function Login() {
                   />
                 </div>
 
-                {tab === "student" && (
-                  <div>
-                    <div className="mb-2 text-[12px] font-semibold text-zinc-500">
-                      年级（可选）
-                    </div>
-                    <Input
-                      className="h-12 rounded-xl border-zinc-200 bg-white/90 px-4 text-[15px] placeholder:text-zinc-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                      value={grade}
-                      onChange={(e) => setGrade(e.target.value)}
-                      placeholder="例如：初二 / 高一"
-                    />
-                  </div>
-                )}
               </>
             )}
           </div>
