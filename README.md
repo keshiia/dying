@@ -41,5 +41,4 @@
 ### 2.2 启动后端（生产）
 - `npm run start`
 
-建议生产环境由 Nginx 托管 `dist/` 并反代 `/api` 到 `3001`，详见：
-- `.trae/documents/部署_青少年普法互动Web平台_从零到上线.md`
+建议生产环境由 Nginx 托管 `dist/` 并反代 `/api` 到 `3001`。
