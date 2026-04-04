@@ -180,7 +180,7 @@ export default function Resources() {
     <div className="resource-center grid gap-4">
       <BannerCarousel
         slides={[
-          { src: '/images/banners/resources/banner-1.jpg', alt: '资源中心' },
+          { src: '/images/banners/resources/banner-1.png', alt: '资源中心' },
           { src: '/images/banners/resources/banner-2.jpg', alt: '资源中心' },
         ]}
       />

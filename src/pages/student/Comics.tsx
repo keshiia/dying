@@ -185,7 +185,7 @@ export default function Comics() {
     <div className="grid gap-5">
       <BannerCarousel
         slides={[
-          { src: '/images/banners/comics/法律23.jpg', alt: '漫画学法' },
+          { src: '/images/banners/comics/banner-1.jpg', alt: '漫画学法' },
         ]}
       />
 
