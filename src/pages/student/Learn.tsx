@@ -16,6 +16,7 @@ import Button from "@/components/ui/Button";
 import Tag from "@/components/ui/Tag";
 import ProgressBar from "@/components/ui/ProgressBar";
 import ChallengeModal from "@/components/student/ChallengeModal";
+import BannerCarousel from "@/components/ui/BannerCarousel";
 import { apiFetch, errorMessage } from "@/utils/api";
 import type { LearningUnit } from "@/types";
 import { useAuthStore } from "@/stores/auth";
@@ -245,69 +246,37 @@ export default function Learn() {
 
   return (
     <div className="grid gap-5">
-      <div className="rounded-3xl overflow-hidden border border-[#dbe7ff] bg-gradient-to-r from-[#e8f2ff] via-[#eef6ff] to-[#e6f4ff] p-6 text-zinc-900 relative">
-        <div className="absolute -left-12 -top-10 h-36 w-36 rounded-full bg-sky-200/45 blur-2xl pointer-events-none" />
-        <div className="absolute right-8 -bottom-14 h-32 w-32 rounded-full bg-cyan-200/45 blur-2xl pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-56 pointer-events-none bg-[radial-gradient(circle_at_80%_50%,rgba(255,255,255,0.45)_0%,transparent_70%)]" />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5 text-2xl font-extrabold leading-tight">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-white/80 ring-1 ring-blue-100">
-                <Scale className="h-4 w-4 text-slate-700" strokeWidth={2.3} />
-              </span>
-              学习闯关中心
-            </div>
-            <div className="mt-1 text-zinc-600 text-base">刷关卡、攒经验、复盘错题</div>
-            {user && (
-              <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
-                  <Trophy className="h-3.5 w-3.5 text-amber-500" />
-                  Lv {user.level} · {user.xp} XP
-                </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
-                  <Flame className="h-3.5 w-3.5 text-rose-500" />
-                  {streakDays > 0 ? `连续学习 ${streakDays} 天` : "今日待打卡"}
-                </div>
-              </div>
-            )}
-          </div>
+      <BannerCarousel
+        slides={[
+          { src: '/images/banners/learn/banner-1.jpg', alt: '学习闯关' },
+          { src: '/images/banners/learn/banner-2.png', alt: '学习闯关' },
+          { src: '/images/banners/learn/banner-3.jpg', alt: '学习闯关' },
+        ]}
+      />
 
-          <div className="shrink-0 flex flex-col items-center gap-1.5">
-            <div className="relative h-20 w-20">
-              <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
-                <circle
-                  cx="40"
-                  cy="40"
-                  r="32"
-                  fill="none"
-                  stroke="rgba(59,130,246,0.18)"
-                  strokeWidth="8"
-                />
-                <circle
-                  cx="40"
-                  cy="40"
-                  r="32"
-                  fill="none"
-                  stroke="var(--p-primary)"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 32}`}
-                  strokeDashoffset={`${2 * Math.PI * 32 * (1 - pct / 100)}`}
-                  style={{ transition: "stroke-dashoffset 1s ease" }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xl font-extrabold text-zinc-900 leading-none">
-                  {pct}%
-                </span>
-                <span className="text-xs text-zinc-500">完成</span>
-              </div>
-            </div>
-            <div className="text-xs text-zinc-600 font-semibold">
-              {completedLevels}/{totalLevels} 关卡
-            </div>
+      {/* Stats bar */}
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200/80 bg-white/90 backdrop-blur-sm px-5 py-3 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[var(--p-primary)] to-[var(--p-primary-dark)] text-white shadow-sm shadow-blue-100">
+            <Scale className="h-4 w-4" strokeWidth={2.2} />
+          </span>
+          <div>
+            <div className="text-sm font-extrabold text-zinc-900">学习闯关中心</div>
+            <div className="text-xs text-zinc-500">刷关卡、攒经验、复盘错题</div>
           </div>
         </div>
+        {user && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-zinc-700">
+              <Trophy className="h-3.5 w-3.5 text-amber-500" />
+              Lv {user.level} · {user.xp} XP
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-zinc-700">
+              <Flame className="h-3.5 w-3.5 text-rose-500" />
+              {streakDays > 0 ? `连续学习 ${streakDays} 天` : "今日待打卡"}
+            </div>
+          </div>
+        )}
       </div>
 
       {!loading && !error && (

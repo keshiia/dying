@@ -13,6 +13,7 @@ import {
 import { clsx } from "clsx";
 import Card from "@/components/ui/Card";
 import Tag from "@/components/ui/Tag";
+import BannerCarousel from "@/components/ui/BannerCarousel";
 import { useToast } from "@/components/ui/Toast";
 import { apiFetch } from "@/utils/api";
 
@@ -182,29 +183,31 @@ export default function Comics() {
 
   return (
     <div className="grid gap-5">
-      {/* Banner */}
-      <div className="rounded-3xl overflow-hidden border border-amber-200/80 bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 p-6 relative">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-200/40 blur-2xl pointer-events-none" />
-        <div className="absolute -left-6 -bottom-8 h-28 w-28 rounded-full bg-orange-200/35 blur-2xl pointer-events-none" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-2.5 text-2xl font-extrabold text-zinc-900 leading-tight">
-            <span className="grid h-8 w-8 place-items-center rounded-xl bg-white/80 ring-1 ring-amber-100">
-              <BookOpen className="h-4 w-4 text-amber-600" strokeWidth={2.3} />
-            </span>
-            漫画学法
+      <BannerCarousel
+        slides={[
+          { src: '/images/banners/comics/法律23.jpg', alt: '漫画学法' },
+        ]}
+      />
+
+      {/* Info bar */}
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200/80 bg-white/90 backdrop-blur-sm px-5 py-3 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-400 text-white shadow-sm shadow-amber-100">
+            <BookOpen className="h-4 w-4" strokeWidth={2.2} />
+          </span>
+          <div>
+            <div className="text-sm font-extrabold text-zinc-900">漫画学法</div>
+            <div className="text-xs text-zinc-500">看漫画故事，学法律知识，做知法守法的好少年</div>
           </div>
-          <div className="mt-1 text-zinc-600 text-base">
-            看漫画故事，学法律知识，做知法守法的好少年
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-zinc-700">
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+            {placeholderComics.length} 个故事连载中
           </div>
-          <div className="mt-3 flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 rounded-full border border-amber-200 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              {placeholderComics.length} 个故事连载中
-            </div>
-            <div className="flex items-center gap-1.5 rounded-full border border-amber-200 bg-white/80 px-3 py-1 text-xs font-bold text-zinc-700">
-              <Eye className="h-3.5 w-3.5 text-amber-500" />
-              真实案例改编
-            </div>
+          <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-zinc-700">
+            <Eye className="h-3.5 w-3.5 text-amber-500" />
+            真实案例改编
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input'
 import Tag from '@/components/ui/Tag'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
+import BannerCarousel from '@/components/ui/BannerCarousel'
 import { apiFetch } from '@/utils/api'
 import type { ResourceDetail, ResourceListItem, ResourceType } from '@/types'
 import { legalChecklist, legalTips } from '@/data/legalContent'
@@ -177,6 +178,13 @@ export default function Resources() {
 
   return (
     <div className="resource-center grid gap-4">
+      <BannerCarousel
+        slides={[
+          { src: '/images/banners/resources/banner-1.jpg', alt: '资源中心' },
+          { src: '/images/banners/resources/banner-2.jpg', alt: '资源中心' },
+        ]}
+      />
+
       <Card className="p-5">
         <div className="flex items-start gap-3">
           <div className="h-9 w-9 rounded-2xl border border-slate-200 bg-white flex items-center justify-center shrink-0">
