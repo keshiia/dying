@@ -5,6 +5,7 @@ import {
   Award,
   CalendarCheck2,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Crown,
   Flame,
@@ -12,13 +13,16 @@ import {
   Sparkles,
   Target,
   TrendingUp,
+  Zap,
 } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import ProgressBar from '@/components/ui/ProgressBar'
 import Tag from '@/components/ui/Tag'
 import Button from '@/components/ui/Button'
+import ChallengeModal from '@/components/student/ChallengeModal'
 import { apiFetch } from '@/utils/api'
 import { useAuthStore } from '@/stores/auth'
+import type { LearningUnit } from '@/types'
 
 type TrendPoint = {
   day: string
@@ -87,17 +91,27 @@ export default function Growth() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [stats, setStats] = useState<GrowthStats | null>(null)
+  const [units, setUnits] = useState<LearningUnit[]>([])
   const [showAllBadges, setShowAllBadges] = useState(false)
   const [showAllUpcomingSummary, setShowAllUpcomingSummary] = useState(false)
   const [badgeFilter, setBadgeFilter] = useState<BadgeFilter>('ALL')
   const [celebratingBadgeId, setCelebratingBadgeId] = useState<string | null>(null)
+  const [openLevel, setOpenLevel] = useState<null | {
+    id: string
+    title: string
+    xpReward: number
+  }>(null)
   const initializedUnlockedRef = useRef(false)
   const prevUnlockedIdsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     ;(async () => {
-      const data = await apiFetch<{ success: true; stats: GrowthStats }>('/api/student/summary')
-      setStats(data.stats)
+      const [summaryData, unitsData] = await Promise.all([
+        apiFetch<{ success: true; stats: GrowthStats }>('/api/student/summary'),
+        apiFetch<{ success: true; units: LearningUnit[] }>('/api/student/units'),
+      ])
+      setStats(summaryData.stats)
+      setUnits(unitsData.units)
     })()
   }, [])
 
@@ -112,6 +126,17 @@ export default function Growth() {
   const weeklyRemaining = Math.max(0, weeklyGoalTarget - weeklyActiveDays)
   const trend = stats?.last7Trend?.length ? stats.last7Trend : emptyTrend
   const maxTrend = Math.max(1, ...trend.map((item) => item.count))
+
+  const nextLevel = useMemo(() => {
+    for (const u of units) {
+      for (const l of u.levels) {
+        if (l.progress?.status !== 'COMPLETED') {
+          return { unit: u, level: l }
+        }
+      }
+    }
+    return null
+  }, [units])
 
   const badgeList = useMemo<BadgeModel[]>(() => {
     const raw = [
@@ -539,6 +564,71 @@ export default function Growth() {
         </div>
       </Card>
 
+      {nextLevel && (
+        <button
+          type="button"
+          className="min-h-[136px] rounded-3xl border-2 border-[var(--p-primary)] bg-slate-100 px-5 py-4 flex items-center justify-between gap-4 hover:bg-slate-200 transition-colors text-left"
+          onClick={() =>
+            setOpenLevel({
+              id: nextLevel.level.id,
+              title: nextLevel.level.title,
+              xpReward: nextLevel.level.xpReward,
+            })
+          }
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-11 w-11 rounded-2xl bg-[var(--p-primary)] text-white flex items-center justify-center text-xl shrink-0 shadow-md shadow-slate-200">
+              {getCategoryMeta(nextLevel.unit.category).emoji}
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-slate-600 uppercase tracking-widest">
+                继续上次 · 下一关
+              </div>
+              <div className="text-base font-extrabold text-zinc-900 truncate mt-0.5">
+                {nextLevel.level.title}
+              </div>
+              <div className="text-xs text-zinc-500 mt-0.5">
+                {nextLevel.unit.title} · 奖励 {nextLevel.level.xpReward} XP
+              </div>
+              <div className="mt-1">
+                <span className="inline-flex rounded-full bg-zinc-200 px-2 py-0.5 text-[11px] font-bold text-zinc-700">
+                  难度：{nextLevel.level.difficulty ?? levelDifficulty(nextLevel.level.orderNo)}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 text-slate-700 font-semibold text-sm">
+            <Zap className="h-4 w-4" />
+            继续挑战
+            <ChevronRight className="h-4 w-4" />
+          </div>
+        </button>
+      )}
+
+      {!nextLevel && (
+        <Card className="p-5 border-sky-100 bg-gradient-to-r from-sky-50 to-blue-50">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-base font-extrabold text-zinc-900">
+                已完成当前全部关卡，太棒了
+              </div>
+              <div className="mt-1 text-sm text-zinc-600">
+                下一步建议做一次错题复盘，或去资源中心扩展法条知识。
+              </div>
+            </div>
+            <Tag color="blue">全通关</Tag>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button variant="secondary" size="sm" onClick={() => navigate('/app/tasks')}>
+              错题复盘
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => navigate('/app/resources')}>
+              资源中心
+            </Button>
+          </div>
+        </Card>
+      )}
+
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -748,6 +838,19 @@ export default function Growth() {
           <Stat title="已完成关卡" value={completedLevels} />
         </div>
       </Card>
+
+      <ChallengeModal
+        openLevel={openLevel}
+        onClose={() => setOpenLevel(null)}
+        onCompleted={async () => {
+          const [summaryData, unitsData] = await Promise.all([
+            apiFetch<{ success: true; stats: GrowthStats }>('/api/student/summary'),
+            apiFetch<{ success: true; units: LearningUnit[] }>('/api/student/units'),
+          ])
+          setStats(summaryData.stats)
+          setUnits(unitsData.units)
+        }}
+      />
     </div>
   )
 }
@@ -759,4 +862,23 @@ function Stat({ title, value }: { title: string; value: string | number }) {
       <div className="mt-1 text-2xl font-extrabold text-zinc-900">{value}</div>
     </div>
   )
+}
+
+function getCategoryMeta(cat: string) {
+  const map: Record<string, { emoji: string }> = {
+    校园安全: { emoji: '🏫' },
+    网络安全: { emoji: '🌐' },
+    消费者权益: { emoji: '🛍️' },
+    交通安全: { emoji: '🚦' },
+    禁毒教育: { emoji: '🚫' },
+    家庭权益: { emoji: '🏠' },
+  }
+  return map[cat] ?? { emoji: '📘' }
+}
+
+function levelDifficulty(orderNo: number): string {
+  if (orderNo <= 1) return '基础'
+  if (orderNo === 2) return '进阶'
+  if (orderNo === 3) return '挑战'
+  return '实战'
 }

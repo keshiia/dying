@@ -12,6 +12,7 @@ import Classes from '@/pages/teacher/Classes'
 import Assignments from '@/pages/teacher/Assignments'
 import TeacherResources from '@/pages/teacher/Resources'
 import AppShell from '@/components/AppShell'
+import { ToastProvider } from '@/components/ui/Toast'
 import { useAuthStore } from '@/stores/auth'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -26,7 +27,8 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Router>
+    <ToastProvider>
+      <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
@@ -73,6 +75,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-    </Router>
+      </Router>
+    </ToastProvider>
   )
 }

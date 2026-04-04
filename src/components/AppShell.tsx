@@ -109,7 +109,7 @@ export default function AppShell({ mode }: Props) {
   const levelPct = user ? user.xp % 100 : 0
 
   const studentNav = [
-    { to: '/app/learn', label: '学习闯关', emoji: '🧠' },
+    { to: '/app/learn', label: '学习闯关', emoji: '🧒' },
     { to: '/app/resources', label: '资源中心', emoji: '📚' },
     { to: '/app/comics', label: '漫画学法', emoji: '📖' },
     { to: '/app/tasks', label: '任务中心', emoji: '📝' },
@@ -161,7 +161,7 @@ export default function AppShell({ mode }: Props) {
           >
             <BrandMark className="group-hover:shadow-blue-200 transition-shadow" />
             <div className="min-w-0">
-              <div className="text-sm font-extrabold text-zinc-900 leading-tight">青少年普法平台</div>
+              <div className="text-base font-extrabold text-zinc-900 leading-tight">青少年普法平台</div>
               <div className="text-xs text-zinc-400 mt-0.5">像打游戏一样学法律</div>
             </div>
           </Link>
@@ -186,7 +186,7 @@ export default function AppShell({ mode }: Props) {
                 to={n.to}
                 className={({ isActive }) =>
                   clsx(
-                    'group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-bold transition-all',
+                    'group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-[15px] font-bold transition-all',
                     isActive
                       ? 'bg-gradient-to-r from-[#84d8ee] via-[#72cde8] to-[#63c0df] text-white/95 shadow-sm shadow-sky-100'
                       : 'text-zinc-700 hover:bg-zinc-100/80',
@@ -201,7 +201,7 @@ export default function AppShell({ mode }: Props) {
                         isActive ? 'bg-white/25 text-white/95' : 'bg-zinc-100 text-zinc-700 group-hover:bg-zinc-200',
                       )}
                     >
-                      {mode === 'student' && n.to === '/app/learn' ? <Scale className="h-4 w-4" strokeWidth={2.2} /> : n.emoji}
+                      {n.emoji}
                     </span>
                     <span className="truncate">{n.label}</span>
                   </>
@@ -310,7 +310,7 @@ export default function AppShell({ mode }: Props) {
               onClick={() => setNavOpen(false)}
               className={({ isActive }) =>
                 clsx(
-                  'group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-bold transition-all',
+                  'group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-[15px] font-bold transition-all',
                   isActive
                     ? 'bg-gradient-to-r from-[#84d8ee] via-[#72cde8] to-[#63c0df] text-white/95 shadow-sm shadow-sky-100'
                     : 'text-zinc-700 hover:bg-zinc-50',
@@ -325,7 +325,7 @@ export default function AppShell({ mode }: Props) {
                       isActive ? 'bg-white/25 text-white/95' : 'bg-zinc-100 text-zinc-700 group-hover:bg-zinc-200',
                     )}
                   >
-                    {mode === 'student' && n.to === '/app/learn' ? <Scale className="h-4 w-4" strokeWidth={2.2} /> : n.emoji}
+                    {n.emoji}
                   </span>
                   <span className="truncate">{n.label}</span>
                 </>

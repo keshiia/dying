@@ -17,9 +17,11 @@ export default function Tasks() {
   const [joinCode, setJoinCode] = useState('')
   const [joinMsg, setJoinMsg] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
   const [openLevel, setOpenLevel] = useState<null | { id: string; title: string; xpReward: number }>(null)
 
   async function load() {
+    setLoading(true)
     setError(null)
     try {
       const [taskData, unitData, reviewData] = await Promise.all([
@@ -32,6 +34,8 @@ export default function Tasks() {
       setReviewLevels(reviewData.reviewLevels)
     } catch (e: unknown) {
       setError(errorMessage(e))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -88,6 +92,19 @@ export default function Tasks() {
         <div className="mt-1 text-sm text-zinc-600">每日练习、错题复盘和老师任务都集中在这里处理。</div>
       </Card>
 
+      {loading ? (
+        <div className="grid gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="p-5">
+              <div className="animate-pulse space-y-3">
+                <div className="h-5 w-32 bg-zinc-100 rounded-full" />
+                <div className="h-16 bg-zinc-100 rounded-2xl" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <>
       <Card className="p-5 min-h-[136px]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -217,8 +234,16 @@ export default function Tasks() {
                   <Button
                     variant="secondary"
                     onClick={() => {
-                      if (t.targetType === 'LEVEL') navigate('/app/learn')
-                      else navigate('/app/resources')
+                      if (t.targetType === 'LEVEL') {
+                        const level = units.flatMap((u) => u.levels).find((l) => l.id === t.targetId)
+                        if (level) {
+                          setOpenLevel({ id: level.id, title: level.title, xpReward: level.xpReward })
+                          return
+                        }
+                        navigate('/app/learn')
+                      } else {
+                        navigate(`/app/resources?id=${t.targetId}`)
+                      }
                     }}
                   >
                     去完成
@@ -255,6 +280,8 @@ export default function Tasks() {
       {error && <Card className="p-5 text-sm text-red-700 bg-red-50 border-red-100">⚠️ {error}</Card>}
 
       <ChallengeModal openLevel={openLevel} onClose={() => setOpenLevel(null)} onCompleted={load} />
+        </>
+      )}
     </div>
   )
 }

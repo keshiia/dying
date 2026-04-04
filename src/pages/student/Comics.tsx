@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   BookOpen,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -12,6 +13,8 @@ import {
 import { clsx } from "clsx";
 import Card from "@/components/ui/Card";
 import Tag from "@/components/ui/Tag";
+import { useToast } from "@/components/ui/Toast";
+import { apiFetch } from "@/utils/api";
 
 interface ComicPanel {
   image: string;
@@ -91,15 +94,23 @@ const placeholderComics: ComicStory[] = [
   },
 ];
 
-const topicMeta: Record<string, string> = {
-  校园欺凌: "校园安全",
-  网络诈骗: "网络安全",
-  消费者权益: "消费维权",
-};
 
 export default function Comics() {
   const [readingStory, setReadingStory] = useState<ComicStory | null>(null);
   const [currentPanel, setCurrentPanel] = useState(0);
+  const [xpAnim, setXpAnim] = useState(false);
+  const rewardedRef = useRef<Set<string>>(new Set(JSON.parse(localStorage.getItem("comic_read") ?? "[]")));
+  const { toast } = useToast();
+
+  function markRead(storyId: string) {
+    if (rewardedRef.current.has(storyId)) return;
+    rewardedRef.current.add(storyId);
+    localStorage.setItem("comic_read", JSON.stringify([...rewardedRef.current]));
+    toast("阅读完成，+10 XP", "success");
+    setXpAnim(true);
+    setTimeout(() => setXpAnim(false), 2000);
+    apiFetch("/api/student/comic-read", { method: "POST", body: JSON.stringify({ storyId }) }).catch(() => {});
+  }
 
   function openStory(story: ComicStory) {
     setReadingStory(story);
@@ -123,6 +134,51 @@ export default function Comics() {
       setCurrentPanel((p) => p - 1);
     }
   }
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!readingStory) return;
+      if (e.key === "ArrowRight") {
+        if (currentPanel < readingStory.panels.length - 1) goNext();
+        else if (currentPanel === readingStory.panels.length - 1) {
+          setCurrentPanel(readingStory.panels.length);
+          markRead(readingStory.id);
+        }
+      } else if (e.key === "ArrowLeft") {
+        goPrev();
+      } else if (e.key === "Escape") {
+        closeReader();
+      }
+    },
+    [readingStory, currentPanel],
+  );
+
+  const touchStartX = useRef(0);
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!readingStory) return;
+      const diff = e.changedTouches[0].clientX - touchStartX.current;
+      if (Math.abs(diff) < 50) return;
+      if (diff < 0) {
+        if (currentPanel < readingStory.panels.length - 1) goNext();
+        else if (currentPanel === readingStory.panels.length - 1) {
+          setCurrentPanel(readingStory.panels.length);
+          markRead(readingStory.id);
+        }
+      } else {
+        goPrev();
+      }
+    },
+    [readingStory, currentPanel],
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
     <div className="grid gap-5">
@@ -169,12 +225,24 @@ export default function Comics() {
                 alt={story.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute top-3 left-3">
+              <div className="absolute top-3 left-3 flex items-center gap-1.5">
                 <Tag color={story.tagColor}>{story.topic}</Tag>
+                {rewardedRef.current.has(story.id) && (
+                  <span className="flex items-center gap-1 rounded-full bg-emerald-500/90 backdrop-blur-sm px-2.5 py-1 text-xs font-bold text-white">
+                    <CheckCircle2 className="h-3 w-3" />
+                    已读
+                  </span>
+                )}
               </div>
               <div className="absolute bottom-3 right-3 rounded-full bg-black/50 backdrop-blur-sm px-2.5 py-1 text-xs font-bold text-white">
-                {story.panels.length} 格
+                {story.panels.length} 页
               </div>
+              {!rewardedRef.current.has(story.id) && (
+                <div className="absolute bottom-3 left-3 rounded-full bg-amber-500/90 backdrop-blur-sm px-2.5 py-1 text-xs font-bold text-white flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  +10 XP
+                </div>
+              )}
             </div>
 
             {/* Info */}
@@ -206,8 +274,22 @@ export default function Comics() {
 
       {/* Comic Reader Modal */}
       {readingStory && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col bg-white rounded-3xl overflow-hidden shadow-2xl">
+            {/* XP Reward Animation Overlay */}
+            {xpAnim && (
+              <div className="absolute inset-0 z-10 grid place-items-center bg-black/20 backdrop-blur-[2px] pointer-events-none">
+                <div className="animate-[xpPop_2s_ease-out_forwards] text-center">
+                  <div className="text-5xl mb-2">🎉</div>
+                  <div className="text-3xl font-black text-white drop-shadow-lg">+10 XP</div>
+                  <div className="mt-1 text-sm font-bold text-white/80">阅读完成！</div>
+                </div>
+              </div>
+            )}
             {/* Reader Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-100 shrink-0">
               <div className="flex items-center gap-2 min-w-0">
@@ -216,7 +298,9 @@ export default function Comics() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs font-semibold text-zinc-400">
-                  {currentPanel + 1} / {readingStory.panels.length}
+                  {currentPanel < readingStory.panels.length
+                    ? `${currentPanel + 1} / ${readingStory.panels.length}`
+                    : "法律小课堂"}
                 </span>
                 <button
                   type="button"
@@ -251,6 +335,15 @@ export default function Comics() {
               ) : (
                 /* Law Tip Summary (shown after last panel) */
                 <div className="p-4 grid gap-3">
+                  {rewardedRef.current.has(readingStory.id) && (
+                    <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 px-4 py-3 flex items-center gap-2.5">
+                      <span className="text-2xl">🎉</span>
+                      <div>
+                        <div className="text-sm font-extrabold text-amber-800">阅读完成！获得 10 XP</div>
+                        <div className="text-xs text-amber-600">继续阅读其他漫画可获取更多经验</div>
+                      </div>
+                    </div>
+                  )}
                   <div className="rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 p-5">
                     <div className="flex items-center gap-2 text-base font-extrabold text-green-800">
                       <Lightbulb className="h-5 w-5 text-green-600" />
@@ -269,6 +362,13 @@ export default function Comics() {
                       {readingStory.relatedLaw}
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={closeReader}
+                    className="w-full rounded-2xl bg-zinc-100 hover:bg-zinc-200 px-4 py-3 text-sm font-bold text-zinc-700 transition-colors"
+                  >
+                    返回列表
+                  </button>
                 </div>
               )}
             </div>
@@ -287,7 +387,7 @@ export default function Comics() {
                 )}
               >
                 <ChevronLeft className="h-4 w-4" />
-                上一格
+                上一页
               </button>
 
               {/* Progress dots */}
@@ -318,7 +418,10 @@ export default function Comics() {
 
               <button
                 type="button"
-                onClick={currentPanel < readingStory.panels.length - 1 ? goNext : () => setCurrentPanel(readingStory.panels.length)}
+                onClick={currentPanel < readingStory.panels.length - 1 ? goNext : () => {
+                  setCurrentPanel(readingStory.panels.length);
+                  markRead(readingStory.id);
+                }}
                 className={clsx(
                   "flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-colors",
                   currentPanel >= readingStory.panels.length
@@ -326,7 +429,7 @@ export default function Comics() {
                     : "bg-[var(--p-primary)] text-white hover:opacity-90 shadow-sm",
                 )}
               >
-                {currentPanel === readingStory.panels.length - 1 ? "看解析" : "下一格"}
+                {currentPanel === readingStory.panels.length - 1 ? "看解析" : "下一页"}
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>

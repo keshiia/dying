@@ -240,6 +240,31 @@ h6 {
     animation: star-twinkle 1.4s ease-in-out infinite;
 }
 
+/* XP奖励弹出动画 */
+@keyframes xpPop {
+    0% {
+        transform: scale(0.5) translateY(20px);
+        opacity: 0;
+    }
+    20% {
+        transform: scale(1.15) translateY(0);
+        opacity: 1;
+    }
+    40% {
+        transform: scale(0.95);
+    }
+    60% {
+        transform: scale(1.05);
+    }
+    75% {
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) translateY(-10px);
+        opacity: 0;
+    }
+}
+
 /* 渐变文字 */
 .text-gradient-green {
     background: linear-gradient(135deg, #1cb0f6, #0a8fd1);

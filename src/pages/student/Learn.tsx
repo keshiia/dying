@@ -8,7 +8,6 @@ import {
   RotateCcw,
   Scale,
   Trophy,
-  Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { clsx } from "clsx";
@@ -238,17 +237,6 @@ export default function Learn() {
       .filter((u) => u.visibleLevels.length > 0);
   }, [filteredUnits, showPendingOnly]);
 
-  const nextLevel = useMemo(() => {
-    for (const u of units) {
-      for (const l of u.levels) {
-        if (l.progress?.status !== "COMPLETED") {
-          return { unit: u, level: l };
-        }
-      }
-    }
-    return null;
-  }, [units]);
-
   function challengeActionLabel(done: boolean, isNext: boolean) {
     if (done) return "再次练习";
     if (isNext) return "继续挑战";
@@ -321,81 +309,6 @@ export default function Learn() {
           </div>
         </div>
       </div>
-
-      {!loading && nextLevel && (
-        <button
-          type="button"
-          className="min-h-[136px] rounded-3xl border-2 border-[var(--p-primary)] bg-slate-100 px-5 py-4 flex items-center justify-between gap-4 hover:bg-slate-200 transition-colors text-left"
-          onClick={() =>
-            setOpenLevel({
-              id: nextLevel.level.id,
-              title: nextLevel.level.title,
-              xpReward: nextLevel.level.xpReward,
-            })
-          }
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-11 w-11 rounded-2xl bg-[var(--p-primary)] text-white flex items-center justify-center text-xl shrink-0 shadow-md shadow-slate-200">
-              {getCategoryMeta(nextLevel.unit.category).emoji}
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-slate-600 uppercase tracking-widest">
-                继续上次 · 下一关
-              </div>
-              <div className="text-base font-extrabold text-zinc-900 truncate mt-0.5">
-                {nextLevel.level.title}
-              </div>
-              <div className="text-xs text-zinc-500 mt-0.5">
-                {nextLevel.unit.title} · 奖励 {nextLevel.level.xpReward} XP
-              </div>
-              <div className="mt-1">
-                <span className="inline-flex rounded-full bg-zinc-200 px-2 py-0.5 text-[11px] font-bold text-zinc-700">
-                  难度：{nextLevel.level.difficulty ?? levelDifficulty(nextLevel.level.orderNo)}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0 text-slate-700 font-semibold text-sm">
-            <Zap className="h-4 w-4" />
-            继续挑战
-            <ChevronRight className="h-4 w-4" />
-          </div>
-        </button>
-      )}
-
-      {!loading && !error && !nextLevel && (
-        <Card className="p-5 border-sky-100 bg-gradient-to-r from-sky-50 to-blue-50">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="text-base font-extrabold text-zinc-900">
-                已完成当前全部关卡，太棒了
-              </div>
-              <div className="mt-1 text-sm text-zinc-600">
-                下一步建议做一次错题复盘，或去资源中心扩展法条知识。
-              </div>
-            </div>
-            <Tag color="blue">全通关</Tag>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => navigate("/app/tasks")}
-            >
-              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-              去错题复盘
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => navigate("/app/resources")}
-            >
-              <BookOpen className="mr-1.5 h-3.5 w-3.5" />
-              去资源中心
-            </Button>
-          </div>
-        </Card>
-      )}
 
       {!loading && !error && (
         <div className="grid gap-2 sm:grid-cols-3">

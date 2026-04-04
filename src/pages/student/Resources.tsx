@@ -1,5 +1,6 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Scale } from 'lucide-react'
+import Markdown from 'react-markdown'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Tag from '@/components/ui/Tag'
@@ -76,6 +77,7 @@ function getToolCategory(resource: ResourceListItem): Exclude<ToolCategory, 'ALL
 
 export default function Resources() {
   const [q, setQ] = useState('')
+  const [debouncedQ, setDebouncedQ] = useState('')
   const [type, setType] = useState<ResourceType | 'ALL'>('ALL')
   const [scene, setScene] = useState<string>('ALL')
   const [toolCategory, setToolCategory] = useState<ToolCategory>('ALL')
@@ -89,17 +91,23 @@ export default function Resources() {
 
   const todayTip = legalTips[new Date().getDate() % legalTips.length]
 
+  const debounceRef = useRef<number>(0)
+  useEffect(() => {
+    debounceRef.current = window.setTimeout(() => setDebouncedQ(q), 300)
+    return () => window.clearTimeout(debounceRef.current)
+  }, [q])
+
   const load = useCallback(async () => {
     setLoading(true)
     const params = new URLSearchParams()
-    if (q) params.set('q', q)
+    if (debouncedQ) params.set('q', debouncedQ)
     if (type !== 'ALL') params.set('type', type)
     if (scene !== 'ALL') params.set('tag', scene)
     const data = await apiFetch<{ success: true; resources: ResourceListItem[] }>(`/api/resources?${params.toString()}`)
     setItems(data.resources)
     setVisibleResourceCount(8)
     setLoading(false)
-  }, [q, type, scene])
+  }, [debouncedQ, type, scene])
 
   useEffect(() => {
     void load()
@@ -417,8 +425,8 @@ export default function Resources() {
               </div>
             )}
             {detail.contentMd && (
-              <div className="mt-4 rounded-2xl bg-zinc-50 border border-zinc-100 p-4 text-sm text-zinc-800 whitespace-pre-line">
-                {detail.contentMd}
+              <div className="mt-4 rounded-2xl bg-zinc-50 border border-zinc-100 p-4 text-sm text-zinc-800 prose prose-zinc prose-sm max-w-none prose-headings:font-extrabold prose-headings:text-zinc-900 prose-strong:text-zinc-900 prose-li:marker:text-zinc-400 prose-a:text-sky-600 prose-a:no-underline hover:prose-a:underline">
+                <Markdown>{detail.contentMd}</Markdown>
               </div>
             )}
           </div>
