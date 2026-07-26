@@ -33,10 +33,9 @@ services:
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost}
       ALLOW_TEACHER_SELF_REGISTER: ${ALLOW_TEACHER_SELF_REGISTER:-true}
-      AI_PROVIDER: ${AI_PROVIDER:-openai}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
+      OPENAI_MODEL: ${OPENAI_MODEL:-meta/llama-3.3-70b-instruct}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://integrate.api.nvidia.com}
       NODE_ENV: production
       PORT: 3001
     ports:

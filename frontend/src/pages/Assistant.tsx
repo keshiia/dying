@@ -331,7 +331,7 @@ export default function Assistant() {
                   )}
                 </div>
 
-                <div className={clsx('max-w-[85%] md:max-w-[75%] min-w-0', msg.role === 'user' && 'order-first')}>
+                <div className={clsx('max-w-[85%] md:max-w-[75%] min-w-0')}>
                   <div
                     className={clsx(
                       'rounded-2xl px-4 py-3 text-sm leading-relaxed',
