@@ -1,5 +1,7 @@
 import type { AuthUser } from '@/types'
 
+const API_BASE = import.meta.env.VITE_API_URL ?? ''
+
 export type ApiError = {
   status: number
   error: string
@@ -41,7 +43,7 @@ export function setToken(token: string | null) {
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken()
-  const r = await fetch(path, {
+  const r = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       ...(init?.headers ?? {}),

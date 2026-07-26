@@ -29,7 +29,7 @@ router.post('/chat', async (req: Request, res: Response) => {
   const { message } = parsed.data
   const citations = recommendCitations(message)
 
-  if (env.AI_PROVIDER !== 'openai' || !env.OPENAI_API_KEY) {
+  if (!env.OPENAI_API_KEY || !env.OPENAI_BASE_URL) {
     res.json({
       success: true,
       answer:

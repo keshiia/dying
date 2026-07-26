@@ -1,6 +1,6 @@
-# 青少年普法互动Web平台
+# 青知法苑——基于游戏化学习的青少年普法平台
 
-> 像打游戏一样学法律 —— 面向初中生的游戏化普法教育平台
+> 像打游戏一样学法律 —— 面向中学生的游戏化普法教育平台
 
 ---
 
@@ -125,53 +125,41 @@
 
 ```
 legal_for_teenager/
-├── api/                        # 后端 API
-│   ├── app.ts                  # Express 应用入口与路由挂载
-│   ├── server.ts               # 本地开发服务器
-│   ├── index.ts                # Vercel Serverless 入口
-│   ├── lib/
-│   │   ├── env.ts              # 环境变量校验（Zod）
-│   │   ├── jwt.ts              # JWT 工具函数
-│   │   └── prisma.ts           # Prisma Client 单例
-│   ├── middleware/
-│   │   ├── requireAuth.ts      # JWT 认证中间件
-│   │   └── requireRole.ts      # 角色权限中间件
-│   └── routes/
-│       ├── auth.ts             # 注册/登录/登出
-│       ├── student.ts          # 学生学习/闯关/漫画 API
-│       ├── teacher.ts          # 教师班级/任务/看板 API
-│       ├── resources.ts        # 资源搜索与详情 API
-│       └── ai.ts               # AI 助手对话 API
-├── prisma/
-│   ├── schema.prisma           # 数据库模型定义（11 个模型）
-│   ├── seed.ts                 # 种子数据（用户、关卡、题目、资源等）
-│   └── migrations/             # 数据库迁移文件
-├── public/
-│   └── images/                 # 静态图片资源（漫画、轮播图）
-├── src/
-│   ├── main.tsx                # React 入口
-│   ├── App.tsx                 # 路由配置与认证守卫
-│   ├── types.ts                # TypeScript 类型定义
-│   ├── stores/auth.ts          # Zustand 认证状态
-│   ├── hooks/useTheme.ts       # 深色/浅色主题切换
-│   ├── utils/
-│   │   ├── api.ts              # API 请求封装
-│   │   └── utils.ts            # 工具函数
-│   ├── data/legalContent.ts    # 静态法律知识与题库
-│   ├── components/             # UI 组件与业务组件
-│   └── pages/                  # 页面组件
-│       ├── Login.tsx           # 登录/注册页
-│       ├── Home.tsx            # 首页（重定向）
-│       ├── Assistant.tsx       # AI 普法助手
-│       ├── student/            # 学生端页面
-│       └── teacher/            # 教师端页面
-├── index.html                  # SPA 入口 HTML
-├── vite.config.ts              # Vite 构建配置
-├── tailwind.config.js          # Tailwind CSS 配置
-├── tsconfig.json               # TypeScript 配置
-├── .env.example                # 环境变量模板
-├── DEPLOY.md                   # 服务器部署教程
-└── package.json                # 项目依赖与脚本
+├── frontend/                    # 独立前端（React SPA）
+│   ├── src/
+│   │   ├── pages/               # 页面组件（Login, Assistant, student/, teacher/）
+│   │   ├── components/          # UI 组件与业务组件
+│   │   ├── stores/auth.ts       # Zustand 认证状态
+│   │   ├── hooks/               # 自定义 Hooks
+│   │   ├── utils/api.ts         # API 请求封装
+│   │   ├── data/                # 静态法律知识与题库
+│   │   ├── types.ts             # TypeScript 类型定义
+│   │   ├── App.tsx              # 路由配置与认证守卫
+│   │   └── main.tsx             # React 入口
+│   ├── public/images/           # 静态图片资源（漫画、轮播图）
+│   ├── index.html               # SPA 入口 HTML
+│   ├── vite.config.ts           # Vite 构建配置
+│   ├── tailwind.config.js       # Tailwind CSS 配置
+│   ├── nginx.conf               # Nginx 部署配置
+│   └── Dockerfile               # 前端 Docker 镜像
+├── backend/                     # 独立后端（Express API）
+│   ├── api/
+│   │   ├── app.ts               # Express 应用入口与路由挂载
+│   │   ├── server.ts            # 本地开发服务器
+│   │   ├── index.ts             # Vercel Serverless 入口
+│   │   ├── lib/                 # 工具库（env, jwt, prisma）
+│   │   ├── middleware/          # 认证中间件（requireAuth, requireRole）
+│   │   └── routes/              # API 路由（auth, student, teacher, resources, ai）
+│   ├── prisma/
+│   │   ├── schema.prisma        # 数据库模型定义（12 个模型）
+│   │   ├── seed.ts              # 种子数据
+│   │   └── migrations/          # 数据库迁移文件
+│   ├── Dockerfile               # 后端 Docker 镜像
+│   └── start.sh                 # 容器启动脚本（自动运行迁移）
+├── docker-compose.yml           # Docker 编排（MySQL + 后端 + 前端）
+├── .env.example                 # 环境变量模板
+├── README.md
+└── .gitignore
 ```
 
 ---
@@ -182,73 +170,142 @@ legal_for_teenager/
 
 | 依赖 | 版本要求 |
 |------|---------|
-| Node.js | 20.x 及以上 |
-| MySQL | 8.x |
-| npm | 10.x 及以上 |
+| Docker & Docker Compose | 最新版（推荐） |
+| 或 Node.js | 20.x 及以上 |
+| 或 MySQL | 8.x |
 
-### 3.2 本地开发安装步骤
+### 3.2 Docker 部署（推荐）
 
 **第一步：克隆项目**
 
 ```bash
-git clone https://gitee.com/你的用户名/legal_for_teenager.git
+git clone <仓库地址>
 cd legal_for_teenager
 ```
 
-**第二步：安装依赖**
+**第二步：配置环境变量**
 
-```bash
-npm install
-```
-
-**第三步：配置环境变量**
+复制环境变量模板并根据需要修改：
 
 ```bash
 cp .env.example .env
 ```
 
-编辑 `.env` 文件，填入数据库连接信息和 JWT 密钥：
+主要配置项：
 
 ```env
-DATABASE_URL="mysql://root:你的密码@localhost:3306/legal_for_teenager?connection_limit=10"
-JWT_SECRET="一个随机的长字符串"
-FRONTEND_ORIGIN="http://localhost:5173"
+# MySQL
+MYSQL_ROOT_PASSWORD=root123
+MYSQL_DATABASE=lft_db
+MYSQL_USER=lft_user
+MYSQL_PASSWORD=lft_pass123
+
+# JWT
+JWT_SECRET=替换为一个随机字符串
+JWT_EXPIRES_IN=7d
+
+# CORS
+FRONTEND_ORIGIN=http://localhost
+
+# AI（可选，不配置则使用默认回复）
+OPENAI_API_KEY=你的API密钥
+OPENAI_MODEL=deepseek-v4-flash
+OPENAI_BASE_URL=https://api.deepseek.com
 ```
 
-**第四步：创建数据库**
-
-登录 MySQL 执行：
-
-```sql
-CREATE DATABASE legal_for_teenager DEFAULT CHARACTER SET utf8mb4;
-```
-
-**第五步：初始化数据库**
+**第三步：启动全部服务**
 
 ```bash
-npx prisma generate
-npx prisma migrate deploy
-npx prisma db seed
+docker compose -p lft up -d
 ```
 
-**第六步：启动开发服务器**
+首次启动会自动构建镜像并初始化数据库，约需 3-5 分钟。
+
+**第四步：初始化种子数据（可选）**
 
 ```bash
-npm run dev
+docker compose -p lft exec backend npx prisma db seed
 ```
 
-前端访问 `http://localhost:5173`，后端 API 运行在 `http://localhost:3001`。
+**第五步：访问**
 
-**第七步：使用种子账号登录**
+| 服务 | 地址 |
+|------|------|
+| 前端页面 | http://localhost |
+| 后端健康检查 | http://localhost:3001/api/health |
+
+**种子账号：**
 
 | 角色 | 邮箱 | 密码 |
 |------|------|------|
 | 学生 | student@example.com | Student123! |
 | 教师 | teacher@example.com | Teacher123! |
 
-### 3.3 服务器部署
+**常用 Docker 命令：**
 
-详细的服务器部署教程（从零开始到上线）请参阅 [DEPLOY.md](./DEPLOY.md)，涵盖 Ubuntu 系统配置、Node.js/MySQL 安装、Nginx 反向代理、PM2 进程守护、HTTPS 配置等完整步骤。
+```bash
+# 查看日志
+docker compose -p lft logs -f
+
+# 停止服务
+docker compose -p lft down
+
+# 重新构建（代码更新后）
+docker compose -p lft build
+docker compose -p lft up -d
+```
+
+### 3.3 本地开发安装（无 Docker）
+
+**第一步：克隆项目并安装依赖**
+
+```bash
+git clone <仓库地址>
+cd legal_for_teenager
+
+# 分别安装前后端依赖
+cd frontend && npm install
+cd ../backend && npm install
+```
+
+**第二步：配置后端环境变量**
+
+创建 `backend/.env`：
+
+```env
+DATABASE_URL="mysql://root:密码@localhost:3306/lft_db"
+JWT_SECRET="一个随机的长字符串"
+FRONTEND_ORIGIN="http://localhost:5173"
+```
+
+**第三步：创建数据库并初始化**
+
+```sql
+CREATE DATABASE lft_db DEFAULT CHARACTER SET utf8mb4;
+```
+
+```bash
+cd backend
+npx prisma generate
+npx prisma migrate deploy
+npx prisma db seed
+```
+
+**第四步：启动开发服务器**
+
+在两个终端中分别运行：
+
+```bash
+# 终端 1：启动后端（端口 3001）
+cd backend
+npm run dev
+
+# 终端 2：启动前端（端口 5173）
+cd frontend
+npm run dev
+```
+
+前端访问 `http://localhost:5173`，后端 API 运行在 `http://localhost:3001`。开发模式下 Vite 自动将 `/api` 请求代理到后端。
 
 ---
 
@@ -256,19 +313,40 @@ npm run dev
 
 ### 4.1 整体架构
 
-项目采用**前后端分离的全栈单体架构**：
+项目采用**前后端分离架构**，通过 Docker 容器化部署：
 
-- **前端**：基于 React 的单页应用（SPA），通过 Vite 构建，Tailwind CSS 实现响应式设计
-- **后端**：基于 Express.js 的 RESTful API，提供 JSON 接口
-- **数据库**：MySQL + Prisma ORM，通过类型安全的查询构建器操作数据
-- **部署**：开发时 Vite 代理 API 请求到后端；生产环境由 Node.js 同时托管静态文件和 API
+- **前端**：基于 React 的单页应用（SPA），通过 Vite 构建，Tailwind CSS 实现响应式设计。生产环境由 Nginx 提供静态文件服务和 SPA fallback
+- **后端**：基于 Express.js 的 RESTful API，提供 JSON 接口，通过 Prisma ORM 操作 MySQL 数据库
+- **数据库**：MySQL 8.x，由 Docker 独立容器运行
+- **部署**：Docker Compose 编排三个容器，Nginx 反向代理 `/api` 请求到后端，实现同源访问
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌──────────┐
-│   React SPA │────▶│  Express API │────▶│  MySQL   │
-│  (Vite 构建) │     │  (REST API)  │     │ (Prisma) │
-└─────────────┘     └─────────────┘     └──────────┘
+                           ┌─────────────────┐
+                           │   浏览器访问     │
+                           │  http://localhost │
+                           └────────┬────────┘
+                                    │
+                           ┌────────▼────────┐
+                           │   frontend       │
+                           │   (Nginx:80)     │
+                           │                  │
+                           │  / → index.html  │
+                           │  /api/* → proxy  │
+                           └────────┬────────┘
+                                    │
+                           ┌────────▼────────┐
+                           │   backend        │
+                           │  (Express:3001)  │
+                           │   RESTful API    │
+                           └────────┬────────┘
+                                    │
+                           ┌────────▼────────┐
+                           │   MySQL 8.x      │
+                           │   (db:3306)      │
+                           └─────────────────┘
 ```
+
+开发模式下，Vite 开发服务器（端口 5173）通过 `vite.config.ts` 中配置的 proxy 将 `/api` 请求转发到后端（端口 3001），无需跨域配置。
 
 ### 4.2 用户角色与权限设计
 
@@ -457,14 +535,13 @@ AI 助手面向未成年人，必须确保对话内容的安全性，同时提�
 
 本项目创新性地将**普法漫画与法律课堂相结合**。每套漫画讲述一个完整的法律故事（如校园欺凌、网络诈骗），阅读完毕后自动展示"法律小课堂"页面，包含实用的法律贴士和具体法条引用。这种"故事引入 → 知识强化"的模式，既保持了阅读的趣味性，又确保了法律知识的准确传达。
 
-### 6.4 AI 驱动的个性化普法助手
+### 6.4 扣子智能体驱动的普法助手
 
-平台集成了基于**扣子（Coze）智能体平台**的 AI 普法助手，学生可以随时提问任何法律问题。AI 助手具备以下创新特点：
-- **智能体架构**：利用扣子平台预配置的专业普法智能体，无需自建 AI 后端，降低开发和运维成本
-- **未成年人适配**：智能体提示词专门针对未成年人场景优化，语言温和易懂
-- **安全边界**：遇到高风险场景自动引导求助，避免不当建议
-- **即开即用**：通过 Web SDK 直接嵌入前端，无需配置 API 密钥，部署简单
-- **便捷交互**：浮动对话气泡设计，随时可以发起提问，不打断学习流程
+平台集成了基于**扣子（Coze）智能体平台**的 AI 普法助手。后端通过 OpenAI 兼容接口调用扣子部署的模型（支持 DeepSeek 等多种模型），学生可以在全屏聊天界面中随时提问。AI 助手具备以下创新特点：
+- **智能体架构**：利用扣子平台预配置的专业普法智能体，后端通过 OpenAI 兼容接口调用，支持 DeepSeek、GPT 等多种模型热切换
+- **未成年人适配**：系统提示词专门针对未成年人场景优化，语言温和易懂，不提供具体法律意见
+- **安全边界**：遇到高风险场景（自伤、暴力、性侵、勒索）自动引导求助，避免不当建议
+- **便捷交互**：全屏聊天界面，支持 Markdown 渲染、快捷提问模板、实时打字指示器，交互体验流畅自然
 
 ### 6.5 双角色协同教学设计
 

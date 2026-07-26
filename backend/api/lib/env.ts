@@ -11,10 +11,9 @@ const EnvSchema = z.object({
     .string()
     .optional()
     .transform((v) => (v ?? 'true') === 'true'),
-  AI_PROVIDER: z.string().optional().transform((v) => v ?? 'openai'),
   OPENAI_API_KEY: z.string().optional().transform((v) => v ?? ''),
-  OPENAI_MODEL: z.string().optional().transform((v) => v ?? 'gpt-4o-mini'),
-  OPENAI_BASE_URL: z.string().optional().transform((v) => v ?? 'https://api.openai.com'),
+  OPENAI_MODEL: z.string().optional().transform((v) => v ?? 'deepseek-v4-flash'),
+  OPENAI_BASE_URL: z.string().optional().transform((v) => v ?? ''),
   FRONTEND_ORIGIN: z.string().optional().transform((v) => v ?? 'http://localhost:5173'),
 })
 
