@@ -7,6 +7,8 @@ import Growth from '@/pages/student/Growth'
 import Resources from '@/pages/student/Resources'
 import Tasks from '@/pages/student/Tasks'
 import Comics from '@/pages/student/Comics'
+import Court from '@/pages/student/games/Court'
+import Detective from '@/pages/student/games/Detective'
 import Dashboard from '@/pages/teacher/Dashboard'
 import Classes from '@/pages/teacher/Classes'
 import Assignments from '@/pages/teacher/Assignments'
@@ -55,6 +57,8 @@ export default function App() {
           <Route path="growth" element={<Growth />} />
           <Route path="resources" element={<Resources />} />
           <Route path="comics" element={<Comics />} />
+          <Route path="games/court" element={<Court />} />
+          <Route path="games/detective" element={<Detective />} />
           <Route path="tasks" element={<Tasks />} />
         </Route>
 

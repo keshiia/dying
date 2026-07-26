@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Bot, ChevronLeft, ChevronRight, GraduationCap, LogOut, Menu, Scale, UserRound } from 'lucide-react'
+import { Bot, ChevronDown, ChevronLeft, ChevronRight, GraduationCap, LogOut, Menu, Scale, UserRound } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useEffect, useMemo, useState } from 'react'
 import Button from '@/components/ui/Button'
@@ -99,6 +99,7 @@ export default function AppShell({ mode }: Props) {
   const { user, clear } = useAuthStore()
   const [navOpen, setNavOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [gamesOpen, setGamesOpen] = useState(true)
 
   useEffect(() => {
     if (!user) return
@@ -116,6 +117,11 @@ export default function AppShell({ mode }: Props) {
     { to: '/app/growth', label: '成长中心', emoji: '🌱' },
   ]
 
+  const gamesNav = [
+    { to: '/app/games/court', label: '模拟法庭', emoji: '⚖️' },
+    { to: '/app/games/detective', label: '案件侦查', emoji: '🕵️' },
+  ]
+
   const teacherNav = [
     { to: '/teacher/dashboard', label: '进度看板', emoji: '📊' },
     { to: '/teacher/classes', label: '班级管理', emoji: '🏫' },
@@ -125,10 +131,18 @@ export default function AppShell({ mode }: Props) {
 
   const nav = mode === 'student' ? studentNav : teacherNav
 
+  const gameActive = useMemo(
+    () => gamesNav.some((g) => location.pathname.startsWith(g.to)),
+    [location.pathname],
+  )
+
   const title = useMemo(() => {
     const match = nav.find((n) => location.pathname.startsWith(n.to))
-    return match ? `${match.emoji} ${match.label}` : mode === 'student' ? '学习中心' : '教师后台'
-  }, [location.pathname, mode, nav])
+    if (match) return `${match.emoji} ${match.label}`
+    const gameMatch = gamesNav.find((g) => location.pathname.startsWith(g.to))
+    if (gameMatch) return `🎮 ${gameMatch.label}`
+    return mode === 'student' ? '学习中心' : '教师后台'
+  }, [location.pathname, mode, nav, gamesNav])
 
   function logout() {
     clear()
@@ -208,6 +222,62 @@ export default function AppShell({ mode }: Props) {
                 )}
               </NavLink>
             ))}
+
+            {mode === 'student' && (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => setGamesOpen((v) => !v)}
+                  className={clsx(
+                    'flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-[15px] font-bold transition-all',
+                    gameActive
+                      ? 'text-[var(--p-primary)]'
+                      : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/80',
+                  )}
+                >
+                  <span
+                    className={clsx(
+                      'grid h-8 w-8 place-items-center rounded-xl text-base transition-colors',
+                      gameActive
+                        ? 'bg-gradient-to-br from-amber-400 to-orange-400 text-white shadow-sm'
+                        : 'bg-zinc-100 text-zinc-500',
+                    )}
+                  >
+                    🎮
+                  </span>
+                  <span className="flex-1 text-left truncate">法治游戏</span>
+                  <ChevronDown
+                    className={clsx(
+                      'h-4 w-4 transition-transform',
+                      gamesOpen && 'rotate-180',
+                    )}
+                  />
+                </button>
+
+                {gamesOpen && (
+                  <div className="ml-3 mt-1 grid gap-0.5 border-l-2 border-zinc-200 pl-2">
+                    {gamesNav.map((g) => {
+                      const isActive = location.pathname.startsWith(g.to)
+                      return (
+                        <NavLink
+                          key={g.to}
+                          to={g.to}
+                          className={clsx(
+                            'flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition-all',
+                            isActive
+                              ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-white shadow-sm'
+                              : 'text-zinc-600 hover:bg-zinc-100/80 hover:text-zinc-800',
+                          )}
+                        >
+                          <span>{g.emoji}</span>
+                          <span>{g.label}</span>
+                        </NavLink>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </nav>
 
           <div className="px-3 pb-5 pt-3 border-t border-zinc-100 mt-auto grid gap-1">
@@ -332,6 +402,54 @@ export default function AppShell({ mode }: Props) {
               )}
             </NavLink>
           ))}
+
+          {mode === 'student' && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => setGamesOpen((v) => !v)}
+                className={clsx(
+                  'flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-[15px] font-bold transition-all',
+                  gameActive ? 'text-amber-600' : 'text-zinc-500 hover:bg-zinc-50',
+                )}
+              >
+                <span className="grid h-8 w-8 place-items-center rounded-xl bg-zinc-100 text-base">
+                  🎮
+                </span>
+                <span className="flex-1 text-left">法治游戏</span>
+                <ChevronDown
+                  className={clsx('h-4 w-4 transition-transform', gamesOpen && 'rotate-180')}
+                />
+              </button>
+
+              {gamesOpen && (
+                <div className="ml-4 mt-1 grid gap-0.5 border-l-2 border-zinc-200 pl-2">
+                  {gamesNav.map((g) => (
+                    <NavLink
+                      key={g.to}
+                      to={g.to}
+                      onClick={() => setNavOpen(false)}
+                      className={({ isActive }) =>
+                        clsx(
+                          'flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition-all',
+                          isActive
+                            ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-white shadow-sm'
+                            : 'text-zinc-600 hover:bg-zinc-50',
+                        )
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <span>{g.emoji}</span>
+                          <span>{g.label}</span>
+                        </>
+                      )}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="mt-4 grid gap-2">

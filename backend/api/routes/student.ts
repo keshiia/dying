@@ -470,6 +470,57 @@ router.post('/comic-read', async (req: Request, res: Response) => {
   res.json({ success: true, xpGain, user })
 })
 
+const CourtResultSchema = z.object({
+  caseId: z.string().min(1),
+  score: z.number().min(0),
+  maxScore: z.number().min(1),
+})
+
+router.post('/court-result', async (req: Request, res: Response) => {
+  const parsed = CourtResultSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ success: false, error: 'BAD_REQUEST' })
+    return
+  }
+
+  const pct = parsed.data.score / Math.max(1, parsed.data.maxScore)
+  // Award 10–30 XP based on performance
+  const xpGain = Math.max(1, Math.round(30 * pct))
+
+  const user = await prisma.user.update({
+    where: { id: req.user!.id },
+    data: {
+      xp: { increment: xpGain },
+      level: 1 + Math.floor((req.user!.xp + xpGain) / 100),
+    },
+    select: { id: true, xp: true, level: true },
+  })
+
+  res.json({ success: true, xpGain, user })
+})
+
+router.post('/detective-result', async (req: Request, res: Response) => {
+  const parsed = CourtResultSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ success: false, error: 'BAD_REQUEST' })
+    return
+  }
+
+  const pct = parsed.data.score / Math.max(1, parsed.data.maxScore)
+  const xpGain = Math.max(1, Math.round(35 * pct))
+
+  const user = await prisma.user.update({
+    where: { id: req.user!.id },
+    data: {
+      xp: { increment: xpGain },
+      level: 1 + Math.floor((req.user!.xp + xpGain) / 100),
+    },
+    select: { id: true, xp: true, level: true },
+  })
+
+  res.json({ success: true, xpGain, user })
+})
+
 router.get('/comic-reads', async (req: Request, res: Response) => {
   const reads = await prisma.comicRead.findMany({
     where: { studentId: req.user!.id },
