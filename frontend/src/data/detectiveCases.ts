@@ -35,6 +35,9 @@ export interface DetectiveNpc {
   emoji: string
   role: string
   sceneId: string
+  /** Position on the scene canvas (0-100). Falls back to default if not set. */
+  x?: number
+  y?: number
   dialogue: string
   secret: string
   triggerQuestion: string

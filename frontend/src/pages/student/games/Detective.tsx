@@ -38,6 +38,35 @@ interface PlayerState {
   deductionAnswers: Record<string, string>
 }
 
+// ── NPC Positions ──────────────────────────────────
+// Position of each NPC on the scene canvas (0-100%)
+const NPC_POSITIONS: Record<string, { x: number; y: number }> = {
+  // Case 1: 画室涂鸦
+  'npc-xiaomei': { x: 22, y: 55 },
+  'npc-chenhao': { x: 72, y: 35 },
+  'npc-linyue': { x: 40, y: 40 },
+  // Case 2: 食堂窃贼
+  'npc-zhang': { x: 25, y: 50 },
+  'npc-xiaoyu': { x: 55, y: 40 },
+  'npc-chen': { x: 65, y: 55 },
+  // Case 3: 谣言风波
+  'npc-zhao': { x: 30, y: 45 },
+  'npc-linsi': { x: 55, y: 35 },
+  'npc-teacher': { x: 65, y: 50 },
+  // Case 4: 体育馆奖杯
+  'npc-coach': { x: 70, y: 40 },
+  'npc-maqiang': { x: 40, y: 30 },
+  'npc-liu': { x: 55, y: 50 },
+  // Case 5: 班级群幽灵
+  'npc-zhangqing': { x: 30, y: 45 },
+  'npc-wanghao': { x: 60, y: 40 },
+  'npc-lixiaoming': { x: 45, y: 50 },
+};
+
+function npcPos(npcId: string) {
+  return NPC_POSITIONS[npcId] ?? { x: 50, y: 50 };
+}
+
 // ── Helpers ────────────────────────────────────────
 
 function calcDetectiveScore(state: PlayerState, theCase: DetectiveCaseData): {
@@ -74,6 +103,7 @@ function SceneBoard({
   onFindClue,
   currentNpc,
   npc,
+  allNpcs,
   onTalkToNpc,
   onAskQuestion,
   onBackToScene,
@@ -84,6 +114,7 @@ function SceneBoard({
   onFindClue: (hs: DetectiveHotspot) => void
   currentNpc: string | null
   npc: DetectiveNpc | null
+  allNpcs: DetectiveNpc[]
   onTalkToNpc: (id: string) => void
   onAskQuestion: (npcId: string, type: 'secret' | 'other', idx?: number) => void
   onBackToScene: () => void
@@ -160,16 +191,20 @@ function SceneBoard({
           )
         })}
 
-        {/* NPC markers */}
-        {scene.id === 'scene-artroom' && (
-          <NpcMarker npcId="npc-xiaomei" emoji="👧" x={22} y={55} label="小美" onClick={() => onTalkToNpc('npc-xiaomei')} />
-        )}
-        {scene.id === 'scene-hallway' && (
-          <NpcMarker npcId="npc-chenhao" emoji="🧑" x={72} y={35} label="陈浩" onClick={() => onTalkToNpc('npc-chenhao')} />
-        )}
-        {scene.id === 'scene-rooftop' && (
-          <NpcMarker npcId="npc-linyue" emoji="👩" x={40} y={40} label="林悦" onClick={() => onTalkToNpc('npc-linyue')} />
-        )}
+        {/* NPC markers — dynamic for any scene */}
+        {allNpcs
+          .filter((n) => n.sceneId === scene.id)
+          .map((npc) => (
+            <NpcMarker
+              key={npc.id}
+              npcId={npc.id}
+              emoji={npc.emoji}
+              x={npcPos(npc.id).x}
+              y={npcPos(npc.id).y}
+              label={npc.name}
+              onClick={() => onTalkToNpc(npc.id)}
+            />
+          ))}
       </div>
     </div>
   )
@@ -489,6 +524,15 @@ export default function Detective() {
   if (step === 'briefing') {
     return (
       <div className="grid gap-4">
+        {/* Back button */}
+        <button
+          type="button"
+          onClick={() => setStep('menu')}
+          className="flex items-center gap-1 text-sm font-semibold text-zinc-500 hover:text-zinc-800 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          返回案件列表
+        </button>
         <Card className="overflow-hidden border-0 shadow-lg">
           <div className="bg-gradient-to-br from-purple-500 via-indigo-500 to-violet-600 p-5 text-white">
             <div className="flex items-center gap-3 mb-1">
@@ -590,6 +634,7 @@ export default function Detective() {
             onFindClue={findClue}
             currentNpc={currentNpc}
             npc={activeNpc}
+            allNpcs={theCase.npcs}
             onTalkToNpc={talkToNpc}
             onAskQuestion={askNpcQuestion}
             onBackToScene={() => setCurrentNpc(null)}

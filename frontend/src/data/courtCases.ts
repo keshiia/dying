@@ -1240,312 +1240,253 @@ export const courtCases: CourtCaseData[] = [
         '• 648元的皮肤≠快乐，理性消费才是真酷！',
       xpReward: 30,
     },
-  },,
-{
-  id: "case-traffic-1",
-  title: "十字路口的抉择",
-  subtitle: "未成年人骑行电动车肇事案",
-  emoji: "🚦",
+  },
+  {
+    id: 'case-traffic-1',
+  title: '十字路口的抉择',
+  subtitle: '未成年人骑行电动车肇事案',
+  emoji: '🚦',
   intro: {
-    narrative: ["16岁的高一学生小杰每天骑电动车上下学。", "某天放学后他载着同学回家途经没有红绿灯的十字路口时没有减速观察直接横穿马路。", "一辆正常行驶的小轿车为了避让紧急转向撞上了路边的电线杆。司机王先生头部受伤。", "交警认定小杰未满18周岁驾驶电动车、违规载人、通过路口未减速让行负主要责任。", "王先生将小杰及其监护人诉至法院要求赔偿医疗费车辆维修费等共计68000元。"],
-    plaintiff: { name: "王先生", avatar: "👨", info: "35岁公司职员正常驾驶中被撞伤" },
-    defendant: { name: "小杰及其监护人", avatar: "👦", info: "16岁高一学生违规驾驶电动车载人肇事" }
+    narrative: [
+      '16岁的高一学生小杰，每天骑电动车上下学。',
+      '某天放学后，小杰载着同学小林一起回家。途经一个没有红绿灯的十字路口时，小杰没有减速观察，直接横穿马路。',
+      '一辆正常行驶的小轿车为了避让小杰的电动车，紧急转向撞上了路边的电线杆。轿车车头严重损坏，司机王先生头部受伤。',
+      '交警调查认定：小杰未满18周岁驾驶电动车、违规载人、通过路口未减速让行，负事故主要责任。',
+      '王先生出院后，将小杰及其监护人诉至法院，要求赔偿医疗费、车辆维修费等共计68000元。',
+    ],
+    plaintiff: { name: '王先生', avatar: '👨', info: '35岁 · 公司职员，正常驾驶中被撞伤' },
+    defendant: { name: '小杰（及其监护人）', avatar: '👦', info: '16岁 · 高一学生，违规驾驶电动车载人肇事' },
   },
   scene: {
-    title: "🔍 事故现场调查",
-    description: "你是一名交通法庭的法官需要审查交警部门提交的事故证据材料。",
-    bgColor: "from-sky-100 to-slate-50",
+    title: '🔍 事故现场调查',
+    description: '你是一名交通法庭的法官，需要审查交警部门提交的事故证据材料。',
+    bgColor: 'from-sky-100 to-slate-50',
     hotspots: [
-{
-        id: "ts-scene",
-        label: "事故现场照片",
-        emoji: "📷",
-        x: 25,
-        y: 30,
-        type: "physical",
-        found: false,
-        content: { title: "事故现场全景", desc: "交警拍摄的事故现场照片。", detail: "一辆银色轿车撞在路边的电线杆上车头左侧严重凹陷。电动车倒在轿车后方约3米处地上有刹车痕迹和刮擦痕。路口无交通信号灯。", insight: "电动车位置和刹车痕迹能帮助判断车速和碰撞过程。" }
+      {
+        id: 'ts-scene', label: '事故现场照片', emoji: '📷', x: 25, y: 30, type: 'physical', found: false,
+        content: { title: '事故现场全景', desc: '交警拍摄的事故现场照片。', detail: '一辆银色轿车撞在路边的电线杆上，车头左侧严重凹陷。电动车倒在轿车后方约3米处，地上有明显的刹车痕迹和刮擦痕。路口四个方向均无交通信号灯。', insight: '电动车位置和刹车痕迹能帮助判断当时的车速和碰撞过程。' },
       },
-{
-        id: "ts-damage",
-        label: "车辆损坏鉴定",
-        emoji: "🔧",
-        x: 45,
-        y: 35,
-        type: "physical",
-        found: false,
-        content: { title: "车辆损坏鉴定报告", desc: "专业机构出具的两车损坏鉴定。", detail: "轿车前保险杠断裂大灯破碎引擎盖变形维修估价42000元。电动车前轮偏摆车身刮痕维修估价600元。", insight: "轿车损失远大于电动车说明司机为了避让做了紧急转向。" }
+      {
+        id: 'ts-damage', label: '车辆损坏鉴定', emoji: '🔧', x: 45, y: 35, type: 'physical', found: false,
+        content: { title: '车辆损坏鉴定报告', desc: '专业机构出具的两车损坏鉴定。', detail: '轿车：前保险杠断裂、左前大灯破碎、引擎盖变形，维修估价42000元。电动车：前轮偏摆、车身右侧刮痕，维修估价600元。', insight: '轿车损失远大于电动车，说明司机为了避让做了紧急转向。' },
       },
-{
-        id: "ts-driver",
-        label: "轿车司机陈述",
-        emoji: "🗣️",
-        x: 65,
-        y: 50,
-        type: "testimony",
-        found: false,
-        content: { title: "王先生的陈述", desc: "轿车司机对事故经过的描述。", detail: "我当时正常行驶大概40码的速度。到路口时突然看到右边冲出来一辆电动车车上还坐了两个人！我本能地猛打方向盘想避开然后就撞上了电线杆。", insight: "40码是正常速度电动车从右侧突然冲出说明小杰没有停车观察。" }
+      {
+        id: 'ts-driver', label: '轿车司机陈述', emoji: '🗣️', x: 65, y: 50, type: 'testimony', found: false,
+        content: { title: '王先生的陈述', desc: '轿车司机王先生对事故经过的描述。', detail: '「我当时正常行驶，大概40码的速度。到路口时突然看到右边冲出来一辆电动车，车上还坐了两个人！我本能地猛打方向盘想避开，结果就撞上了电线杆。」王先生因头部撞击导致轻微脑震荡，住院5天。', insight: '40码是正常速度。电动车从右侧突然冲出——说明小杰没有在路口停车观察。' },
       },
-{
-        id: "ts-teen",
-        label: "小杰的陈述",
-        emoji: "👦",
-        x: 35,
-        y: 55,
-        type: "testimony",
-        found: false,
-        content: { title: "小杰的事故陈述", desc: "小杰在交警队的询问笔录。", detail: "我就想着赶紧回家那个路口平时没什么车的。我确实没看到那辆车等我看到的时候已经来不及了。我知道不能载人的但小林说顺路带他一程。", insight: "没看到说明他根本没有在路口减速观察。明知不能载人但还是做了。" }
+      {
+        id: 'ts-teen', label: '小杰的陈述', emoji: '👦', x: 35, y: 55, type: 'testimony', found: false,
+        content: { title: '小杰的事故陈述', desc: '小杰在交警队的询问笔录。', detail: '「我就想着赶紧回家……那个路口平时没什么车的。我确实没看到那辆车……等我看到的时候已经来不及了。我知道不能载人的，但小林说顺路带他一程……」小杰在询问中数次哽咽。', insight: '「没看到」说明他根本没有在路口减速观察。「知道不能载人但还是做了」——明知故犯。' },
       },
-{
-        id: "ts-law",
-        label: "交通法规摘录",
-        emoji: "📋",
-        x: 50,
-        y: 20,
-        type: "document",
-        found: false,
-        content: { title: "相关交通法规", desc: "交警部门提供的交通法规依据。", detail: "《道路交通安全法实施条例》规定驾驶电动自行车必须年满16周岁非机动车不得载人。通过没有信号灯的路口应当减速让行。", insight: "小杰年满16岁可以骑电动车但不能载人他已经违规了。" }
+      {
+        id: 'ts-law', label: '交通法规摘录', emoji: '📋', x: 50, y: 20, type: 'document', found: false,
+        content: { title: '相关交通法规', desc: '交警部门提供的交通法规依据。', detail: '《道路交通安全法实施条例》第七十二条：驾驶电动自行车必须年满16周岁。第七十三条：非机动车不得载人。通过没有信号灯的路口应当减速慢行、让行。', insight: '小杰年满16岁可以骑电动车，但电动车不得载人——他已经违规了。' },
       },
-{
-        id: "ts-medical",
-        label: "医院诊断书",
-        emoji: "🏥",
-        x: 70,
-        y: 25,
-        type: "document",
-        found: false,
-        content: { title: "王先生的医疗记录", desc: "医院出具的诊断书和费用清单。", detail: "诊断轻度脑震荡颈部软组织损伤。住院5天医疗费共计12000元。医嘱建议休息2周。", insight: "伤势确实属实医疗费是合理的实际损失。" }
-      }
-    ]
+      {
+        id: 'ts-medical', label: '医院诊断书', emoji: '🏥', x: 70, y: 25, type: 'document', found: false,
+        content: { title: '王先生的医疗记录', desc: '医院出具的王先生的诊断书和费用清单。', detail: '诊断：轻度脑震荡、颈部软组织损伤。住院5天，医疗费共计12000元。医嘱建议休息2周。所有费用清单完整，有医院公章。', insight: '伤势不算特别严重但确凿属实，医疗费是合理的实际损失。' },
+      },
+    ],
   },
   evidence: {
-    title: "⚖️ 法庭调查",
-    description: "双方提交了以下证据请逐一审查是否采纳。",
+    title: '⚖️ 法庭调查',
+    description: '双方提交了以下证据，请逐一审查是否采纳。',
     items: [
-{ id: "ev-ts-photo", title: "事故现场照片", emoji: "📷", type: "physical", description: "交警拍摄的现场照片。", detail: "有拍摄时间和地点信息能客观反映现场情况。", admissible: true, correctAccept: true },
-{ id: "ev-ts-report", title: "交警事故认定书", emoji: "📄", type: "document", description: "交警出具的事故认定书。", detail: "官方文书有盖章和签名认定事实清楚。", admissible: true, correctAccept: true },
-{ id: "ev-ts-medical", title: "医疗费用清单", emoji: "🏥", type: "document", description: "医疗费用明细。", detail: "医院正规票据费用合理。", admissible: true, correctAccept: true },
-{ id: "ev-ts-repair", title: "车辆维修报价单", emoji: "🔧", type: "document", description: "4S店维修估价单。", detail: "官方报价明码标价。", admissible: true, correctAccept: true },
-{ id: "ev-ts-cctv", title: "路口监控录像", emoji: "📹", type: "digital", description: "监控拍到了事故经过。", detail: "清晰记录了碰撞全过程是最有力的证据。", admissible: true, correctAccept: true },
-{ id: "ev-ts-school", title: "学校违纪记录", emoji: "📋", type: "document", description: "小杰在校违纪记录。", detail: "与本次事故无直接关联可能引起偏见。", admissible: false, inadmissibleReason: "品格证据与本案无直接关联", correctAccept: false }
-    ]
+      { id: 'ev-ts-photo', title: '事故现场照片', emoji: '📷', type: 'physical', description: '交警拍摄的现场全景照片及细节照片。', detail: '照片证据形式合法，有拍摄时间和地点信息，能客观反映事故现场情况。', admissible: true, correctAccept: true },
+      { id: 'ev-ts-report', title: '交警事故认定书', emoji: '📄', type: 'document', description: '交警部门出具的道路交通事故认定书。', detail: '官方文书，有交警部门盖章和经办人签名，认定事实清楚。', admissible: true, correctAccept: true },
+      { id: 'ev-ts-medical', title: '医疗费用清单', emoji: '🏥', type: 'document', description: '王先生的医疗费用明细和诊断证明。', detail: '医院正规票据，诊断与事故的关联性明确，费用合理。', admissible: true, correctAccept: true },
+      { id: 'ev-ts-repair', title: '车辆维修报价单', emoji: '🔧', type: 'document', description: '4S店出具的车辆维修估价单。', detail: '4S店官方报价，各项维修项目明码标价。', admissible: true, correctAccept: true },
+      { id: 'ev-ts-cctv', title: '路口监控录像', emoji: '📹', type: 'digital', description: '附近商铺的监控拍到了事故经过。', detail: '监控录像清晰记录了电动车横穿路口与轿车碰撞的全过程，是最有力的证据之一。', admissible: true, correctAccept: true },
+      { id: 'ev-ts-school', title: '学校违纪记录', emoji: '📋', type: 'document', description: '小杰在校的违纪记录，证明其多次违反校规。', detail: '虽然能反映小杰的行为习惯，但与本次交通事故无直接关联，且可能引起对当事人品格的偏见。', admissible: false, inadmissibleReason: '品格证据与本案无直接关联，可能引起不公正偏见。', correctAccept: false },
+    ],
   },
   debate: {
-    title: "💬 法庭辩论",
-    description: "双方律师就责任划分展开辩论。",
+    title: '💬 法庭辩论',
+    description: '双方律师就责任划分和赔偿金额展开辩论。',
     stages: [
-{
-        id: "debate-t1",
-        speaker: "原告律师",
-        speakerEmoji: "👨‍⚖️",
-        dialogue: "被告未满18周岁驾驶电动车上路、违规载人、路口未减速让行是事故直接原因。原告正常行驶无过错。请求赔偿全部损失。",
+      {
+        id: 'debate-t1', speaker: '原告律师', speakerEmoji: '👨‍⚖️',
+        dialogue: '审判长，被告小杰未满18周岁驾驶电动车上路、违规载人、通过路口未减速让行，其违法行为是导致本次事故发生的直接原因。我方当事人正常行驶无任何过错。请求法庭判令被告及其监护人赔偿全部损失。',
         choices: [
-{ id: "dt1-q1", text: "问原告律师请说明各赔偿项目依据。", reveal: "原告律师逐项说明了医疗费12000元误工费8000元车辆维修费42000元等共计68000元每项都有依据。", isRecommended: true, feedback: "好问题明确赔偿依据有助于裁决。" },
-{ id: "dt1-q2", text: "直接问小杰知不知道不能载人？", reveal: "小杰低头知道。", isRecommended: false, feedback: "跳过原告陈述直接质问被告程序不规范。" }
-        ]
+          { id: 'dt1-q1', text: '问原告律师：请说明各赔偿项目的具体依据。', reveal: '原告律师逐项说明了医疗费12000元、护理费3000元、误工费8000元、车辆维修费42000元、精神损害抚慰金3000元，共计68000元的计算依据。每一项都有对应的票据或法律依据。', isRecommended: true, feedback: '✅ 好问题！明确赔偿依据有助于后续裁决。' },
+          { id: 'dt1-q2', text: '直接问小杰：你知不知道骑电动车不能载人？', reveal: '小杰低头：「知……知道。」', isRecommended: false, feedback: '⚠️ 跳过原告陈述直接质问被告，程序上不规范。' },
+        ],
       },
-{
-        id: "debate-t2",
-        speaker: "被告律师",
-        speakerEmoji: "👩‍⚖️",
-        dialogue: "我方承认小杰存在过错但原告作为成年人经过路口时也未做到充分观察。且小杰是未成年人认知能力有限请求综合考虑。",
+      {
+        id: 'debate-t2', speaker: '被告律师', speakerEmoji: '👩‍⚖️',
+        dialogue: '审判长，我方承认小杰的行为存在过错。但原告作为驾驶经验丰富的成年人，在经过路口时也未做到充分的观察和预判。且我方当事人是未成年人，认知能力和判断力有限，请求法庭在责任划分上综合考虑。',
         choices: [
-{ id: "dt2-q1", text: "问被告未成年人身份是否应减轻赔偿责任？", reveal: "被告律师引用《民法典》第1188条无民事行为能力人限制民事行为能力人造成损害的由监护人承担侵权责任。", isRecommended: true, feedback: "切中要害！关键在于监护是否到位。" },
-{ id: "dt2-q2", text: "问原告当时有没有看到电动车？", reveal: "王先生看到的时候已经就在我车前两三米了我根本没有反应时间！", isRecommended: false, feedback: "小杰没有观察就直接横穿了路口这不是原告的过错。" }
-        ]
+          { id: 'dt2-q1', text: '要求被告律师说明：未成年人身份是否应减轻赔偿责任？', reveal: '被告律师引用了《民法典》第一千一百八十八条：无民事行为能力人、限制民事行为能力人造成他人损害的，由监护人承担侵权责任。', isRecommended: true, feedback: '✅ 切中要害！未成年人侵权时监护人确实应承担责任，关键在于监护是否到位。' },
+          { id: 'dt2-q2', text: '问原告：你当时有没有看到电动车？', reveal: '王先生：「我看到的时候已经就在我车前面了——大概就两三米远！我根本没有反应时间！」', isRecommended: false, feedback: '⚠️ 这个问题偏向于找原告的过错，但小杰确实没有观察就直接横穿了路口。' },
+        ],
       },
-{
-        id: "debate-t3",
-        speaker: "原告律师反驳",
-        speakerEmoji: "👨‍⚖️",
-        dialogue: "监控显示小杰横穿路口时完全没有减速是事故根本原因。监护人允许16岁孩子骑电动车上下学未尽到监管义务。",
+      {
+        id: 'debate-t3', speaker: '原告律师（反驳）', speakerEmoji: '👨‍⚖️',
+        dialogue: '审判长，从监控录像可以清楚看到，小杰驾车横穿路口时完全没有减速或观察，是事故的根本原因。监护人允许16岁的孩子骑电动车上下学，本身就未尽到充分的监管义务。请求法庭依法支持我方全部诉求。',
         choices: [
-{ id: "dt3-q1", text: "总结争议焦点明确本庭将根据过错程度和法律规定公正裁决。", reveal: "休庭后你走进合议室准备作出裁决。", isRecommended: true, feedback: "专业的庭审控制！" },
-{ id: "dt3-q2", text: "问双方是否愿意调解？", reveal: "原告要求全额被告最多承担70%差距较大调解难达成。", isRecommended: false, feedback: "调解可行性低直接裁决更有效率。" }
-        ]
-      }
-    ]
+          { id: 'dt3-q1', text: '总结：本案争议焦点明确。本庭将根据过错程度、损失情况和法律规定作出公正裁决。', reveal: '休庭后，你走进合议室准备作出裁决。', isRecommended: true, feedback: '✅ 专业的庭审控制！' },
+          { id: 'dt3-q2', text: '问双方是否愿意调解？', reveal: '原告要求全额赔偿，被告表示最多承担70%。差距较大，调解难以达成。', isRecommended: false, feedback: '⚠️ 从双方态度看调解可行性低，直接裁决更有效率。' },
+        ],
+      },
+    ],
   },
   deliberation: {
-    title: "🧠 合议裁决",
-    description: "根据庭审情况作出你的裁决。",
+    title: '🧠 合议裁决',
+    description: '根据庭审情况，作出你的裁决。',
     laws: [
-{ id: "law-t1", name: "《民法典》第1165条", summary: "行为人因过错侵害他人民事权益造成损害的应当承担侵权责任。", isCorrect: false, explanation: "这是一般原则但不够具体。" },
-{ id: "law-t2", name: "《民法典》第1188条", summary: "限制民事行为能力人造成他人损害的由监护人承担侵权责任。", isCorrect: true, explanation: "正确！小杰16岁属于限制民事行为能力人其侵权责任应由监护人承担。这是本案核心法律依据。" },
-{ id: "law-t3", name: "《道路交通安全法实施条例》", summary: "驾驶电动自行车须年满16周岁非机动车不得载人。", isCorrect: false, explanation: "这是行政法层面的规定民事赔偿应适用《民法典》。" }
+      { id: 'law-t1', name: '《民法典》第一千一百六十五条', summary: '行为人因过错侵害他人民事权益造成损害的，应当承担侵权责任。', isCorrect: false, explanation: '这条是侵权责任的一般原则，是正确的但不够具体。' },
+      { id: 'law-t2', name: '《民法典》第一千一百八十八条', summary: '无民事行为能力人、限制民事行为能力人造成他人损害的，由监护人承担侵权责任。', isCorrect: true, explanation: '✅ 正确！小杰16岁属于限制民事行为能力人，其侵权责任应由监护人承担。这是本案责任主体的核心法律依据。' },
+      { id: 'law-t3', name: '《道路交通安全法实施条例》第七十二条', summary: '驾驶电动自行车必须年满16周岁，非机动车不得载人。', isCorrect: false, explanation: '这是行政法层面的规定，用以判断小杰是否存在违法行为，但民事赔偿责任的划分应适用《民法典》。' },
     ],
     verdict: {
-      question: "你认为小杰及其监护人应承担多少责任？",
+      question: '你认为小杰及其监护人应承担多少责任？',
       options: [
-{ id: "verdict-t-all", label: "承担主要责任80%", desc: "小杰违规载人未减速让行是事故主因。", isCorrect: true, explanation: "正确！小杰负主要责任王先生也有部分注意义务所以小杰方承担80%较合理。" },
-{ id: "verdict-t-half", label: "各承担50%", desc: "双方都有过错对半分担。", isCorrect: false, explanation: "监控显示小杰突然冲出王先生来不及反应让王先生承担50%不公平。" },
-{ id: "verdict-t-zero", label: "小杰无责", desc: "未成年人不应承担责任。", isCorrect: false, explanation: "侵权造成损害时监护人要承担替代责任年龄不是免责理由。" }
-      ]
+        { id: 'verdict-t-all', label: '✅ 承担主要责任（80%）', desc: '小杰违规载人、未减速让行是事故主因。', isCorrect: true, explanation: '正确！交警认定小杰负主要责任。根据《民法典》，限制民事行为能力人造成损害的，由监护人承担侵权责任。但王先生作为司机也有一定注意义务，所以小杰方承担80%较合理。' },
+        { id: 'verdict-t-half', label: '⚠️ 各承担50%', desc: '双方都有过错，对半分担。', isCorrect: false, explanation: '监控显示小杰是突然冲出的，王先生确实来不及反应。让王先生承担50%不符合公平原则。' },
+        { id: 'verdict-t-zero', label: '❌ 小杰无责', desc: '未成年人不应承担责任。', isCorrect: false, explanation: '年龄不是免责的理由。侵权造成损害时，监护人要承担替代责任。' },
+      ],
     },
     penalty: {
-      question: "你认为赔偿金额应为多少？",
+      question: '你认为赔偿金额应为多少？',
       options: [
-{ id: "pen-t-full", label: "全额赔偿68000元", desc: "全部损失应当赔偿。", isCorrect: false, explanation: "小杰虽负主要责任但非全部责任全额赔偿不合理。" },
-{ id: "pen-t-80", label: "赔偿54400元80%", desc: "按责任比例承担。", isCorrect: true, explanation: "合理！68000乘以80%等于54400元由监护人承担。" },
-{ id: "pen-t-low", label: "赔偿20000元", desc: "未成年人没经济能力象征性赔偿。", isCorrect: false, explanation: "侵权责任不因没有经济能力而免除监护人应当赔偿。" }
-      ]
-    }
+        { id: 'pen-t-full', label: '全额赔偿68000元', desc: '造成的损失应当全部赔偿。', isCorrect: false, explanation: '小杰虽负主要责任但非全部责任，全额赔偿不合理。' },
+        { id: 'pen-t-80', label: '赔偿54400元（80%）', desc: '按责任比例承担。', isCorrect: true, explanation: '✅ 合理！按80%责任计算：68000×80%=54400元。由小杰的监护人承担。' },
+        { id: 'pen-t-low', label: '赔偿20000元', desc: '未成年人没有经济能力，象征性赔偿即可。', isCorrect: false, explanation: '侵权责任不因侵权人没有经济能力而免除，监护人应当承担赔偿责任。' },
+      ],
+    },
   },
-  result: { title: "⚖️ 宣判", correctVerdict: "监护人承担80%赔偿责任", correctLaw: "《民法典》第1188条", summary: "小杰违规载人未减速让行负主要责任。由监护人承担80%赔偿责任共计54400元。", lawExplanation: "💡 **交通安全要点**\n• 年满16周岁才能骑电动自行车\n• 电动车自行车不得载人\n• 通过路口必须减速观察确认安全\n\n💡 **监护人责任**\n民法典规定未成年人造成他人损害的由监护人承担侵权责任。家长应加强交通安全教育。", xpReward: 30 }
+  result: {
+    title: '⚖️ 宣判',
+    correctVerdict: '监护人承担80%赔偿责任',
+    correctLaw: '《民法典》第一千一百八十八条',
+    summary: '小杰未满18周岁违规载人、通过路口未减速让行，负事故主要责任。因其系限制民事行为能力人，由监护人承担80%的赔偿责任，共计54400元。',
+    lawExplanation: '💡 **交通安全要点**\n• 年满16周岁才能骑电动自行车\n• 电动车、自行车不得载人\n• 通过路口必须减速观察、确认安全\n• 未满18周岁不能驾驶机动车\n\n💡 **监护人责任**\n《民法典》规定，未成年人造成他人损害的，由监护人承担侵权责任。家长应加强对孩子的交通安全教育。',
+    xpReward: 30,
+    },
+  },
+  {
+    id: 'case-drug-1',
+  title: '提神糖的秘密',
+  subtitle: '新型毒品伪装与法律责任案',
+  emoji: '🚫',
+  intro: {
+    narrative: [
+      '16岁的小凯在网吧认识了一个叫「阿龙」的社会青年。阿龙经常请小凯喝饮料、打游戏，两人很快熟络起来。',
+      '某天，阿龙拿出一颗彩色糖果状的东西对小凯说：「这是聪明糖，吃了精力充沛、打游戏反应超快。很多学生都在吃，不含毒品成分的。」',
+      '小凯吃了一颗后确实感觉精神兴奋，连赢了好几局游戏。之后他又从阿龙那里买了多次。渐渐地，小凯发现不吃就浑身难受、注意力无法集中。',
+      '直到有一天，小凯在学校课堂上突然晕倒，被医院检出甲基苯丙胺（冰毒）阳性。家长报警后，警方抓获了阿龙，在其住处查获了大量伪装成糖果、跳跳糖、奶茶粉的毒品。',
+      '经查，阿龙通过熟人介绍在学校周边以「提神」「增强记忆力」为噱头向未成年人售卖毒品，已查明的受害学生有9人。',
+    ],
+    plaintiff: { name: '检察机关（公诉人）', avatar: '⚖️', info: '以9名未成年受害人为代表的公诉案件' },
+    defendant: { name: '阿龙（龙某）', avatar: '🧑', info: '22岁 · 无业，向未成年人售卖伪装毒品' },
+  },
+  scene: {
+    title: '🔍 调查取证',
+    description: '审查警方提交的毒品犯罪证据材料。',
+    bgColor: 'from-red-100 via-rose-50 to-orange-50',
+    hotspots: [
+      {
+        id: 'dg-drugs', label: '查获的毒品', emoji: '🍬', x: 25, y: 30, type: 'physical', found: false,
+        content: { title: '伪装成零食的毒品', desc: '警方在阿龙住处查获的毒品物证照片。', detail: '外观与普通糖果、跳跳糖、奶茶粉完全一样，部分包装袋上印有卡通图案。经鉴定均含有甲基苯丙胺成分。现场还查获了电子秤和分装袋。', insight: '这些毒品和普通零食没有区别，青少年很容易被迷惑。卡通包装直接针对未成年人。' },
+      },
+      {
+        id: 'dg-chat', label: '聊天记录', emoji: '💬', x: 45, y: 35, type: 'digital', found: false,
+        content: { title: '阿龙与小凯的聊天记录', desc: '从双方手机中提取的微信聊天记录。', detail: '阿龙：「这个吃了打游戏超猛，真的不骗你。」小凯：「不会有问题吧？」阿龙：「我吃了半年了你看我有事吗？放心，好多学生都在吃。」', insight: '阿龙明知对方是学生，还以「打游戏超猛」诱导购买。这是针对未成年人的精准犯罪。' },
+      },
+      {
+        id: 'dg-money', label: '转账记录', emoji: '💰', x: 60, y: 40, type: 'digital', found: false,
+        content: { title: '交易转账记录', desc: '受害学生的微信转账记录。', detail: '频次从一周1次增加到一周3-4次，金额从100元到500元不等。9人累计向阿龙转账32000元。备注有时写「糖」或「零食」。', insight: '频次由少到多、金额由小到大——这是典型的成瘾特征。' },
+      },
+      {
+        id: 'dg-school', label: '学校周边调查', emoji: '🏫', x: 35, y: 55, type: 'testimony', found: false,
+        content: { title: '学校周边走访记录', desc: '警方走访获取的线索。', detail: '阿龙常在学校附近的奶茶店、网吧门口以请客方式接近学生，先免费赠送「试吃装」，等上瘾后再收费。部分学生知道不对劲但觉得兴奋。', insight: '「免费试吃」是毒贩惯用手段——先让你上瘾，再高价出售。' },
+      },
+      {
+        id: 'dg-lab', label: '鉴定报告', emoji: '🔬', x: 70, y: 55, type: 'document', found: false,
+        content: { title: '毒品成分鉴定报告', desc: '物证鉴定中心出具的鉴定书。', detail: '送检物品均检出甲基苯丙胺成分。其中「糖果」每颗含毒量约0.3g，达到「数量较大」标准。鉴定程序合法。', insight: '鉴定报告是定罪的关键证据。含毒量达到「数量较大」意味着刑罚更重。' },
+      },
+      {
+        id: 'dg-testimony', label: '受害学生证言', emoji: '👥', x: 50, y: 20, type: 'testimony', found: false,
+        content: { title: '受害学生的询问笔录', desc: '警方对9名学生的询问记录。', detail: '6人知道可能不是好东西但抱着「试一次没事」的心态尝试；3人完全被骗。所有学生都表示后悔，「没想到会上瘾」「不敢告诉家长」。', insight: '青少年普遍有「试一次没事」的侥幸心理，但毒品试一次就可能毁一生。' },
+      },
+    ],
+  },
+  evidence: {
+    title: '⚖️ 法庭调查',
+    description: '检方提交了以下证据，请逐项审查。',
+    items: [
+      { id: 'ev-dg-drugs', title: '毒品物证', emoji: '🍬', type: 'physical', description: '查获的伪装毒品和分装工具。', detail: '扣押程序合法，物证保管链完整。', admissible: true, correctAccept: true },
+      { id: 'ev-dg-chat', title: '聊天记录', emoji: '💬', type: 'digital', description: '阿龙与受害者的聊天记录。', detail: '依法提取，内容完整，可证明主观故意。', admissible: true, correctAccept: true },
+      { id: 'ev-dg-money', title: '转账记录', emoji: '💰', type: 'digital', description: '受害学生的转账记录。', detail: '与聊天记录相互印证。', admissible: true, correctAccept: true },
+      { id: 'ev-dg-report', title: '鉴定报告', emoji: '🔬', type: 'document', description: '毒品成分含量鉴定书。', detail: '鉴定机构和人员有资质，程序合法。', admissible: true, correctAccept: true },
+      { id: 'ev-dg-statement', title: '询问笔录', emoji: '📄', type: 'document', description: '受害学生的询问笔录。', detail: '形式规范，有被询问人签名确认。', admissible: true, correctAccept: true },
+      { id: 'ev-dg-criminal', title: '前科记录', emoji: '📋', type: 'document', description: '阿龙曾因吸毒被拘留的记录。', detail: '与本次贩卖毒品罪无直接关联，可能引起偏见。', admissible: false, inadmissibleReason: '前科记录与本案无直接关联', correctAccept: false },
+    ],
+  },
+  debate: {
+    title: '💬 法庭辩论',
+    description: '公诉人与辩护律师就定罪量刑展开辩论。',
+    stages: [
+      {
+        id: 'debate-d1', speaker: '公诉人', speakerEmoji: '👨‍⚖️',
+        dialogue: '审判长，被告人阿龙明知是毒品而向多人（包括多名未成年人）贩卖，已构成贩卖毒品罪。将毒品伪装成零食销售，手段隐蔽、性质恶劣，依法应从重处罚。',
+        choices: [
+          { id: 'dd1-q1', text: '问公诉人：请说明针对未成年人的犯罪手法。', reveal: '阿龙在奶茶店以请客为名接近学生，先免费送低毒试吃装，上瘾后再高价出售。还制作了卡通包装的「特别版」。', isRecommended: true, feedback: '✅ 查明犯罪手法对量刑很重要。针对未成年人的犯罪应从重处罚。' },
+          { id: 'dd1-q2', text: '问阿龙：你知道你卖的是学生吗？', reveal: '阿龙低头：「知道……但他们想买，我就卖了。」', isRecommended: false, feedback: '⚠️ 公诉人尚未陈述完毕，此时打断不严谨。' },
+        ],
+      },
+      {
+        id: 'debate-d2', speaker: '辩护律师', speakerEmoji: '👩‍⚖️',
+        dialogue: '我方当事人认罪认罚，配合调查。且阿龙本人也是在网吧被人引诱吸毒的受害者。请求从轻处罚。',
+        choices: [
+          { id: 'dd2-q1', text: '质问：阿龙自己受害就能祸害更多人吗？', reveal: '辩护律师无言以对。旁听席上受害学生家长忍不住哭了。', isRecommended: false, feedback: '⚠️ 法官应保持中立，不宜在庭上表现情绪化。' },
+          { id: 'dd2-q2', text: '问辩护律师：退赃退赔情况如何？', reveal: '阿龙已供述全部事实并提供上家线索。但贩毒所得32000元已被挥霍，无力退赔。', isRecommended: true, feedback: '✅ 客观中立！认罪认罚可以从宽，但退赃是重要考量因素。' },
+        ],
+      },
+      {
+        id: 'debate-d3', speaker: '公诉人反驳', speakerEmoji: '👨‍⚖️',
+        dialogue: '即便认罪认罚，本案仍有从重情节：贩卖对象含9名未成年人、毒品伪装成零食、数量达较大标准。建议判处七年至八年。',
+        choices: [
+          { id: 'dd3-q1', text: '宣布休庭合议。本案事实清楚，本庭将依法判决。', reveal: '法槌落下。你走进合议室准备裁决。', isRecommended: true, feedback: '✅ 果断、专业！' },
+          { id: 'dd3-q2', text: '问阿龙有什么想对受害学生说的？', reveal: '阿龙沉默了很久：「对不起。」', isRecommended: false, feedback: '⚠️ 一句对不起无法弥补对9个孩子的伤害。' },
+        ],
+      },
+    ],
+  },
+  deliberation: {
+    title: '🧠 合议裁决',
+    description: '根据庭审情况，对本案作出裁决。',
+    laws: [
+      { id: 'law-d1', name: '《刑法》第三百四十七条（贩卖毒品罪）', summary: '贩卖毒品无论数量多少都追究刑事责任。向未成年人出售从重处罚。', isCorrect: true, explanation: '✅ 正确！这是本案定罪的核心法条。贩卖毒品罪是行为犯，只要有贩卖行为就构成犯罪。' },
+      { id: 'law-d2', name: '《禁毒法》', summary: '预防和惩治毒品犯罪行为。', isCorrect: false, explanation: '这是原则性法律，定罪量刑应适用《刑法》。' },
+      { id: 'law-d3', name: '《治安管理处罚法》第七十二条', summary: '非法持有少量毒品的处拘留或罚款。', isCorrect: false, explanation: '阿龙是贩卖而非仅持有，性质严重得多。' },
+    ],
+    verdict: {
+      question: '阿龙的行为构成什么罪？',
+      options: [
+        { id: 'verdict-d-yes', label: '✅ 贩卖毒品罪', desc: '阿龙明知是毒品而向他人贩卖。', isCorrect: true, explanation: '正确！向9名未成年人出售、将毒品伪装成零食均为从重情节。' },
+        { id: 'verdict-d-no', label: '❌ 诱导吸毒罪', desc: '他没有制造毒品，只是诱导他人。', isCorrect: false, explanation: '阿龙实际出售并获利，贩卖毒品罪是更准确的罪名。' },
+      ],
+    },
+    penalty: {
+      question: '你认为应如何量刑？',
+      options: [
+        { id: 'pen-d-light', label: '有期徒刑五年', desc: '认罪认罚从宽。', isCorrect: false, explanation: '向9名未成年人贩卖、伪装零食等从重情节叠加，五年偏轻。' },
+        { id: 'pen-d-medium', label: '有期徒刑七年六个月', desc: '综合从重和从轻情节。', isCorrect: true, explanation: '✅ 适当的量刑！认罪认罚、提供上家线索等从轻情节下，七年六个月在合理范围内。' },
+        { id: 'pen-d-heavy', label: '有期徒刑十二年', desc: '毒贩必须严惩。', isCorrect: false, explanation: '有从轻情节，十二年过于严厉。' },
+      ],
+    },
+  },
+  result: {
+    title: '⚖️ 宣判',
+    correctVerdict: '贩卖毒品罪成立',
+    correctLaw: '《刑法》第三百四十七条',
+    summary: '阿龙以伪装成零食的方式向9名未成年人贩卖毒品，构成贩卖毒品罪，判处有期徒刑七年六个月，并处罚金。',
+    lawExplanation: '💡 **禁毒知识**\n• 毒品可能伪装成糖果、奶茶粉——陌生人给的零食不要吃\n• 凡是声称「提神」「增强记忆力」的药物都要警惕\n• 一次好奇尝试可能导致终身成瘾\n\n💡 **法律红线**\n• 贩卖毒品无论多少都追究刑责\n• 向未成年人出售毒品从重处罚\n\n💡 **求助渠道**\n• 发现涉毒线索拨打110\n• 戒毒求助拨打12348法律援助热线',
+    xpReward: 30,
+  },
 },
-,
-{
-  id: "case-drug-1",
-  title: "提神糖的秘密",
-  subtitle: "新型毒品伪装与法律责任案",
-  emoji: "🚫",
-  intro: {
-    narrative: ["16岁的小凯在网吧认识了一个叫阿龙的社会青年。阿龙经常请小凯喝饮料打游戏两人很快熟络。", "某天阿龙拿出一颗彩色糖果状的东西说这是聪明糖吃了精力充沛打游戏反应超快很多学生都在吃。", "小凯吃了一颗后确实感觉精神兴奋。之后又买了多次渐渐发现不吃就浑身难受注意力无法集中。", "有一天小凯在学校课堂上突然晕倒被检出甲基苯丙胺阳性。警方抓获阿龙查获大量伪装成糖果的毒品。", "阿龙通过熟人介绍在学校周边以提神增强记忆力为噱头向未成年人售卖毒品受害学生有9人。"],
-    plaintiff: { name: "检察机关", avatar: "⚖️", info: "以9名未成年受害人为代表的公诉案件" },
-    defendant: { name: "阿龙(龙某)", avatar: "🧑", info: "22岁无业向未成年人售卖伪装毒品" }
-  },
-  scene: {
-    title: "🔍 调查取证",
-    description: "审查警方提交的毒品犯罪证据材料。",
-    bgColor: "from-red-100 via-rose-50 to-orange-50",
-    hotspots: [
-{
-        id: "dg-drugs",
-        label: "查获的毒品",
-        emoji: "🍬",
-        x: 25,
-        y: 30,
-        type: "physical",
-        found: false,
-        content: { title: "伪装成零食的毒品", desc: "警方查获的毒品物证照片。", detail: "外观与普通糖果跳跳糖奶茶粉完全一样包装袋上印有卡通图案。经鉴定含有甲基苯丙胺成分。", insight: "这些毒品和普通零食没有区别青少年很容易被迷惑。卡通包装直接针对未成年人。" }
-      },
-{
-        id: "dg-chat",
-        label: "聊天记录",
-        emoji: "💬",
-        x: 45,
-        y: 35,
-        type: "digital",
-        found: false,
-        content: { title: "阿龙与小凯的聊天记录", desc: "从手机中提取的微信聊天记录。", detail: "阿龙说这个吃了打游戏超猛好多学生都在吃。小凯曾质疑不会有事吧阿龙说吃了半年了没事。记录还显示阿龙多次催款。", insight: "阿龙明知对方是学生还诱导购买这是针对未成年人的精准犯罪。" }
-      },
-{
-        id: "dg-money",
-        label: "转账记录",
-        emoji: "💰",
-        x: 60,
-        y: 40,
-        type: "digital",
-        found: false,
-        content: { title: "交易转账记录", desc: "受害学生的微信转账记录。", detail: "频次从一周1次增加到一周3到4次金额从100元到500元不等。9人累计转账32000元。", insight: "频次由少到多金额由小到大这是典型的成瘾特征。" }
-      },
-{
-        id: "dg-school",
-        label: "学校周边调查",
-        emoji: "🏫",
-        x: 35,
-        y: 55,
-        type: "testimony",
-        found: false,
-        content: { title: "学校周边走访记录", desc: "警方走访获取的线索。", detail: "阿龙常在学校附近奶茶店网吧门口以请客方式接近学生先免费试吃等上瘾再收费。部分学生知道不对劲但觉得兴奋。", insight: "免费试吃是毒贩惯用手段先让你上瘾再高价出售。" }
-      },
-{
-        id: "dg-lab",
-        label: "鉴定报告",
-        emoji: "🔬",
-        x: 70,
-        y: 55,
-        type: "document",
-        found: false,
-        content: { title: "毒品成分鉴定报告", desc: "物证鉴定中心出具的鉴定书。", detail: "送检物品均检出甲基苯丙胺成分。糖果每颗含毒量约0.3g达到数量较大标准。鉴定程序合法。", insight: "鉴定报告是定罪的关键证据含毒量达到数量较大意味着刑罚更重。" }
-      },
-{
-        id: "dg-testimony",
-        label: "受害学生证言",
-        emoji: "👥",
-        x: 50,
-        y: 20,
-        type: "testimony",
-        found: false,
-        content: { title: "受害学生的询问笔录", desc: "警方对9名学生的询问记录。", detail: "6人知道可能不是好东西但抱着试一次没事的心态；3人完全被骗。所有学生都表示后悔。", insight: "青少年普遍存在试一次没事的侥幸心理但毒品试一次就可能毁一生。" }
-      }
-    ]
-  },
-  evidence: {
-    title: "⚖️ 法庭调查",
-    description: "检方提交了证据请逐项审查。",
-    items: [
-{ id: "ev-dg-drugs", title: "毒品物证", emoji: "🍬", type: "physical", description: "查获的伪装毒品和分装工具。", detail: "扣押程序合法物证保管链完整。", admissible: true, correctAccept: true },
-{ id: "ev-dg-chat", title: "聊天记录", emoji: "💬", type: "digital", description: "阿龙与受害者的聊天记录。", detail: "依法提取内容完整可证明主观故意。", admissible: true, correctAccept: true },
-{ id: "ev-dg-money", title: "转账记录", emoji: "💰", type: "digital", description: "受害学生的转账记录。", detail: "与聊天记录相互印证。", admissible: true, correctAccept: true },
-{ id: "ev-dg-report", title: "鉴定报告", emoji: "🔬", type: "document", description: "毒品成分含量鉴定书。", detail: "鉴定机构和人员有资质程序合法。", admissible: true, correctAccept: true },
-{ id: "ev-dg-statement", title: "询问笔录", emoji: "📄", type: "document", description: "受害学生的询问笔录。", detail: "形式规范有签名确认。", admissible: true, correctAccept: true },
-{ id: "ev-dg-criminal", title: "前科记录", emoji: "📋", type: "document", description: "阿龙曾因吸毒被拘留的记录。", detail: "与本次贩卖毒品罪无直接关联可能引起偏见。", admissible: false, inadmissibleReason: "前科记录与本案无直接关联", correctAccept: false }
-    ]
-  },
-  debate: {
-    title: "💬 法庭辩论",
-    description: "公诉人与辩护律师就定罪量刑展开辩论。",
-    stages: [
-{
-        id: "debate-d1",
-        speaker: "公诉人",
-        speakerEmoji: "👨‍⚖️",
-        dialogue: "被告人明知是毒品而向多人包括未成年人贩卖已构成贩卖毒品罪。将毒品伪装成零食销售手段隐蔽性质恶劣应依法从重处罚。",
-        choices: [
-{ id: "dd1-q1", text: "问公诉人说明针对未成年人的犯罪手法。", reveal: "阿龙在奶茶店以请客为名接近学生先免费送低毒试吃装上瘾后高价出售。还制作了卡通包装的特别版。", isRecommended: true, feedback: "查明犯罪手法对量刑很重要针对未成年人的犯罪应从重处罚。" },
-{ id: "dd1-q2", text: "问阿龙你知道卖的是学生吗？", reveal: "阿龙低头知道但他们想买我就卖了。", isRecommended: false, feedback: "公诉人尚未陈述完毕此时打断不严谨。" }
-        ]
-      },
-{
-        id: "debate-d2",
-        speaker: "辩护律师",
-        speakerEmoji: "👩‍⚖️",
-        dialogue: "我方当事人认罪认罚配合调查。且阿龙本人也是毒品受害者最初被人引诱吸毒。请求从轻处罚。",
-        choices: [
-{ id: "dd2-q1", text: "质问阿龙自己受害就能祸害更多人吗？", reveal: "辩护律师无言以对旁听席上受害学生家长忍不住哭了。", isRecommended: false, feedback: "法官应保持中立不宜在庭上表现情绪化。" },
-{ id: "dd2-q2", text: "问辩护律师退赃退赔情况如何？", reveal: "阿龙已供述全部事实并提供了上家线索。但贩毒所得32000元已被挥霍无力退赔。", isRecommended: true, feedback: "客观中立的追问认罪认罚可以从宽但退赃是重要考量因素。" }
-        ]
-      },
-{
-        id: "debate-d3",
-        speaker: "公诉人反驳",
-        speakerEmoji: "👨‍⚖️",
-        dialogue: "即便考虑认罪认罚本案仍有从重情节：贩卖对象含9名未成年人、毒品伪装成零食、数量达到较大标准。建议判处七年至八年。",
-        choices: [
-{ id: "dd3-q1", text: "宣布休庭合议本案事实清楚证据确实充分本庭将依法判决。", reveal: "法槌落下你走进合议室准备裁决。", isRecommended: true, feedback: "果断专业！" },
-{ id: "dd3-q2", text: "问阿龙有什么想对受害学生说的？", reveal: "阿龙沉默了很久对不起。", isRecommended: false, feedback: "一句对不起无法弥补对9个孩子的伤害。" }
-        ]
-      }
-    ]
-  },
-  deliberation: {
-    title: "🧠 合议裁决",
-    description: "根据庭审情况对本案作出裁决。",
-    laws: [
-{ id: "law-d1", name: "《刑法》第347条", summary: "贩卖毒品无论数量多少都追究刑事责任。向未成年人出售从重处罚。", isCorrect: true, explanation: "这是本案定罪的核心法条贩卖毒品罪只要有贩卖行为就构成犯罪。" },
-{ id: "law-d2", name: "《禁毒法》", summary: "预防和惩治毒品犯罪行为。", isCorrect: false, explanation: "这是原则性法律定罪量刑应适用刑法。" },
-{ id: "law-d3", name: "《治安管理处罚法》", summary: "非法持有少量毒品的处拘留或罚款。", isCorrect: false, explanation: "阿龙是贩卖不是仅持有不适用治安管理处罚。" }
-    ],
-    verdict: {
-      question: "阿龙的行为构成什么罪？",
-      options: [
-{ id: "verdict-d-yes", label: "贩卖毒品罪", desc: "阿龙明知是毒品而向他人贩卖。", isCorrect: true, explanation: "正确！向9名未成年人出售将毒品伪装成零食均为从重情节。" },
-{ id: "verdict-d-no", label: "诱导吸毒罪", desc: "他没有制造毒品只是诱导他人。", isCorrect: false, explanation: "阿龙实际出售并获利贩卖毒品罪是更准确的罪名。" }
-      ]
-    },
-    penalty: {
-      question: "你认为应如何量刑？",
-      options: [
-{ id: "pen-d-light", label: "有期徒刑五年", desc: "认罪认罚从宽。", isCorrect: false, explanation: "向9名未成年人贩卖加上伪装成零食等从重情节五年偏轻。" },
-{ id: "pen-d-medium", label: "有期徒刑七年六个月", desc: "综合从重和从轻情节。", isCorrect: true, explanation: "适当的量刑！综合认罪认罚提供上家线索等从轻情节七年六个月在合理范围内。" },
-{ id: "pen-d-heavy", label: "有期徒刑十二年", desc: "毒贩必须严惩。", isCorrect: false, explanation: "有从轻情节十二年过于严厉。" }
-      ]
-    }
-  },
-  result: { title: "⚖️ 宣判", correctVerdict: "贩卖毒品罪成立", correctLaw: "《刑法》第347条", summary: "阿龙以伪装成零食的方式向9名未成年人贩卖毒品构成贩卖毒品罪判处有期徒刑七年六个月并处罚金。", lawExplanation: "💡 **禁毒知识**\n• 毒品可能伪装成糖果奶茶粉陌生人给的零食不要吃\n• 凡是声称提神增强记忆力的药物都要警惕\n• 一次好奇可能终身成瘾\n\n💡 **法律红线**\n• 贩卖毒品无论数量多少都追究刑责\n• 向未成年人出售毒品从重处罚\n\n💡 **求助渠道**\n• 发现涉毒线索拨打110\n• 戒毒求助拨打12348", xpReward: 30 }
-}
-]
+];
 
 export function getCaseById(id: string): CourtCaseData | undefined {
   return courtCases.find((c) => c.id === id)
