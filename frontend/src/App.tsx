@@ -52,7 +52,7 @@ export default function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<Navigate to="/app/learn" replace />} />
+          <Route index element={<Navigate to="/app/comics" replace />} />
           <Route path="learn" element={<Learn />} />
           <Route path="growth" element={<Growth />} />
           <Route path="resources" element={<Resources />} />

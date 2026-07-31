@@ -59,7 +59,7 @@ export default function Login() {
 
         setAuth(data.token, data.user);
         navigate(
-          data.user.role === "TEACHER" ? "/teacher/dashboard" : "/app/learn",
+          data.user.role === "TEACHER" ? "/teacher/dashboard" : "/app/comics",
           { replace: true },
         );
         return;
@@ -81,7 +81,7 @@ export default function Login() {
 
       setAuth(data.token, data.user);
       navigate(
-        data.user.role === "TEACHER" ? "/teacher/dashboard" : "/app/learn",
+        data.user.role === "TEACHER" ? "/teacher/dashboard" : "/app/comics",
         { replace: true },
       );
     } catch (e: unknown) {
@@ -130,7 +130,7 @@ export default function Login() {
 
             {/* 底部：一行极淡的小字 */}
             <div className="relative text-[13px] text-white/30">
-              青少年普法学习平台
+              青少年普法智能体
             </div>
           </aside>
 

@@ -167,12 +167,12 @@ export default function AppShell({ mode }: Props) {
       {!sidebarCollapsed && (
         <aside className="hidden lg:flex flex-col w-72 shrink-0 h-screen sticky top-0 overflow-hidden bg-gradient-to-b from-white to-zinc-50/80 border-r border-zinc-200/70 shadow-sm">
           <Link
-            to={mode === 'student' ? '/app/learn' : '/teacher/dashboard'}
+            to={mode === 'student' ? '/app/comics' : '/teacher/dashboard'}
             className="flex items-center gap-2.5 px-5 py-5 group border-b border-zinc-100/80"
           >
             <BrandMark className="group-hover:shadow-blue-200 transition-shadow" />
             <div className="min-w-0">
-              <div className="text-base font-extrabold text-zinc-900 leading-tight">青少年普法平台</div>
+              <div className="text-base font-extrabold text-zinc-900 leading-tight">青少年普法智能体</div>
               <div className="text-xs text-zinc-400 mt-0.5">让法治成为青春的底色</div>
             </div>
           </Link>
@@ -256,7 +256,7 @@ export default function AppShell({ mode }: Props) {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-sm border-b border-zinc-100 sticky top-0 z-30">
-          <Link to={mode === 'student' ? '/app/learn' : '/teacher/dashboard'} className="flex items-center gap-2">
+          <Link to={mode === 'student' ? '/app/comics' : '/teacher/dashboard'} className="flex items-center gap-2">
             <BrandMark compact />
             <span className="text-sm font-extrabold text-zinc-900">{title}</span>
           </Link>
