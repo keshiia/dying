@@ -60,10 +60,6 @@ export default function ErrorAnalysisPanel({ className }: Props) {
     )
   }
 
-  const worstTopic = analysis.byTopic[0]
-  const worstType = analysis.byType[0]
-  const showAnalysis = analysis.totalErrors > 0
-
   return (
     <Card className={clsx('p-5', className)}>
       <div className="flex items-center justify-between mb-3">
@@ -87,7 +83,7 @@ export default function ErrorAnalysisPanel({ className }: Props) {
           <ProgressBar
             value={analysis.overallAccuracy}
             size="sm"
-            color={analysis.overallAccuracy >= 80 ? 'green' : analysis.overallAccuracy >= 60 ? 'blue' : 'red'}
+            color={analysis.overallAccuracy >= 80 ? 'green' : analysis.overallAccuracy >= 60 ? 'blue' : 'orange'}
           />
         </div>
       )}

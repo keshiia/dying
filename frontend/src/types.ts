@@ -38,6 +38,7 @@ export type Question = {
   prompt: string
   optionsJson: string | null
   orderNo: number
+  difficulty?: number
 }
 
 export type ResourceType = 'CASE' | 'LAW_SUMMARY' | 'VIDEO' | 'ARTICLE'

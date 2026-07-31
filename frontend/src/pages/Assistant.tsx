@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowUp, Bot, User, ChevronLeft, RefreshCw, BookOpen, MessageSquare, Plus, Trash2 } from 'lucide-react'
+import { ArrowUp, Bot, User, ChevronLeft, RefreshCw, BookOpen, MessageSquare, Plus, Trash2, LogOut } from 'lucide-react'
 import { clsx } from 'clsx'
 import ReactMarkdown from 'react-markdown'
 import { apiFetch } from '@/utils/api'
+import { useAuthStore } from '@/stores/auth'
 
 // ── Types ──
 type Message = {
@@ -71,11 +72,12 @@ function saveSessions(sessions: Session[]) {
 // ── Component ──
 export default function Assistant() {
   const navigate = useNavigate()
+  const { user, clear } = useAuthStore()
   const [sessions, setSessions] = useState<Session[]>(() => loadSessions())
   const [activeId, setActiveId] = useState<string>('')
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -197,13 +199,18 @@ export default function Assistant() {
 
   const canSend = input.trim().length > 0 && !loading
 
+  function logout() {
+    clear()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div className="flex h-dvh bg-[var(--p-bg)] overflow-hidden">
-      {/* ── Sidebar ── */}
+      {/* ── Sidebar (桌面端始终显示，移动端可开关) ── */}
       <aside
         className={clsx(
-          'flex flex-col shrink-0 h-full bg-white border-r border-zinc-200/60 transition-all duration-300',
-          sidebarOpen ? 'w-52' : 'w-0 overflow-hidden border-r-0',
+          'flex-col shrink-0 h-full bg-white border-r border-zinc-200/60 transition-all duration-300',
+          sidebarOpen ? 'flex w-52' : 'hidden lg:flex lg:w-52',
         )}
       >
         <div className="flex items-center gap-2 px-3 h-12 shrink-0 border-b border-zinc-100">
@@ -223,35 +230,41 @@ export default function Assistant() {
             <div className="text-xs text-zinc-400 text-center mt-6">暂无会话</div>
           )}
           {sessions.map((s) => (
-            <button
+            <div
               key={s.id}
-              type="button"
-              onClick={() => switchSession(s.id)}
               className={clsx(
-                'group relative w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left transition-all',
+                'group relative w-full flex items-center gap-1 rounded-xl pl-3 pr-1.5 py-1 transition-all',
                 s.id === activeId
                   ? 'bg-zinc-100'
                   : 'hover:bg-zinc-50',
               )}
             >
-              <MessageSquare className={clsx(
-                'h-3.5 w-3.5 shrink-0',
-                s.id === activeId ? 'text-zinc-700' : 'text-zinc-400',
-              )} />
-              <span className={clsx(
-                'flex-1 text-sm truncate',
-                s.id === activeId ? 'font-semibold text-zinc-800' : 'font-medium text-zinc-600',
-              )}>
-                {s.title}
-              </span>
-              <span
-                role="button"
+              <button
+                type="button"
+                onClick={() => switchSession(s.id)}
+                className="flex-1 flex items-center gap-2 py-1 text-left min-w-0"
+              >
+                <MessageSquare className={clsx(
+                  'h-3.5 w-3.5 shrink-0',
+                  s.id === activeId ? 'text-zinc-700' : 'text-zinc-400',
+                )} />
+                <span className={clsx(
+                  'flex-1 text-sm truncate',
+                  s.id === activeId ? 'font-semibold text-zinc-800' : 'font-medium text-zinc-600',
+                )}>
+                  {s.title}
+                </span>
+              </button>
+              <button
+                type="button"
                 onClick={(e) => deleteSession(s.id, e)}
-                className="shrink-0 grid h-6 w-6 place-items-center rounded-md text-zinc-300 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-400 transition-all"
+                aria-label="删除会话"
+                title="删除会话"
+                className="shrink-0 grid h-7 w-7 place-items-center rounded-lg text-zinc-300 hover:bg-red-50 hover:text-red-400 transition-all max-lg:opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-              </span>
-            </button>
+              </button>
+            </div>
           ))}
         </div>
       </aside>
@@ -261,7 +274,7 @@ export default function Assistant() {
         {/* ── Header ── */}
         <header className="shrink-0 border-b border-white/40 bg-white/70 backdrop-blur-xl px-4 py-3">
           <div className="mx-auto flex max-w-4xl items-center justify-between">
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               {/* Mobile back */}
               <button
                 type="button"
@@ -269,6 +282,19 @@ export default function Assistant() {
                 className="grid h-9 w-9 place-items-center rounded-xl text-zinc-500 hover:bg-zinc-100 lg:hidden"
               >
                 <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              {/* Mobile session toggle */}
+              <button
+                type="button"
+                onClick={() => setSidebarOpen((v) => !v)}
+                className={clsx(
+                  'grid h-9 w-9 place-items-center rounded-xl lg:hidden transition-colors',
+                  sidebarOpen ? 'bg-sky-100 text-sky-600' : 'text-zinc-500 hover:bg-zinc-100',
+                )}
+                title="会话列表"
+              >
+                <MessageSquare className="h-5 w-5" />
               </button>
 
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-cyan-500 text-white shadow-md shadow-cyan-200/60 shrink-0">
@@ -284,14 +310,25 @@ export default function Assistant() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => navigate('/app/learn')}
-              className="hidden lg:inline-flex items-center gap-1.5 rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:border-zinc-300 hover:bg-zinc-50 transition-all"
-            >
-              <BookOpen className="h-4 w-4" />
-              返回学习
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => navigate('/app/learn')}
+                className="hidden lg:inline-flex items-center gap-1.5 rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:border-zinc-300 hover:bg-zinc-50 transition-all"
+              >
+                <BookOpen className="h-4 w-4" />
+                返回学习
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex items-center gap-1.5 rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-500 shadow-sm hover:border-red-200 hover:bg-red-50 hover:text-red-500 transition-all"
+                title="退出登录"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">退出登录</span>
+              </button>
+            </div>
           </div>
         </header>
 
@@ -325,9 +362,9 @@ export default function Assistant() {
                   )}
                 >
                   {msg.role === 'user' ? (
-                    <User className="h-4.5 w-4.5" strokeWidth={2.3} />
+                    <User className="h-[18px] w-[18px]" strokeWidth={2.3} />
                   ) : (
-                    <Bot className="h-4.5 w-4.5" strokeWidth={2.3} />
+                    <Bot className="h-[18px] w-[18px]" strokeWidth={2.3} />
                   )}
                 </div>
 
@@ -369,7 +406,7 @@ export default function Assistant() {
             {loading && (
               <div className="flex gap-3 animate-slide-up">
                 <div className="mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-400 to-cyan-500 text-white shadow-sm shadow-cyan-200/60">
-                  <Bot className="h-4.5 w-4.5" />
+                  <Bot className="h-[18px] w-[18px]" />
                 </div>
                 <div className="flex items-center gap-2 rounded-2xl border border-zinc-200/70 bg-white/90 px-5 py-3.5 shadow-sm">
                   <span className="flex gap-1">

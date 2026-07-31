@@ -150,8 +150,8 @@ function SceneBoard({
         {scene.bgDecorations.map((dec, i) => (
           <span
             key={i}
-            className="absolute pointer-events-none opacity-30 select-none"
-            style={{ left: `${dec.x}%`, top: `${dec.y}%`, transform: 'translate(-50%, -50%)', fontSize: dec.size ? undefined : '2.5rem' }}
+            className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-30 select-none"
+            style={{ left: `${dec.x}%`, top: `${dec.y}%`, fontSize: dec.size ?? '2.5rem' }}
           >
             {dec.emoji}
           </span>
@@ -167,19 +167,19 @@ function SceneBoard({
               onClick={() => !found && onFindClue(hs)}
               disabled={found}
               className={clsx(
-                'absolute transition-all duration-300',
+                'absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300',
                 found
                   ? 'opacity-100 scale-100'
                   : 'hover:scale-110 animate-soft-pulse cursor-pointer',
               )}
-              style={{ left: `${hs.x}%`, top: `${hs.y}%`, transform: 'translate(-50%, -50%)' }}
+              style={{ left: `${hs.x}%`, top: `${hs.y}%` }}
             >
               <div
                 className={clsx(
                   'flex items-center gap-1.5 rounded-full px-3 py-2 shadow-lg transition-all',
                   found
-                    ? 'bg-purple-500 text-white ring-2 ring-purple-300'
-                    : 'bg-white/95 text-zinc-700 ring-2 ring-purple-300/60 hover:bg-purple-50',
+                    ? 'bg-sky-500 text-white ring-2 ring-sky-300'
+                    : 'bg-white/95 text-zinc-700 ring-2 ring-sky-300/60 hover:bg-sky-50',
                 )}
               >
                 <span className="text-lg">{found ? '✅' : hs.emoji}</span>
@@ -229,13 +229,13 @@ function NpcMarker({
     <button
       type="button"
       onClick={onClick}
-      className="absolute animate-soft-pulse cursor-pointer"
-      style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
+      className="absolute -translate-x-1/2 -translate-y-1/2 animate-soft-pulse cursor-pointer"
+      style={{ left: `${x}%`, top: `${y}%` }}
     >
-      <div className="flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-2 shadow-lg ring-2 ring-purple-400/60 hover:bg-purple-50 transition-all">
+      <div className="flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-2 shadow-lg ring-2 ring-sky-400/60 hover:bg-sky-50 transition-all">
         <span className="text-lg">{emoji}</span>
         <span className="text-xs font-bold text-zinc-700 truncate max-w-[80px]">{label}</span>
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-100 text-sky-600">
           <MessageCircle className="h-3 w-3" />
         </span>
       </div>
@@ -273,8 +273,8 @@ function NpcDialogueView({
   )
 
   return (
-    <Card className="overflow-hidden border-purple-200">
-      <div className="bg-gradient-to-r from-purple-500 to-violet-500 p-4 text-white">
+    <Card className="overflow-hidden border-sky-200">
+      <div className="bg-gradient-to-r from-[var(--p-primary)] to-[var(--p-primary-dark)] p-4 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-3xl">{npc.emoji}</span>
@@ -307,7 +307,7 @@ function NpcDialogueView({
               <button
                 type="button"
                 onClick={() => handleAsk('secret')}
-                className="rounded-2xl border-2 border-purple-200 bg-purple-50 px-4 py-3 text-left text-sm font-semibold text-purple-800 transition-all hover:border-purple-400 hover:bg-purple-100"
+                className="rounded-2xl border-2 border-sky-200 bg-sky-50 px-4 py-3 text-left text-sm font-semibold text-sky-800 transition-all hover:border-sky-400 hover:bg-sky-100"
               >
                 🔍 {npc.triggerQuestion}
               </button>
@@ -336,7 +336,7 @@ function NpcDialogueView({
               className={clsx(
                 'rounded-2xl p-4 text-sm leading-relaxed',
                 activeResponse.startsWith('secret')
-                  ? 'bg-amber-50 border border-amber-200 text-amber-900'
+                  ? 'bg-sky-50 border border-sky-200 text-zinc-700'
                   : 'bg-sky-50 border border-sky-200 text-zinc-700',
               )}
             >
@@ -464,7 +464,7 @@ export default function Detective() {
   if (step === 'menu') {
     return (
       <div className="grid gap-5">
-        <div className="rounded-3xl bg-gradient-to-br from-purple-500 via-indigo-500 to-violet-600 p-6 text-white shadow-lg shadow-purple-200">
+        <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-6 text-white shadow-lg shadow-sky-200">
           <div className="flex items-center gap-3">
             <span className="text-4xl">🕵️</span>
             <div>
@@ -486,13 +486,13 @@ export default function Detective() {
               key={c.id}
               type="button"
               onClick={() => startCase(c)}
-              className="group rounded-3xl border-2 border-zinc-200 bg-white overflow-hidden text-left transition-all hover:border-purple-300 hover:shadow-lg hover:-translate-y-0.5"
+              className="group rounded-3xl border-2 border-zinc-200 bg-white overflow-hidden text-left transition-all hover:border-sky-300 hover:shadow-lg hover:-translate-y-0.5"
             >
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 px-5 py-4 border-b border-zinc-100">
+              <div className="bg-gradient-to-r from-sky-50 to-cyan-50 px-5 py-4 border-b border-zinc-100">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{c.emoji}</span>
                   <div>
-                    <div className="text-lg font-extrabold text-zinc-900 group-hover:text-purple-700 transition-colors">
+                    <div className="text-lg font-extrabold text-zinc-900 group-hover:text-sky-700 transition-colors">
                       {c.title}
                     </div>
                     <div className="text-sm font-semibold text-zinc-500">{c.subtitle}</div>
@@ -501,10 +501,10 @@ export default function Detective() {
               </div>
               <div className="px-5 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-semibold text-zinc-600">
-                  <Search className="h-4 w-4 text-purple-500" />
+                  <Search className="h-4 w-4 text-sky-500" />
                   <span>{c.scenes.length} 个场景 · {c.difficulty}</span>
                 </div>
-                <span className="text-sm font-bold text-purple-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                <span className="text-sm font-bold text-sky-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                   开始侦查
                   <ChevronRight className="h-4 w-4" />
                 </span>
@@ -534,7 +534,7 @@ export default function Detective() {
           返回案件列表
         </button>
         <Card className="overflow-hidden border-0 shadow-lg">
-          <div className="bg-gradient-to-br from-purple-500 via-indigo-500 to-violet-600 p-5 text-white">
+          <div className="bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-5 text-white">
             <div className="flex items-center gap-3 mb-1">
               <span className="text-4xl">📋</span>
               <div>
@@ -547,7 +547,7 @@ export default function Detective() {
             {theCase.intro.narrative.map((para, i) => (
               <p key={i} className="text-sm text-zinc-700 leading-relaxed">{para}</p>
             ))}
-            <div className="rounded-2xl bg-indigo-50 border border-indigo-200 p-4 text-sm font-semibold text-indigo-800">
+            <div className="rounded-2xl bg-sky-50 border border-sky-200 p-4 text-sm font-semibold text-sky-800">
               🎯 {theCase.intro.briefing}
             </div>
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -592,7 +592,7 @@ export default function Detective() {
               <span className="hidden sm:inline">{theCase.title}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-600">
-              <Trophy className="h-3.5 w-3.5 text-amber-500" />
+              <Trophy className="h-3.5 w-3.5 text-sky-500" />
               {user?.xp ?? 0} XP
             </div>
           </div>
@@ -611,8 +611,8 @@ export default function Detective() {
                 className={clsx(
                   'shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition-all',
                   isActive
-                    ? 'bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-md'
-                    : 'bg-white border border-zinc-200 text-zinc-700 hover:border-purple-300',
+                    ? 'bg-gradient-to-r from-[var(--p-primary)] to-[var(--p-primary-dark)] text-white shadow-md'
+                    : 'bg-white border border-zinc-200 text-zinc-700 hover:border-sky-300',
                 )}
               >
                 <span>{s.name.slice(0, 2)}</span>
@@ -644,7 +644,7 @@ export default function Detective() {
         {/* Clue notebook */}
         <Card className="p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-zinc-700 mb-2">
-            <BookOpen className="h-4 w-4 text-purple-500" />
+            <BookOpen className="h-4 w-4 text-sky-500" />
             侦探笔记本
           </div>
 
@@ -660,7 +660,7 @@ export default function Detective() {
                   className={clsx(
                     'rounded-xl px-3 py-1.5 text-xs font-semibold transition-all',
                     found
-                      ? 'bg-purple-100 text-purple-800 border border-purple-200 cursor-pointer hover:bg-purple-200'
+                      ? 'bg-sky-100 text-sky-800 border border-sky-200 cursor-pointer hover:bg-sky-200'
                       : 'bg-zinc-100 text-zinc-400 border border-zinc-200',
                   )}
                 >
@@ -671,7 +671,7 @@ export default function Detective() {
           </div>
 
           {/* Progress + unlock deduction */}
-          <ProgressBar value={(state.foundClues.length / totalClues) * 100} color="purple" animated />
+          <ProgressBar value={(state.foundClues.length / totalClues) * 100} color="blue" animated />
           <div className="mt-1 text-xs text-zinc-500">
             已找到 {state.foundClues.length}/{totalClues} 条线索
             {canDeduce && !allCluesFound && ' · 已满足推理条件！'}
@@ -682,7 +682,7 @@ export default function Detective() {
         {/* NPC list */}
         <Card className="p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-zinc-700 mb-2">
-            <Users className="h-4 w-4 text-indigo-500" />
+            <Users className="h-4 w-4 text-sky-500" />
             相关人物
           </div>
           <div className="flex flex-wrap gap-2">
@@ -695,16 +695,16 @@ export default function Detective() {
                   className={clsx(
                     'rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-1.5',
                     secret
-                      ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                      ? 'bg-sky-100 text-sky-800 border border-sky-200'
                       : talked
-                        ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                        ? 'bg-sky-100 text-sky-800 border border-sky-200'
                         : 'bg-zinc-100 text-zinc-500 border border-zinc-200',
                   )}
                 >
                   <span>{npc.emoji}</span>
                   <span>{npc.name}</span>
-                  {secret && <span className="text-amber-600">🤫</span>}
-                  {talked && !secret && <CheckCircle2 className="h-3 w-3 text-indigo-500" />}
+                  {secret && <span className="text-sky-600">🤫</span>}
+                  {talked && !secret && <CheckCircle2 className="h-3 w-3 text-sky-500" />}
                 </div>
               )
             })}
@@ -728,7 +728,7 @@ export default function Detective() {
   if (step === 'deduction') {
     return (
       <div className="grid gap-4">
-        <Card className="p-5 bg-gradient-to-r from-purple-500 to-violet-500 text-white border-0 shadow-lg">
+        <Card className="p-5 bg-gradient-to-r from-[var(--p-primary)] to-[var(--p-primary-dark)] text-white border-0 shadow-lg">
           <div className="flex items-center gap-3">
             <span className="text-3xl">🧩</span>
             <div>
@@ -741,7 +741,7 @@ export default function Detective() {
         {theCase.deduction.questions.map((q) => {
           const chosen = state.deductionAnswers[q.id]
           return (
-            <Card key={q.id} className={clsx('p-5', chosen && 'border-purple-200')}>
+            <Card key={q.id} className={clsx('p-5', chosen && 'border-sky-200')}>
               <div className="text-sm font-extrabold text-zinc-900 mb-3">{q.question}</div>
               <div className="grid gap-2">
                 {q.options.map((opt) => {
@@ -754,7 +754,7 @@ export default function Detective() {
                       className={clsx(
                         'rounded-2xl border-2 p-3 text-left text-sm transition-all',
                         selected
-                          ? 'border-purple-400 bg-purple-50 shadow-sm'
+                          ? 'border-sky-400 bg-sky-50 shadow-sm'
                           : 'border-zinc-200 bg-white hover:border-zinc-300',
                       )}
                     >
@@ -762,7 +762,7 @@ export default function Detective() {
                         <div
                           className={clsx(
                             'grid h-6 w-6 shrink-0 place-items-center rounded-lg text-xs font-extrabold',
-                            selected ? 'bg-purple-500 text-white' : 'bg-zinc-100 text-zinc-500',
+                            selected ? 'bg-sky-500 text-white' : 'bg-zinc-100 text-zinc-500',
                           )}
                         >
                           {String.fromCharCode(65 + q.options.indexOf(opt))}
@@ -802,7 +802,7 @@ export default function Detective() {
   if (step === 'result' && scoreData) {
     return (
       <div className="grid gap-4">
-        <div className="rounded-3xl bg-gradient-to-br from-purple-500 via-indigo-500 to-violet-600 p-6 text-white shadow-lg shadow-purple-200 text-center">
+        <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-6 text-white shadow-lg shadow-sky-200 text-center">
           <span className="text-5xl">🔍</span>
           <div className="mt-2 text-2xl font-black">案件告破！</div>
           <div className="mt-1 text-base font-bold text-white/80">{theCase.title}</div>
@@ -826,9 +826,9 @@ export default function Detective() {
               <div key={d.label} className="flex items-center gap-3">
                 <span className="w-28 text-xs font-bold text-zinc-600 shrink-0">{d.label}</span>
                 <div className="flex-1">
-                  <ProgressBar value={(d.earned / Math.max(1, d.max)) * 100} size="sm" color="purple" />
+                  <ProgressBar value={(d.earned / Math.max(1, d.max)) * 100} size="sm" color="blue" />
                 </div>
-                <span className={clsx('text-xs font-extrabold w-12 text-right', d.earned === d.max ? 'text-purple-600' : 'text-zinc-500')}>
+                <span className={clsx('text-xs font-extrabold w-12 text-right', d.earned === d.max ? 'text-sky-600' : 'text-zinc-500')}>
                   {d.earned}/{d.max}
                 </span>
               </div>
@@ -837,8 +837,8 @@ export default function Detective() {
         </Card>
 
         {/* Case summary */}
-        <Card className="p-5 border-purple-200 bg-purple-50/50">
-          <div className="flex items-center gap-2 text-sm font-extrabold text-purple-800 mb-3">
+        <Card className="p-5 border-sky-200 bg-sky-50/50">
+          <div className="flex items-center gap-2 text-sm font-extrabold text-sky-800 mb-3">
             <Lightbulb className="h-4 w-4" />
             真相大白
           </div>
@@ -846,7 +846,7 @@ export default function Detective() {
         </Card>
 
         {/* Full story */}
-        <Card className="p-5 border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
+        <Card className="p-5 border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50">
           <div className="text-sm text-zinc-700 leading-relaxed whitespace-pre-line">
             {theCase.result.fullStory}
           </div>
@@ -877,7 +877,7 @@ export default function Detective() {
             className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-gradient-to-r from-purple-500 to-violet-500 p-4 text-white">
+            <div className="bg-gradient-to-r from-[var(--p-primary)] to-[var(--p-primary-dark)] p-4 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{clueDetail.emoji}</span>
@@ -894,12 +894,12 @@ export default function Detective() {
             </div>
             <div className="p-5 grid gap-3">
               <div className="text-sm text-zinc-700 leading-relaxed">{clueDetail.content.detail}</div>
-              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3">
+              <div className="rounded-2xl bg-sky-50 border border-sky-200 p-3">
                 <div className="flex items-start gap-2">
-                  <Lightbulb className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                  <Lightbulb className="h-4 w-4 text-sky-600 shrink-0 mt-0.5" />
                   <div>
-                    <div className="text-xs font-bold text-amber-800">🔎 推理提示</div>
-                    <div className="mt-1 text-xs text-amber-900">{clueDetail.content.insight}</div>
+                    <div className="text-xs font-bold text-sky-800">🔎 推理提示</div>
+                    <div className="mt-1 text-xs text-zinc-700">{clueDetail.content.insight}</div>
                   </div>
                 </div>
               </div>

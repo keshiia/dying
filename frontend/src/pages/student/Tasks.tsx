@@ -227,7 +227,7 @@ export default function Tasks() {
                   <div className="text-sm font-semibold text-zinc-900 truncate">任务：{t.targetType === 'LEVEL' ? '闯关' : '阅读资源'}</div>
                   <div className="mt-1 text-xs text-zinc-500">截止：{t.dueAt ? new Date(t.dueAt).toLocaleString() : '未设置'}</div>
                   <div className="mt-2 flex gap-2">
-                    <Tag>{t.targetType}</Tag>
+                    <Tag>{t.targetType === 'LEVEL' ? '闯关' : '阅读资源'}</Tag>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -270,7 +270,7 @@ export default function Tasks() {
                   <div className="text-sm font-semibold text-zinc-900 truncate">任务：{t.targetType === 'LEVEL' ? '闯关' : '阅读资源'}</div>
                   <div className="mt-1 text-xs text-zinc-500">完成时间：{t.submittedAt ? new Date(t.submittedAt).toLocaleString() : ''}</div>
                 </div>
-                <Tag className="bg-[color:var(--p-primary)]/10 text-zinc-900">DONE</Tag>
+                <Tag className="bg-[color:var(--p-primary)]/10 text-zinc-900">已完成</Tag>
               </div>
             ))
           )}

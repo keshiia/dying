@@ -275,7 +275,7 @@ export default function Court() {
     return (
       <div className="grid gap-5">
         {/* Header */}
-        <div className="rounded-3xl bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400 p-6 text-white shadow-lg shadow-orange-200">
+        <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-6 text-white shadow-lg shadow-sky-200">
           <div className="flex items-center gap-3">
             <span className="text-4xl">⚖️</span>
             <div>
@@ -298,13 +298,13 @@ export default function Court() {
               key={c.id}
               type="button"
               onClick={() => startCase(c)}
-              className="group rounded-3xl border-2 border-zinc-200 bg-white overflow-hidden text-left transition-all hover:border-amber-300 hover:shadow-lg hover:-translate-y-0.5"
+              className="group rounded-3xl border-2 border-zinc-200 bg-white overflow-hidden text-left transition-all hover:border-sky-300 hover:shadow-lg hover:-translate-y-0.5"
             >
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 px-5 py-4 border-b border-zinc-100">
+              <div className="bg-gradient-to-r from-sky-50 to-cyan-50 px-5 py-4 border-b border-zinc-100">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{c.emoji}</span>
                   <div>
-                    <div className="text-lg font-extrabold text-zinc-900 group-hover:text-amber-700 transition-colors">
+                    <div className="text-lg font-extrabold text-zinc-900 group-hover:text-sky-700 transition-colors">
                       {c.title}
                     </div>
                     <div className="text-sm font-semibold text-zinc-500">{c.subtitle}</div>
@@ -313,10 +313,10 @@ export default function Court() {
               </div>
               <div className="px-5 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-zinc-600">
-                  <Gavel className="h-4 w-4 text-amber-500" />
+                  <Gavel className="h-4 w-4 text-sky-500" />
                   6 个关卡 · {c.result.xpReward} XP
                 </div>
-                <span className="text-sm font-bold text-amber-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                <span className="text-sm font-bold text-sky-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                   开始审理
                   <ChevronRight className="h-4 w-4" />
                 </span>
@@ -364,7 +364,7 @@ export default function Court() {
           </div>
           {user && (
             <div className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-600">
-              <Trophy className="h-3.5 w-3.5 text-amber-500" />
+              <Trophy className="h-3.5 w-3.5 text-sky-500" />
               {user.xp} XP
             </div>
           )}
@@ -375,7 +375,7 @@ export default function Court() {
       {/* ── STEP: Intro ── */}
       {step === 'intro' && (
         <Card className="overflow-hidden border-0 shadow-lg">
-          <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400 p-6 text-white">
+          <div className="bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-6 text-white">
             <div className="flex items-center gap-3 mb-2">
               <span className="text-4xl">📜</span>
               <div>
@@ -481,20 +481,20 @@ export default function Court() {
                   onClick={() => findHotspot(hs)}
                   disabled={found}
                   className={clsx(
-                    'absolute transition-all duration-300',
+                    'absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300',
                     found
                       ? 'opacity-100 scale-100'
                       : 'hover:scale-110 animate-soft-pulse cursor-pointer',
                     isAnimating && 'scale-125',
                   )}
-                  style={{ left: `${hs.x}%`, top: `${hs.y}%`, transform: 'translate(-50%, -50%)' }}
+                  style={{ left: `${hs.x}%`, top: `${hs.y}%` }}
                 >
                   <div
                     className={clsx(
                       'flex items-center gap-1.5 rounded-full px-3 py-2 shadow-lg transition-all',
                       found
                         ? 'bg-emerald-500 text-white ring-2 ring-emerald-300'
-                        : 'bg-white/95 text-zinc-700 ring-2 ring-amber-300 hover:bg-amber-50',
+                        : 'bg-white/95 text-zinc-700 ring-2 ring-sky-300 hover:bg-sky-50',
                     )}
                   >
                     <span className="text-lg">{found ? '✅' : hs.emoji}</span>
@@ -535,7 +535,7 @@ export default function Court() {
             <div className="mt-4">
               <ProgressBar
                 value={(choices.foundHotspots.length / theCase.scene.hotspots.length) * 100}
-                color="orange"
+                color="blue"
                 animated
               />
               <div className="mt-1 text-xs text-zinc-500">
@@ -680,7 +680,7 @@ export default function Court() {
                         key={c.id}
                         type="button"
                         onClick={() => pickDebateChoice(stage.id, c.id)}
-                        className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-semibold text-zinc-700 transition-all hover:border-amber-300 hover:bg-amber-50/50 hover:shadow-sm"
+                        className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-semibold text-zinc-700 transition-all hover:border-sky-300 hover:bg-sky-50/50 hover:shadow-sm"
                       >
                         {c.text}
                       </button>
@@ -688,7 +688,7 @@ export default function Court() {
                   </div>
                 ) : (
                   <div className="mt-3 grid gap-2">
-                    <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-sm font-semibold text-amber-800">
+                    <div className="rounded-2xl bg-sky-50 border border-sky-200 p-3 text-sm font-semibold text-sky-800">
                       🎯 你选择了：{chosen.text}
                     </div>
                     <div className="rounded-2xl bg-sky-50 border border-sky-200 p-3 text-sm text-zinc-700">
@@ -707,7 +707,7 @@ export default function Court() {
           <Card className="p-4">
             <ProgressBar
               value={(Object.keys(choices.debateChoices).length / theCase.debate.stages.length) * 100}
-              color="purple"
+              color="blue"
               animated
             />
             <div className="mt-4">
@@ -809,7 +809,7 @@ export default function Court() {
 
           {/* Penalty */}
           {theCase.deliberation.penalty && choices.verdictChoice !== null && (
-            <Card className="p-5 border-amber-200">
+            <Card className="p-5 border-sky-200">
               <div className="text-sm font-extrabold text-zinc-900 mb-3">📋 {theCase.deliberation.penalty.question}</div>
               <div className="grid gap-3">
                 {theCase.deliberation.penalty.options.map((opt) => {
@@ -853,7 +853,7 @@ export default function Court() {
       {step === 'result' && scoreData && (
         <div className="grid gap-4">
           {/* Score Hero */}
-          <div className="rounded-3xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 p-6 text-white shadow-lg shadow-emerald-200">
+          <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-6 text-white shadow-lg shadow-sky-200">
             <div className="text-center">
               <span className="text-5xl">🏆</span>
               <div className="mt-2 text-2xl font-black">判决完成！</div>
@@ -956,7 +956,7 @@ export default function Court() {
             className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-gradient-to-r from-amber-400 to-orange-400 p-4 text-white">
+            <div className="bg-gradient-to-r from-[var(--p-primary)] to-[var(--p-primary-dark)] p-4 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{detailModal.type === 'hotspot' ? (detailModal.data as SceneHotspot).emoji : (detailModal.data as EvidenceItem).emoji}</span>

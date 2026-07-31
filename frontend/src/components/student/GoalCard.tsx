@@ -14,13 +14,6 @@ type Props = {
   className?: string
 }
 
-const GOAL_LABELS: Record<string, string> = {
-  COMPLETE_LEVELS: '完成关卡',
-  REVIEW_LEVELS: '错题复盘',
-  DAILY_ACTIVE: '学习打卡',
-  STUDY_HOURS: '学习时长',
-}
-
 export default function GoalCard({ className }: Props) {
   const [goals, setGoals] = useState<StudentGoal[]>([])
   const [loading, setLoading] = useState(true)

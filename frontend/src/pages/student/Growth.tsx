@@ -23,7 +23,7 @@ import ChallengeModal from '@/components/student/ChallengeModal'
 import ErrorAnalysisPanel from '@/components/student/ErrorAnalysisPanel'
 import { apiFetch } from '@/utils/api'
 import { useAuthStore } from '@/stores/auth'
-import type { LearningUnit, StudentProfile } from '@/types'
+import type { LearningUnit } from '@/types'
 
 type TrendPoint = {
   day: string
@@ -104,15 +104,21 @@ export default function Growth() {
   }>(null)
   const initializedUnlockedRef = useRef(false)
   const prevUnlockedIdsRef = useRef<Set<string>>(new Set())
+  const dataLoadedRef = useRef(false)
 
   useEffect(() => {
     ;(async () => {
-      const [summaryData, unitsData] = await Promise.all([
-        apiFetch<{ success: true; stats: GrowthStats }>('/api/student/summary'),
-        apiFetch<{ success: true; units: LearningUnit[] }>('/api/student/units'),
-      ])
-      setStats(summaryData.stats)
-      setUnits(unitsData.units)
+      try {
+        const [summaryData, unitsData] = await Promise.all([
+          apiFetch<{ success: true; stats: GrowthStats }>('/api/student/summary'),
+          apiFetch<{ success: true; units: LearningUnit[] }>('/api/student/units'),
+        ])
+        setStats(summaryData.stats)
+        setUnits(unitsData.units)
+        dataLoadedRef.current = true
+      } catch {
+        // 接口失败时保持兜底数据（stats 各字段均用 ?? 0 兜底），不抛未处理异常
+      }
     })()
   }, [])
 
@@ -396,6 +402,9 @@ export default function Growth() {
   }, [lockedBadges.length])
 
   useEffect(() => {
+    // 数据未加载完成前不初始化，避免首次渲染把已有徽章误判为"新解锁"
+    if (!dataLoadedRef.current) return
+
     const currentUnlockedIds = new Set(badgeList.filter((badge) => badge.unlocked).map((badge) => badge.id))
 
     if (!initializedUnlockedRef.current) {

@@ -58,6 +58,9 @@ export default function RecommendationSection({ className, onStartLevel }: Props
   function handleClick(rec: Recommendation) {
     if (rec.type === 'LEVEL' && rec.targetId && onStartLevel) {
       onStartLevel(rec.targetId, rec.title, rec.xpReward ?? 10)
+    } else if (rec.type === 'LEVEL' && !rec.targetId) {
+      // "每日一题"等无具体关卡的目标 → 跳转学习页
+      navigate('/app/learn')
     } else if (rec.type === 'REVIEW') {
       navigate('/app/tasks')
     } else if (rec.type === 'RESOURCE') {
@@ -101,7 +104,7 @@ export default function RecommendationSection({ className, onStartLevel }: Props
                     <span className="text-sm font-bold text-zinc-900 truncate">{rec.title}</span>
                     <Tag color={
                       rec.urgency === 'high' ? 'red' : rec.urgency === 'medium' ? 'orange' : 'zinc'
-                    } size="sm">
+                    }>
                       {rec.urgency === 'high' ? '优先' : rec.urgency === 'medium' ? '推荐' : '可选'}
                     </Tag>
                   </div>

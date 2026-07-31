@@ -80,10 +80,18 @@ router.post('/chat', async (req: Request, res: Response) => {
   } catch { /* ignore context build errors */ }
 
   if (!env.OPENAI_API_KEY || !env.OPENAI_BASE_URL) {
+    const fallbackAnswer =
+      '我可以帮你用“学习用途”的方式解释法律概念与风险提示。当前未配置AI密钥，所以我先给你一份学习建议：\n\n1) 先确认情境（校园/网络/家庭/消费）\n2) 先保证安全，再求助可信成年人\n3) 保留证据（截图/聊天记录/转账凭证）\n4) 需要紧急帮助可拨打 110 或 12348\n'
+
+    try {
+      await prisma.aiChatMessage.create({
+        data: { studentId: req.user!.id, role: 'assistant', content: fallbackAnswer, sessionId },
+      })
+    } catch { /* ignore */ }
+
     res.json({
       success: true,
-      answer:
-        '我可以帮你用“学习用途”的方式解释法律概念与风险提示。当前未配置AI密钥，所以我先给你一份学习建议：\n\n1) 先确认情境（校园/网络/家庭/消费）\n2) 先保证安全，再求助可信成年人\n3) 保留证据（截图/聊天记录/转账凭证）\n4) 需要紧急帮助可拨打 110 或 12348\n',
+      answer: fallbackAnswer,
       citations,
     })
     return

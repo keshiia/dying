@@ -215,10 +215,6 @@ export default function Learn() {
     [units],
   );
 
-  const pct = totalLevels
-    ? Math.round((completedLevels / totalLevels) * 100)
-    : 0;
-
   const categories = useMemo(() => {
     const set = new Set(units.map((u) => u.category));
     return ["全部", ...Array.from(set)];

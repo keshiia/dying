@@ -85,6 +85,7 @@ export default function Resources() {
   const [items, setItems] = useState<ResourceListItem[]>([])
   const [toolCatalog, setToolCatalog] = useState<ResourceListItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
   const [detail, setDetail] = useState<ResourceDetail | null>(null)
   const [showChecklist, setShowChecklist] = useState(false)
@@ -100,14 +101,20 @@ export default function Resources() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const params = new URLSearchParams()
-    if (debouncedQ) params.set('q', debouncedQ)
-    if (type !== 'ALL') params.set('type', type)
-    if (scene !== 'ALL') params.set('tag', scene)
-    const data = await apiFetch<{ success: true; resources: ResourceListItem[] }>(`/api/resources?${params.toString()}`)
-    setItems(data.resources)
-    setVisibleResourceCount(8)
-    setLoading(false)
+    setError(null)
+    try {
+      const params = new URLSearchParams()
+      if (debouncedQ) params.set('q', debouncedQ)
+      if (type !== 'ALL') params.set('type', type)
+      if (scene !== 'ALL') params.set('tag', scene)
+      const data = await apiFetch<{ success: true; resources: ResourceListItem[] }>(`/api/resources?${params.toString()}`)
+      setItems(data.resources)
+      setVisibleResourceCount(8)
+    } catch {
+      setError('资源加载失败，请稍后重试')
+    } finally {
+      setLoading(false)
+    }
   }, [debouncedQ, type, scene])
 
   useEffect(() => {
@@ -122,8 +129,12 @@ export default function Resources() {
 
   useEffect(() => {
     async function loadToolCatalog() {
-      const data = await apiFetch<{ success: true; resources: ResourceListItem[] }>('/api/resources?type=ARTICLE')
-      setToolCatalog(data.resources)
+      try {
+        const data = await apiFetch<{ success: true; resources: ResourceListItem[] }>('/api/resources?type=ARTICLE')
+        setToolCatalog(data.resources)
+      } catch {
+        // 工具目录加载失败时静默降级，不影响主列表
+      }
     }
     void loadToolCatalog()
   }, [])
@@ -172,8 +183,12 @@ export default function Resources() {
   async function open(itemId: string) {
     setOpenId(itemId)
     setDetail(null)
-    const data = await apiFetch<{ success: true; resource: ResourceDetail }>(`/api/resources/${itemId}`)
-    setDetail(data.resource)
+    try {
+      const data = await apiFetch<{ success: true; resource: ResourceDetail }>(`/api/resources/${itemId}`)
+      setDetail(data.resource)
+    } catch {
+      setOpenId(null)
+    }
   }
 
   return (
@@ -384,7 +399,12 @@ export default function Resources() {
                 </Button>
               </div>
             ))}
-            {!loading && items.length === 0 && (
+            {error && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-6 text-center text-sm text-red-600">
+                {error}
+              </div>
+            )}
+            {!loading && !error && items.length === 0 && (
               <div className="rounded-2xl border border-zinc-100 bg-zinc-50 px-4 py-6 text-center text-sm text-zinc-500">
                 当前筛选下暂无资源，试试更换关键词或分类。
               </div>

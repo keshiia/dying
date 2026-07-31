@@ -101,6 +101,7 @@ export default function Comics() {
   const [readingStory, setReadingStory] = useState<ComicStory | null>(null);
   const [currentPanel, setCurrentPanel] = useState(0);
   const [xpAnim, setXpAnim] = useState(false);
+  const [lastXpGain, setLastXpGain] = useState(10);
   const userId = useAuthStore((s) => s.user?.id);
   const [readSet, setReadSet] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -128,6 +129,7 @@ export default function Comics() {
       body: JSON.stringify({ storyId }),
     })
       .then((res) => {
+        setLastXpGain(res.xpGain);
         toast(`阅读完成，+${res.xpGain} XP`, "success");
         if (res.xpGain > 0) {
           const store = useAuthStore.getState();
@@ -316,7 +318,11 @@ export default function Comics() {
               <div className="absolute inset-0 z-10 grid place-items-center bg-black/20 backdrop-blur-[2px] pointer-events-none">
                 <div className="animate-[xpPop_2s_ease-out_forwards] text-center">
                   <div className="text-5xl mb-2">🎉</div>
-                  <div className="text-3xl font-black text-white drop-shadow-lg">+10 XP</div>
+                  {lastXpGain > 0 ? (
+                    <div className="text-3xl font-black text-white drop-shadow-lg">+{lastXpGain} XP</div>
+                  ) : (
+                    <div className="text-3xl font-black text-white drop-shadow-lg">已阅读过</div>
+                  )}
                   <div className="mt-1 text-sm font-bold text-white/80">阅读完成！</div>
                 </div>
               </div>
@@ -370,7 +376,9 @@ export default function Comics() {
                     <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 px-4 py-3 flex items-center gap-2.5">
                       <span className="text-2xl">🎉</span>
                       <div>
-                        <div className="text-sm font-extrabold text-amber-800">阅读完成！获得 10 XP</div>
+                        <div className="text-sm font-extrabold text-amber-800">
+                          {lastXpGain > 0 ? `阅读完成！获得 ${lastXpGain} XP` : '已阅读过本漫画'}
+                        </div>
                         <div className="text-xs text-amber-600">继续阅读其他漫画可获取更多经验</div>
                       </div>
                     </div>

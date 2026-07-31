@@ -214,7 +214,7 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
                   <span className="text-xs text-zinc-500">
                     第 {step + 1} / {total} 题
                   </span>
-                  {(current as any).difficulty === 1 || current.type === 'TRUE_FALSE' ? null : (
+                  {current.difficulty === 1 || current.type === 'TRUE_FALSE' ? null : (
                     <span className="rounded-full bg-gradient-to-r from-sky-100 to-cyan-100 px-2 py-0.5 text-[10px] font-bold text-sky-700 border border-sky-200/60">
                       自适应
                     </span>
