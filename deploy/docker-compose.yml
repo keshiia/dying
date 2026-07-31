@@ -1,0 +1,52 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: lft-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-lft_db}
+      MYSQL_USER: ${MYSQL_USER:-lft_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-lft_pass123}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: legal-for-teen-backend:latest
+    container_name: lft-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER:-lft_user}:${MYSQL_PASSWORD:-lft_pass123}@db:3306/${MYSQL_DATABASE:-lft_db}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-use-a-long-random-string}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost}
+      ALLOW_TEACHER_SELF_REGISTER: ${ALLOW_TEACHER_SELF_REGISTER:-true}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-meta/llama-3.3-70b-instruct}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://integrate.api.nvidia.com}
+      NODE_ENV: production
+      PORT: 3001
+    ports:
+      - "3001:3001"
+
+  frontend:
+    image: legal-for-teen-frontend:latest
+    container_name: lft-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  mysql-data:
