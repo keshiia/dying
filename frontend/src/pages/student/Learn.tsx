@@ -8,6 +8,7 @@ import {
   RotateCcw,
   Scale,
   Trophy,
+  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { clsx } from "clsx";
@@ -17,8 +18,11 @@ import Tag from "@/components/ui/Tag";
 import ProgressBar from "@/components/ui/ProgressBar";
 import ChallengeModal from "@/components/student/ChallengeModal";
 import BannerCarousel from "@/components/ui/BannerCarousel";
+import ProfileRadar from "@/components/student/ProfileRadar";
+import GoalCard from "@/components/student/GoalCard";
+import RecommendationSection from "@/components/student/RecommendationSection";
 import { apiFetch, errorMessage } from "@/utils/api";
-import type { LearningUnit } from "@/types";
+import type { LearningUnit, StudentProfile } from "@/types";
 import { useAuthStore } from "@/stores/auth";
 
 const categoryMeta: Record<
@@ -143,6 +147,8 @@ export default function Learn() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [streakDays, setStreakDays] = useState(0);
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [filter, setFilter] = useState<string>("全部");
   const [showPendingOnly, setShowPendingOnly] = useState(true);
   const [openLevel, setOpenLevel] = useState<null | {
@@ -176,8 +182,21 @@ export default function Learn() {
     }
   }
 
+  async function loadProfile() {
+    setProfileLoading(true);
+    try {
+      const data = await apiFetch<{ success: true; profile: StudentProfile }>("/api/student/profile");
+      setProfile(data.profile);
+    } catch {
+      // ignore
+    } finally {
+      setProfileLoading(false);
+    }
+  }
+
   useEffect(() => {
     void load();
+    void loadProfile();
   }, []);
 
   const totalLevels = useMemo(
@@ -279,41 +298,20 @@ export default function Learn() {
         )}
       </div>
 
+      {/* 智能推荐区域 */}
       {!loading && !error && (
-        <div className="grid gap-2 sm:grid-cols-3">
-          <button
-            type="button"
-            onClick={() => navigate("/app/tasks")}
-            className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors hover:bg-zinc-50"
-          >
-            <div className="flex items-center gap-2 text-sm font-bold text-zinc-900">
-              <CircleHelp className="h-4 w-4 text-slate-600" />
-              今日1题
-            </div>
-            <div className="mt-1 text-xs text-zinc-500">30 秒快速热身</div>
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/app/tasks")}
-            className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors hover:bg-zinc-50"
-          >
-            <div className="flex items-center gap-2 text-sm font-bold text-zinc-900">
-              <RotateCcw className="h-4 w-4 text-slate-600" />
-              错题复盘
-            </div>
-            <div className="mt-1 text-xs text-zinc-500">查漏补缺更高效</div>
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/app/resources")}
-            className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors hover:bg-zinc-50"
-          >
-            <div className="flex items-center gap-2 text-sm font-bold text-zinc-900">
-              <BookOpen className="h-4 w-4 text-slate-600" />
-              法条速查
-            </div>
-            <div className="mt-1 text-xs text-zinc-500">按主题快速查依据</div>
-          </button>
+        <RecommendationSection
+          onStartLevel={(id, title, xpReward) =>
+            setOpenLevel({ id, title, xpReward })
+          }
+        />
+      )}
+
+      {/* 学习画像 + 本周目标 */}
+      {!loading && !error && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ProfileRadar profile={profile} loading={profileLoading} />
+          <GoalCard />
         </div>
       )}
 

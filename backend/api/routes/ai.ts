@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { env } from '../lib/env.js'
+import { prisma } from '../lib/prisma.js'
 
 const router = Router()
 
@@ -26,8 +27,57 @@ router.post('/chat', async (req: Request, res: Response) => {
     return
   }
 
-  const { message } = parsed.data
+  const { message, sessionId } = parsed.data
   const citations = recommendCitations(message)
+
+  // ── 保存用户消息 ──
+  try {
+    await prisma.aiChatMessage.create({
+      data: { studentId: req.user!.id, role: 'user', content: message, sessionId },
+    })
+  } catch { /* ignore */ }
+
+  // ── 获取用户上下文用于个性化 ──
+  let userContext = ''
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: { nickname: true, grade: true },
+    })
+
+    const progress = await prisma.userProgress.findMany({
+      where: { studentId: req.user!.id, status: 'COMPLETED' },
+      include: { level: { include: { unit: true } } },
+      take: 50,
+    })
+
+    // 按主题统计
+    const topicStats = new Map<string, { total: number; scoreSum: number; count: number }>()
+    for (const p of progress) {
+      const topic = p.level.unit.category
+      const s = topicStats.get(topic) ?? { total: 0, scoreSum: 0, count: 0 }
+      s.total++
+      s.scoreSum += p.bestScore
+      topicStats.set(topic, s)
+    }
+
+    const topicSummary = [...topicStats.entries()]
+      .map(([topic, s]) => `${topic}${s.count}关(均${Math.round(s.scoreSum / s.count)}分)`)
+      .join('，')
+
+    // 最近聊天记录
+    const recentChats = await prisma.aiChatMessage.findMany({
+      where: { studentId: req.user!.id, role: 'user' },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: { content: true },
+    })
+    const recentQuestions = recentChats.map((c) => c.content).join(' | ')
+
+    userContext = `当前用户：${user?.nickname ?? '同学'}${user?.grade ? `，${user.grade}` : ''}。`
+    if (topicSummary) userContext += `已完成：${topicSummary}。`
+    if (recentQuestions) userContext += `最近提问：${recentQuestions}。`
+  } catch { /* ignore context build errors */ }
 
   if (!env.OPENAI_API_KEY || !env.OPENAI_BASE_URL) {
     res.json({
@@ -42,13 +92,18 @@ router.post('/chat', async (req: Request, res: Response) => {
   const baseUrl = env.OPENAI_BASE_URL.replace(/\/$/, '')
   const url = `${baseUrl}/v1/chat/completions`
 
+  const personalNote = userContext
+    ? `注意：以下信息仅用于个性化回应，不要直接复述或逐条罗列：\n${userContext}\n当用户询问法律问题时，结合其年龄和进度用合适的方式回应。`
+    : ''
+
   const system =
     '你是面向初高中生的普法学习助手。你的目标是用简单、温和、可操作的语言解释法律常识与风险提示。\n' +
     '要求：\n' +
     '- 不提供具体法律意见或办案结论，只做学习解释与一般性建议。\n' +
     '- 遇到涉及自伤、暴力、性侵、勒索等高风险内容，优先建议立即求助监护人/老师/报警（110）或12348。\n' +
     '- 内容要适合未成年人阅读，不使用恐吓或刺激性描述。\n' +
-    '- 尽量给出3-5条行动清单。\n'
+    '- 尽量给出3-5条行动清单。\n' +
+    (personalNote ? `${personalNote}\n` : '')
 
   const body = {
     model: env.OPENAI_MODEL,
@@ -78,9 +133,18 @@ router.post('/chat', async (req: Request, res: Response) => {
 
   const data = (await r.json()) as unknown
   const answer = readOpenAiAnswer(data)
+  const finalAnswer = answer ?? '我暂时没想好，你可以换个说法问问。'
+
+  // ── 保存 AI 回复 ──
+  try {
+    await prisma.aiChatMessage.create({
+      data: { studentId: req.user!.id, role: 'assistant', content: finalAnswer, sessionId },
+    })
+  } catch { /* ignore */ }
+
   res.json({
     success: true,
-    answer: answer ?? '我暂时没想好，你可以换个说法问问。',
+    answer: finalAnswer,
     citations,
   })
 })

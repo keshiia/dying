@@ -99,3 +99,75 @@ export type AiCitation = {
   id: string
   label: string
 }
+
+// ── 个性化相关类型 ──
+
+export type TopicMastery = {
+  topic: string
+  mastery: number
+  questionsTotal: number
+  questionsCorrect: number
+  trend: 'up' | 'down' | 'stable'
+}
+
+export type WeakArea = {
+  topic: string
+  questionType: string
+  failCount: number
+  failRate: number
+  suggestion: string
+}
+
+export type Strength = {
+  topic: string
+  accuracy: number
+  questionType: string
+}
+
+export type LearningStyle = {
+  preferredTypes: string[]
+  activePattern: 'morning' | 'afternoon' | 'evening' | 'irregular'
+  pace: 'fast' | 'steady' | 'slow'
+  weeklyAvgAttempts: number
+}
+
+export type StudentProfile = {
+  topicMasteries: TopicMastery[]
+  weakAreas: WeakArea[]
+  strengths: Strength[]
+  learningStyle: LearningStyle
+  totalAttempts: number
+  totalCorrect: number
+  totalQuestions: number
+  overallAccuracy: number
+}
+
+export type Recommendation = {
+  type: 'LEVEL' | 'REVIEW' | 'RESOURCE' | 'COMIC' | 'GAME'
+  targetId: string
+  title: string
+  reason: string
+  urgency: 'high' | 'medium' | 'low'
+  xpReward?: number
+}
+
+export type StudentGoal = {
+  id: string
+  title: string
+  description: string | null
+  targetType: string
+  targetCount: number
+  progress: number
+  completed: boolean
+  weekStart: string
+}
+
+export type ErrorAnalysis = {
+  totalErrors: number
+  totalQuestions: number
+  overallAccuracy: number
+  byTopic: Array<{ topic: string; total: number; errors: number; accuracy: number; avgScore: number }>
+  byType: Array<{ type: string; total: number; errors: number; accuracy: number }>
+  patterns: string[]
+  suggestions: string[]
+}

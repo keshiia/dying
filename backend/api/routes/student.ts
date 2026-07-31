@@ -188,11 +188,54 @@ router.get('/levels/:levelId/questions', async (req: Request, res: Response) => 
     return
   }
 
-  const questions = await prisma.question.findMany({
+  let questions = await prisma.question.findMany({
     where: { levelId },
     orderBy: { orderNo: 'asc' },
-    select: { id: true, type: true, prompt: true, optionsJson: true, orderNo: true },
+    select: { id: true, type: true, prompt: true, optionsJson: true, orderNo: true, difficulty: true },
   })
+
+  // ── 自适应排序（方向6） ──
+  const ADAPTIVE_ENABLED = true
+  if (ADAPTIVE_ENABLED && questions.length > 0) {
+    // 获取该学生的历史答题表现
+    const pastAttempts = await prisma.attempt.findMany({
+      where: { studentId: req.user!.id },
+      include: {
+        level: { include: { unit: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    })
+
+    // 按题型计算历史正确率
+    const typeAccuracy = new Map<string, { correct: number; total: number }>()
+    for (const a of pastAttempts) {
+      const lvlQuestions = a.levelId === levelId ? questions : []
+      if (lvlQuestions.length === 0) continue
+      const typesInLevel = [...new Set(lvlQuestions.map((q) => q.type))].filter(Boolean)
+      for (const t of typesInLevel) {
+        const stats = typeAccuracy.get(t) ?? { correct: 0, total: 0 }
+        stats.total += a.totalCount
+        stats.correct += a.correctCount
+        typeAccuracy.set(t, stats)
+      }
+    }
+
+    // 根据题型难度排序：TRUE_FALSE < SINGLE < SCENARIO
+    const typeOrder = ['TRUE_FALSE', 'SINGLE', 'SCENARIO']
+    const typeRank = (t: string) => typeOrder.indexOf(t) >= 0 ? typeOrder.indexOf(t) : 2
+
+    // 对每个题目计算自适应优先级
+    const scored = questions.map((q) => {
+      const stats = typeAccuracy.get(q.type)
+      const historyAccuracy = stats && stats.total > 0 ? stats.correct / stats.total : 0.5
+      // 优先级：历史正确率高的优先（建立信心），同正确率按题型简单优先
+      const priority = historyAccuracy * 100 - typeRank(q.type) * 10
+      return { q, priority }
+    })
+    scored.sort((a, b) => b.priority - a.priority)
+    questions = scored.map((s) => s.q)
+  }
 
   res.json({
     success: true,
@@ -609,6 +652,266 @@ router.post('/tasks/:assignmentId/submit', async (req: Request, res: Response) =
 
   res.json({ success: true })
 })
+
+// ── 方向1: 学生画像 ──
+router.get('/profile', async (req: Request, res: Response) => {
+  const { getStudentProfile } = await import('../lib/studentProfile.js')
+  const profile = await getStudentProfile(req.user!.id, req.user!.id)
+  res.json({ success: true, profile })
+})
+
+// ── 方向4: 智能错题复盘 ──
+router.get('/error-analysis', async (req: Request, res: Response) => {
+  // 获取最近 240 次答题记录
+  const recentAttempts = await prisma.attempt.findMany({
+    where: { studentId: req.user!.id },
+    orderBy: { createdAt: 'desc' },
+    take: 240,
+    include: {
+      level: {
+        include: { unit: true },
+      },
+    },
+  })
+
+  if (recentAttempts.length === 0) {
+    res.json({ success: true, analysis: { totalErrors: 0, byTopic: [], byType: [], patterns: [], suggestions: [] } })
+    return
+  }
+
+  // 按主题聚合错题
+  const topicMap = new Map<string, { total: number; correct: number; recentScore: number[] }>()
+  const typeMap = new Map<string, { total: number; correct: number }>()
+  const levelErrors = new Map<string, number>()
+  let totalQ = 0
+  let totalC = 0
+
+  for (const a of recentAttempts) {
+    const category = a.level.unit.category
+    const stats = topicMap.get(category) ?? { total: 0, correct: 0, recentScore: [] }
+    stats.total += a.totalCount
+    stats.correct += a.correctCount
+    stats.recentScore.push(a.score)
+    topicMap.set(category, stats)
+    totalQ += a.totalCount
+    totalC += a.correctCount
+
+    const errors = a.totalCount - a.correctCount
+    if (errors > 0) {
+      levelErrors.set(a.levelId, (levelErrors.get(a.levelId) ?? 0) + errors)
+    }
+  }
+
+  // 按题型聚合（从 questions 表反查）
+  const levelIds = [...new Set(recentAttempts.map((a) => a.levelId))]
+  const questions = await prisma.question.findMany({
+    where: { levelId: { in: levelIds } },
+    select: { levelId: true, type: true },
+  })
+  const questionsByLevel = new Map<string, string[]>()
+  for (const q of questions) {
+    const list = questionsByLevel.get(q.levelId) ?? []
+    list.push(q.type)
+    questionsByLevel.set(q.levelId, list)
+  }
+
+  for (const a of recentAttempts) {
+    const types = questionsByLevel.get(a.levelId) ?? []
+    const errors = a.totalCount - a.correctCount
+    if (errors > 0 && types.length > 0) {
+      const errorsPerType = Math.round(errors / types.length)
+      for (const t of types) {
+        const ts = typeMap.get(t) ?? { total: 0, correct: 0 }
+        ts.total += 1
+        if (errorsPerType < 1) ts.correct += 1
+        typeMap.set(t, ts)
+      }
+    }
+  }
+
+  const byTopic = [...topicMap.entries()]
+    .filter(([, s]) => s.total > 0)
+    .map(([topic, s]) => ({
+      topic,
+      total: s.total,
+      errors: s.total - s.correct,
+      accuracy: Math.round((s.correct / s.total) * 100),
+      avgScore: Math.round(s.recentScore.reduce((a, b) => a + b, 0) / s.recentScore.length),
+    }))
+    .sort((a, b) => a.accuracy - b.accuracy)
+
+  const byType = [...typeMap.entries()]
+    .filter(([, s]) => s.total > 0)
+    .map(([type, s]) => ({
+      type,
+      total: s.total,
+      errors: s.total - s.correct,
+      accuracy: Math.round((s.correct / s.total) * 100),
+    }))
+    .sort((a, b) => a.accuracy - b.accuracy)
+
+  // 识别错误模式
+  const patterns: string[] = []
+  const worstTopic = byTopic[0]
+  if (worstTopic && worstTopic.accuracy < 70) {
+    patterns.push(`你在「${worstTopic.topic}」主题上错误率较高（正确率 ${worstTopic.accuracy}%），建议重点复习该主题的基础概念`)
+  }
+
+  const worstType = byType[0]
+  if (worstType && worstType.accuracy < 70) {
+    const typeLabel = worstType.type === 'SCENARIO' ? '情境分析题' : worstType.type === 'TRUE_FALSE' ? '判断题' : '选择题'
+    patterns.push(`你在${typeLabel}上表现较弱（正确率 ${worstType.accuracy}%），需要加强场景判断能力`)
+  }
+
+  const totalErrors = totalQ - totalC
+  if (totalErrors > 0 && totalQ > 0) {
+    const overallAccuracy = Math.round((totalC / totalQ) * 100)
+    if (overallAccuracy < 60) {
+      patterns.push('整体正确率偏低，建议从基础关卡重新梳理知识体系')
+    }
+  }
+
+  // 生成改进建议
+  const suggestions: string[] = []
+  const SUGGESTION_TOPIC: Record<string, string> = {
+    '校园法律': '建议重看校园欺凌漫画，复习「拒绝欺凌」主题关卡',
+    '网络法律': '建议复习「反诈骗与信息保护」关卡和反诈微动画',
+    '家庭法律': '建议复习「监护与隐私」主题的家庭法律相关关卡',
+    '消费法律': '建议复习「网游充值与维权」关卡中的消费维权部分',
+    '交通安全': '建议复习「交通规则与出行安全」相关关卡',
+    '禁毒法律': '建议复习「毒品识别与拒绝技巧」关卡',
+  }
+  for (const t of byTopic) {
+    if (t.accuracy < 65) {
+      const suggestion = SUGGESTION_TOPIC[t.topic]
+      if (suggestion) suggestions.push(suggestion)
+    }
+  }
+  if (suggestions.length === 0 && totalErrors > 0) {
+    suggestions.push('建议每次闯关后仔细阅读错题解析，巩固法律知识点')
+  }
+
+  res.json({
+    success: true,
+    analysis: {
+      totalErrors,
+      totalQuestions: totalQ,
+      overallAccuracy: totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0,
+      byTopic,
+      byType,
+      patterns: patterns.slice(0, 3),
+      suggestions: suggestions.slice(0, 3),
+    },
+  })
+})
+
+// ── 方向2: 个性化推荐 ──
+router.get('/recommendations', async (req: Request, res: Response) => {
+  const { getStudentProfile } = await import('../lib/studentProfile.js')
+  const { generateRecommendations } = await import('../lib/recommendationEngine.js')
+
+  const profile = await getStudentProfile(req.user!.id, req.user!.id)
+  const recs = await generateRecommendations(req.user!.id, profile)
+
+  res.json({ success: true, recommendations: recs })
+})
+
+// ── 方向7: 学习目标 ──
+function getShanghaiWeekStart(): Date {
+  const now = new Date()
+  const shanghai = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }))
+  const day = shanghai.getDay()
+  const diff = shanghai.getDate() - day + (day === 0 ? -6 : 1)
+  const monday = new Date(shanghai)
+  monday.setDate(diff)
+  monday.setHours(0, 0, 0, 0)
+  return monday
+}
+
+router.get('/goals', async (req: Request, res: Response) => {
+  const weekStart = getShanghaiWeekStart()
+  const goals = await prisma.studentGoal.findMany({
+    where: { studentId: req.user!.id, weekStart },
+    orderBy: { createdAt: 'asc' },
+  })
+  res.json({ success: true, goals })
+})
+
+router.post('/goals/generate', async (req: Request, res: Response) => {
+  const { getStudentProfile } = await import('../lib/studentProfile.js')
+  const profile = await getStudentProfile(req.user!.id, req.user!.id)
+  const weekStart = getShanghaiWeekStart()
+
+  // 删除本周旧目标
+  await prisma.studentGoal.deleteMany({
+    where: { studentId: req.user!.id, weekStart },
+  })
+
+  const goals: Array<{ title: string; description: string; targetType: string; targetCount: number }> = []
+
+  // 基于画像生成目标
+  const completedLevels = profile.topicMasteries.filter((t) => t.mastery >= 60).length
+  const nonZeroTopics = profile.topicMasteries.filter((t) => t.mastery > 0).length
+
+  if (completedLevels < 3) {
+    goals.push({
+      title: '完成基础闯关',
+      description: '本周完成 2 关基础闯关，建立学习节奏',
+      targetType: 'COMPLETE_LEVELS',
+      targetCount: 2,
+    })
+  }
+
+  if (profile.overallAccuracy < 70 && profile.totalAttempts > 0) {
+    goals.push({
+      title: '错题复盘提升',
+      description: '本周做 3 次错题复盘，目标是正确率提升到 70% 以上',
+      targetType: 'REVIEW_LEVELS',
+      targetCount: 3,
+    })
+  }
+
+  const weakTopics = profile.weakAreas.filter((w) => w.failCount >= 2)
+  if (weakTopics.length > 0) {
+    goals.push({
+      title: '攻克薄弱主题',
+      description: `本周重点攻克「${weakTopics[0].topic}」薄弱点，完成相关关卡`,
+      targetType: 'COMPLETE_LEVELS',
+      targetCount: 1,
+    })
+  }
+
+  // 默认至少生成一个目标
+  if (goals.length === 0) {
+    goals.push({
+      title: '保持学习节奏',
+      description: '本周完成 2 次学习打卡，持续积累',
+      targetType: 'DAILY_ACTIVE',
+      targetCount: 2,
+    })
+  }
+
+  // 写入数据库
+  const created = await Promise.all(
+    goals.map((g) =>
+      prisma.studentGoal.create({
+        data: {
+          studentId: req.user!.id,
+          weekStart,
+          title: g.title,
+          description: g.description,
+          targetType: g.targetType,
+          targetCount: g.targetCount,
+        },
+      }),
+    ),
+  )
+
+  res.json({ success: true, goals: created })
+})
+
+// ── 方向6: 关卡难度自适应（修改 question 排序） ──
+// 在 GET /levels/:levelId/questions 中已集成自适应排序逻辑
 
 export default router
 

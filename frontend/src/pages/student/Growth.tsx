@@ -20,9 +20,10 @@ import ProgressBar from '@/components/ui/ProgressBar'
 import Tag from '@/components/ui/Tag'
 import Button from '@/components/ui/Button'
 import ChallengeModal from '@/components/student/ChallengeModal'
+import ErrorAnalysisPanel from '@/components/student/ErrorAnalysisPanel'
 import { apiFetch } from '@/utils/api'
 import { useAuthStore } from '@/stores/auth'
-import type { LearningUnit } from '@/types'
+import type { LearningUnit, StudentProfile } from '@/types'
 
 type TrendPoint = {
   day: string
@@ -830,14 +831,18 @@ export default function Growth() {
         </Card>
       </div>
 
-      <Card className="p-5">
-        <div className="text-sm font-extrabold text-zinc-900">学习数据</div>
-        <div className="mt-4 grid grid-cols-12 gap-3">
-          <Stat title="闯关次数" value={attemptCount} />
-          <Stat title="平均正确率" value={avgScore + '%'} />
-          <Stat title="已完成关卡" value={completedLevels} />
-        </div>
-      </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ErrorAnalysisPanel />
+
+        <Card className="p-5">
+          <div className="text-sm font-extrabold text-zinc-900">学习数据</div>
+          <div className="mt-4 grid grid-cols-12 gap-3">
+            <Stat title="闯关次数" value={attemptCount} />
+            <Stat title="平均正确率" value={avgScore + '%'} />
+            <Stat title="已完成关卡" value={completedLevels} />
+          </div>
+        </Card>
+      </div>
 
       <ChallengeModal
         openLevel={openLevel}
