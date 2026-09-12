@@ -340,24 +340,37 @@ router.post('/levels/:levelId/submit', async (req: Request, res: Response) => {
       },
     })
 
+    // XP 按「最佳成绩」结算，且只补发差额。
+    //
+    // 原先的条件是「只要还没通关就发 XP」，但分数 <60 时状态会一直停在 IN_PROGRESS，
+    // wasCompleted 永远为 false，于是同一关卡反复提交低分就能每次拿到 XP，
+    // 没有次数上限——等级系统因此形同虚设。
+    //
+    // 改成差额结算后：未通关的重复提交不再发 XP；首次通关按本次成绩发放；
+    // 之后重刷提高最佳成绩只补差额，既堵住了漏洞，也不会让认真重刷的学生吃亏。
+    const xpAwardedFor = (best: number, completed: boolean) =>
+      completed ? Math.max(1, Math.round(level.xpReward * (best / 100))) : 0
+    const prevAwarded = xpAwardedFor(existing?.bestScore ?? 0, wasCompleted)
+    const nextAwarded = xpAwardedFor(bestScore, status === 'COMPLETED')
+    const xpGain = Math.max(0, nextAwarded - prevAwarded)
+
     let user = await tx.user.findUnique({
       where: { id: req.user!.id },
       select: { id: true, xp: true, level: true },
     })
 
-    if (!wasCompleted) {
-      const xpGain = Math.max(1, Math.round(level.xpReward * (score / 100)))
-      const newXp = req.user!.xp + xpGain
+    if (xpGain > 0 && user) {
+      // 用事务内读到的 xp，而不是 req.user.xp，避免并发提交基于过期值计算
+      const newXp = user.xp + xpGain
       const newLevel = 1 + Math.floor(newXp / 100)
       user = await tx.user.update({
         where: { id: req.user!.id },
         data: { xp: newXp, level: newLevel },
         select: { id: true, xp: true, level: true },
       })
-      return [attemptCreated, user, xpGain] as const
     }
 
-    return [attemptCreated, user!, 0] as const
+    return [attemptCreated, user!, xpGain] as const
   })
 
   res.json({
