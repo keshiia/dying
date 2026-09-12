@@ -16,6 +16,7 @@ export default function Tasks() {
   const [reviewLevels, setReviewLevels] = useState<ReviewLevel[]>([])
   const [joinCode, setJoinCode] = useState('')
   const [joinMsg, setJoinMsg] = useState<string | null>(null)
+  const [myClass, setMyClass] = useState<{ id: string; name: string; joinCode: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [openLevel, setOpenLevel] = useState<null | { id: string; title: string; xpReward: number }>(null)
@@ -24,14 +25,16 @@ export default function Tasks() {
     setLoading(true)
     setError(null)
     try {
-      const [taskData, unitData, reviewData] = await Promise.all([
+      const [taskData, unitData, reviewData, classData] = await Promise.all([
         apiFetch<{ success: true; tasks: StudentTask[] }>('/api/student/tasks'),
         apiFetch<{ success: true; units: LearningUnit[] }>('/api/student/units'),
         apiFetch<{ success: true; reviewLevels: ReviewLevel[] }>('/api/student/review-levels'),
+        apiFetch<{ success: true; class: { id: string; name: string; joinCode: string } | null }>('/api/student/my-class'),
       ])
       setTasks(taskData.tasks)
       setUnits(unitData.units)
       setReviewLevels(reviewData.reviewLevels)
+      setMyClass(classData.class)
     } catch (e: unknown) {
       setError(errorMessage(e))
     } finally {
@@ -74,6 +77,18 @@ export default function Tasks() {
       )
       setJoinMsg(`已加入：${data.class.name}`)
       setJoinCode('')
+      await load()
+    } catch (e: unknown) {
+      setJoinMsg(errorMessage(e))
+    }
+  }
+
+  async function leave() {
+    if (!window.confirm('确定要退出当前班级吗？学习进度和错题都会保留，重新加入即可继续。')) return
+    setJoinMsg(null)
+    try {
+      await apiFetch('/api/student/leave-class', { method: 'POST', body: JSON.stringify({}) })
+      setJoinMsg('已退出班级')
       await load()
     } catch (e: unknown) {
       setJoinMsg(errorMessage(e))
@@ -204,15 +219,33 @@ export default function Tasks() {
       <Card className="p-5">
         <div className="text-lg font-extrabold text-zinc-900">教师任务</div>
         <div className="mt-1 text-sm text-zinc-600">输入班级加入码后，你会在这里看到老师布置的学习任务。</div>
-        <div className="mt-4 flex items-center gap-2 flex-wrap">
-          <div className="w-[240px]">
-            <Input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="班级加入码" />
+        {myClass ? (
+          <div className="mt-4 flex items-center gap-3 flex-wrap">
+            <div className="rounded-2xl border border-zinc-100 bg-zinc-50 px-4 py-2.5">
+              <div className="text-sm font-semibold text-zinc-900">{myClass.name}</div>
+              <div className="mt-0.5 text-xs text-zinc-500">加入码 {myClass.joinCode}</div>
+            </div>
+            <Button variant="secondary" onClick={leave}>
+              退出班级
+            </Button>
+            {joinMsg && <div className="text-sm text-zinc-700">{joinMsg}</div>}
           </div>
-          <Button variant="secondary" onClick={join}>
-            加入班级
-          </Button>
-          {joinMsg && <div className="text-sm text-zinc-700">{joinMsg}</div>}
-        </div>
+        ) : (
+          <>
+            <div className="mt-4 flex items-center gap-2 flex-wrap">
+              <div className="w-[240px]">
+                <Input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="班级加入码" />
+              </div>
+              <Button variant="secondary" onClick={join}>
+                加入班级
+              </Button>
+              {joinMsg && <div className="text-sm text-zinc-700">{joinMsg}</div>}
+            </div>
+            <div className="mt-2 text-xs text-zinc-500">
+              一名学生同时只能加入一个班级，换班时请先退出当前班级。
+            </div>
+          </>
+        )}
       </Card>
 
       <Card className="p-5">

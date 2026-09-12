@@ -585,13 +585,45 @@ router.post('/join-class', async (req: Request, res: Response) => {
     return
   }
 
-  await prisma.classMember.upsert({
-    where: { classId_studentId: { classId: clazz.id, studentId: req.user!.id } },
-    update: {},
-    create: { classId: clazz.id, studentId: req.user!.id },
+  // 一名学生同时只属于一个班级。风险预警要推给唯一的班主任，
+  // 也避免同一个学生挂在多位教师的名单里，导致同一条预警重复打扰多人。
+  const current = await prisma.classMember.findFirst({
+    where: { studentId: req.user!.id },
+    select: { classId: true },
+  })
+  if (current) {
+    // 重复提交同一个邀请码视为成功，不要让用户看到报错
+    if (current.classId === clazz.id) {
+      res.json({ success: true, class: { id: clazz.id, name: clazz.name, joinCode: clazz.joinCode } })
+      return
+    }
+    res.status(409).json({ success: false, error: 'ALREADY_IN_CLASS' })
+    return
+  }
+
+  await prisma.classMember.create({
+    data: { classId: clazz.id, studentId: req.user!.id },
   })
 
   res.json({ success: true, class: { id: clazz.id, name: clazz.name, joinCode: clazz.joinCode } })
+})
+
+/**
+ * 退出当前班级。只删除归属关系，学习数据（XP、关卡进度、错题、画像）全部保留，
+ * 重新加入任何班级都能接着用。
+ */
+router.post('/leave-class', async (req: Request, res: Response) => {
+  const removed = await prisma.classMember.deleteMany({ where: { studentId: req.user!.id } })
+  res.json({ success: true, removed: removed.count })
+})
+
+/** 当前所属班级，供学生端展示；未加入任何班级时 class 为 null */
+router.get('/my-class', async (req: Request, res: Response) => {
+  const membership = await prisma.classMember.findFirst({
+    where: { studentId: req.user!.id },
+    select: { class: { select: { id: true, name: true, joinCode: true } } },
+  })
+  res.json({ success: true, class: membership?.class ?? null })
 })
 
 router.get('/tasks', async (req: Request, res: Response) => {
