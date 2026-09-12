@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowUp, Bot, User, ChevronLeft, RefreshCw, BookOpen, MessageSquare, Plus, Trash2, LogOut } from 'lucide-react'
+import { ArrowUp, Bot, User, ChevronLeft, RefreshCw, BookOpen, MessageSquare, Plus, Trash2, LogOut, ShieldAlert } from 'lucide-react'
 import { clsx } from 'clsx'
 import ReactMarkdown from 'react-markdown'
 import { apiFetch } from '@/utils/api'
@@ -11,6 +11,8 @@ type Message = {
   role: 'user' | 'assistant'
   content: string
   citations?: Citation[]
+  /** 这条回复触发了风险规则，正文里已由服务端插入了求助卡片 */
+  crisis?: boolean
 }
 
 type Citation = {
@@ -23,6 +25,7 @@ type ChatResponse = {
   success: true
   answer: string
   citations: Citation[]
+  crisis?: boolean
 }
 
 type Session = {
@@ -175,6 +178,7 @@ export default function Assistant() {
         role: 'assistant',
         content: data.answer,
         citations: data.citations,
+        crisis: data.crisis === true,
       }
       upsertSession(activeId, (s) => ({
         ...s,
@@ -369,12 +373,19 @@ export default function Assistant() {
                 </div>
 
                 <div className={clsx('max-w-[85%] md:max-w-[75%] min-w-0')}>
+                  {msg.crisis && (
+                    <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-[11px] font-bold text-red-600 ring-1 ring-red-200">
+                      <ShieldAlert className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      这条回复包含紧急求助信息
+                    </div>
+                  )}
                   <div
                     className={clsx(
                       'rounded-2xl px-4 py-3 text-sm leading-relaxed',
                       msg.role === 'user'
                         ? 'bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-200/70'
                         : 'border border-zinc-200/70 bg-white/90 shadow-sm backdrop-blur-sm',
+                      msg.crisis && 'border-red-200 ring-2 ring-red-200/70',
                     )}
                   >
                     {msg.role === 'assistant' ? (
@@ -441,6 +452,12 @@ export default function Assistant() {
         {/* ── Input area ── */}
         <div className="shrink-0 border-t border-white/40 bg-white/70 backdrop-blur-xl px-4 py-3">
           <div className="mx-auto max-w-3xl">
+            {/* 学生知情提示：明确告知对话会被用于识别安全风险，
+                这是「知情告知」而不是背着学生监控私聊 */}
+            <p className="mb-2 flex items-center justify-center gap-1.5 text-center text-[11px] leading-relaxed text-zinc-500">
+              <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-zinc-400" strokeWidth={2.2} />
+              涉及安全风险的内容，系统会提示老师关注你 —— 这是为了帮你。
+            </p>
             <div className="flex items-end gap-2">
               <div className="relative flex-1">
                 <textarea
