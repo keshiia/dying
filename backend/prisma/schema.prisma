@@ -70,6 +70,7 @@ model User {
   chatMessages     AiChatMessage[]
   goals            StudentGoal[]
   riskEvents       RiskEvent[]
+  gameResults      GameResult[]
 }
 
 model Class {
@@ -299,4 +300,22 @@ model RiskEvent {
 
   @@index([studentId, kind, status])
   @@index([status, lastSeenAt])
+}
+
+// 模拟法庭 / 案件侦查的单局最好成绩。成绩由前端计算后上报，服务端无法复算，
+// 这张表的作用是记录「这个学生在这个案件上已经拿到过多少分」，
+// 以便像关卡一样按最好成绩结算 XP —— 否则反复提交同一个案件就能反复拿 XP。
+model GameResult {
+  id        String   @id @default(cuid())
+  studentId String
+  gameType  String // 'COURT' | 'DETECTIVE'
+  caseId    String
+  bestPct   Int      @default(0) // 0-100
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, gameType, caseId])
+  @@index([studentId, gameType])
 }

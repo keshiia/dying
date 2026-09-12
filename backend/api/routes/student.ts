@@ -526,54 +526,97 @@ router.post('/comic-read', async (req: Request, res: Response) => {
   res.json({ success: true, xpGain, user })
 })
 
-const CourtResultSchema = z.object({
-  caseId: z.string().min(1),
-  score: z.number().min(0),
-  maxScore: z.number().min(1),
+// 模拟法庭与案件侦查的判分逻辑和案件数据都在前端，服务端无从复算成绩，
+// 只能对客户端上报的数字做钳制，并像关卡一样按最好成绩结算 XP。
+const MAX_GAME_SCORE = 200
+
+const GameResultSchema = z.object({
+  caseId: z.string().min(1).max(120),
+  score: z.number().min(0).max(MAX_GAME_SCORE),
+  maxScore: z.number().min(1).max(MAX_GAME_SCORE),
 })
 
+/** 完成度百分比 → XP。0 分保底不发，否则空提交可以反复薅 */
+const gameXpFor = (pctInt: number, cap: number) =>
+  pctInt <= 0 ? 0 : Math.max(1, Math.round((cap * pctInt) / 100))
+
+/**
+ * 结算一局游戏成绩。
+ *
+ * 两处防护：
+ * - clamp 完成度到 [0,1]，挡住 `{score: 1e9, maxScore: 1}` 一次请求把等级刷满
+ * - 按同一案件的历史最好成绩「只补差额」，否则反复提交同一个 caseId 就能反复拿 XP
+ */
+async function settleGameResult(
+  studentId: string,
+  gameType: 'COURT' | 'DETECTIVE',
+  input: { caseId: string; score: number; maxScore: number },
+  cap: number,
+) {
+  const pct = Math.min(1, Math.max(0, input.score / Math.max(1, input.maxScore)))
+  const pctInt = Math.round(pct * 100)
+  const key = { studentId, gameType, caseId: input.caseId }
+
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.gameResult.findUnique({
+      where: { studentId_gameType_caseId: key },
+    })
+
+    const prevAwarded = gameXpFor(existing?.bestPct ?? 0, cap)
+    const bestPct = Math.max(existing?.bestPct ?? 0, pctInt)
+    const xpGain = Math.max(0, gameXpFor(bestPct, cap) - prevAwarded)
+
+    await tx.gameResult.upsert({
+      where: { studentId_gameType_caseId: key },
+      update: { bestPct },
+      create: { ...key, bestPct },
+    })
+
+    const current = await tx.user.findUnique({
+      where: { id: studentId },
+      select: { id: true, xp: true, level: true },
+    })
+    if (!current || xpGain <= 0) return { xpGain: 0, user: current }
+
+    const newXp = current.xp + xpGain
+    const user = await tx.user.update({
+      where: { id: studentId },
+      data: { xp: newXp, level: 1 + Math.floor(newXp / 100) },
+      select: { id: true, xp: true, level: true },
+    })
+    return { xpGain, user }
+  })
+}
+
 router.post('/court-result', async (req: Request, res: Response) => {
-  const parsed = CourtResultSchema.safeParse(req.body)
+  const parsed = GameResultSchema.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ success: false, error: 'BAD_REQUEST' })
     return
   }
 
-  const pct = parsed.data.score / Math.max(1, parsed.data.maxScore)
-  // Award 10–30 XP based on performance
-  const xpGain = Math.max(1, Math.round(30 * pct))
-
-  const user = await prisma.user.update({
-    where: { id: req.user!.id },
-    data: {
-      xp: { increment: xpGain },
-      level: 1 + Math.floor((req.user!.xp + xpGain) / 100),
-    },
-    select: { id: true, xp: true, level: true },
-  })
-
+  const { xpGain, user } = await settleGameResult(
+    req.user!.id,
+    'COURT',
+    { caseId: parsed.data.caseId, score: parsed.data.score, maxScore: parsed.data.maxScore },
+    30,
+  )
   res.json({ success: true, xpGain, user })
 })
 
 router.post('/detective-result', async (req: Request, res: Response) => {
-  const parsed = CourtResultSchema.safeParse(req.body)
+  const parsed = GameResultSchema.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ success: false, error: 'BAD_REQUEST' })
     return
   }
 
-  const pct = parsed.data.score / Math.max(1, parsed.data.maxScore)
-  const xpGain = Math.max(1, Math.round(35 * pct))
-
-  const user = await prisma.user.update({
-    where: { id: req.user!.id },
-    data: {
-      xp: { increment: xpGain },
-      level: 1 + Math.floor((req.user!.xp + xpGain) / 100),
-    },
-    select: { id: true, xp: true, level: true },
-  })
-
+  const { xpGain, user } = await settleGameResult(
+    req.user!.id,
+    'DETECTIVE',
+    { caseId: parsed.data.caseId, score: parsed.data.score, maxScore: parsed.data.maxScore },
+    35,
+  )
   res.json({ success: true, xpGain, user })
 })
 
