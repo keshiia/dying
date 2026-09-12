@@ -41,6 +41,32 @@ export default function Login() {
   async function onSubmit() {
     if (loading) return;
     setError(null);
+
+    // 先在前端校验，否则空值只会换回后端一个笼统的 BAD_REQUEST
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setError("请输入邮箱");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError("邮箱格式不正确，例如 name@example.com");
+      return;
+    }
+    if (!password) {
+      setError("请输入密码");
+      return;
+    }
+    if (mode === "register") {
+      if (password.length < 8) {
+        setError("密码至少需要 8 位");
+        return;
+      }
+      if (!nickname.trim()) {
+        setError("请输入昵称");
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -52,7 +78,7 @@ export default function Login() {
         }>("/api/auth/login", {
           method: "POST",
           body: JSON.stringify({
-            email: email.trim(),
+            email: trimmedEmail,
             password,
           }),
         });
@@ -72,7 +98,7 @@ export default function Login() {
       }>("/api/auth/register", {
         method: "POST",
         body: JSON.stringify({
-          email: email.trim(),
+          email: trimmedEmail,
           password,
           role: tab,
           nickname: nickname.trim(),
