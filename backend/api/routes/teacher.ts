@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { requireRole } from '../middleware/requireRole.js'
+import { addRiskStreamClient } from '../lib/riskStream.js'
 
 const router = Router()
 
@@ -63,7 +64,7 @@ router.get('/classes/:classId/members', async (req: Request, res: Response) => {
   })
 
   const studentIds = members.map((m) => m.student.id)
-  const [attempts, completed] = await Promise.all([
+  const [attempts, completed, openRisks] = await Promise.all([
     prisma.attempt.findMany({
       where: { studentId: { in: studentIds } },
       select: { studentId: true, score: true },
@@ -72,7 +73,21 @@ router.get('/classes/:classId/members', async (req: Request, res: Response) => {
       where: { studentId: { in: studentIds }, status: 'COMPLETED' },
       select: { studentId: true },
     }),
+    // 未处理的风险事件，用于在成员表里给出一个风险标记
+    prisma.riskEvent.findMany({
+      where: { studentId: { in: studentIds }, status: 'OPEN' },
+      select: { studentId: true, level: true },
+    }),
   ])
+
+  const RISK_RANK: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3 }
+  const riskAgg = new Map<string, { count: number; level: string }>()
+  for (const r of openRisks) {
+    const prev = riskAgg.get(r.studentId)
+    const level =
+      prev && RISK_RANK[prev.level] >= RISK_RANK[r.level] ? prev.level : r.level
+    riskAgg.set(r.studentId, { count: (prev?.count ?? 0) + 1, level })
+  }
 
   const attemptAgg = new Map<string, { count: number; sum: number }>()
   for (const a of attempts) {
@@ -95,6 +110,8 @@ router.get('/classes/:classId/members', async (req: Request, res: Response) => {
         attemptCount: a?.count ?? 0,
         avgScore: avg,
         completedLevels: completedAgg.get(m.student.id) ?? 0,
+        openRiskCount: riskAgg.get(m.student.id)?.count ?? 0,
+        riskLevel: riskAgg.get(m.student.id)?.level ?? null,
       }
     }),
   })
@@ -233,6 +250,158 @@ router.post('/resources', async (req: Request, res: Response) => {
   })
 
   res.json({ success: true, resource })
+})
+
+// ─────────────────────────── 风险预警 ───────────────────────────
+
+function serializeRiskEvent(
+  e: {
+    id: string
+    studentId: string
+    kind: string
+    level: string
+    snippet: string
+    summary: string | null
+    suggestion: string | null
+    triggerCount: number
+    lastSeenAt: Date
+    status: string
+    handledNote: string | null
+    handledAt: Date | null
+    createdAt: Date
+  },
+  student: { nickname: string; grade: string | null } | undefined,
+  className: string | undefined,
+) {
+  return {
+    id: e.id,
+    studentId: e.studentId,
+    studentName: student?.nickname ?? '同学',
+    studentGrade: student?.grade ?? null,
+    className: className ?? null,
+    kind: e.kind,
+    level: e.level,
+    snippet: e.snippet,
+    summary: e.summary,
+    suggestion: e.suggestion,
+    triggerCount: e.triggerCount,
+    lastSeenAt: e.lastSeenAt,
+    status: e.status,
+    handledNote: e.handledNote,
+    handledAt: e.handledAt,
+    createdAt: e.createdAt,
+  }
+}
+
+/** 侧边栏角标用：只返回未处理数量，不必为了一个数字拉整个列表 */
+router.get('/risk-events/count', async (req: Request, res: Response) => {
+  const classes = await prisma.class.findMany({
+    where: { teacherId: req.user!.id },
+    select: { id: true },
+  })
+  const classIds = classes.map((c) => c.id)
+  const openCount = classIds.length
+    ? await prisma.riskEvent.count({ where: { classId: { in: classIds }, status: 'OPEN' } })
+    : 0
+  res.json({ success: true, openCount })
+})
+
+/** 列出本教师各班的风险预警。status 支持 OPEN（默认）/ HANDLED / ALL */
+router.get('/risk-events', async (req: Request, res: Response) => {
+  const classes = await prisma.class.findMany({
+    where: { teacherId: req.user!.id },
+    select: { id: true, name: true },
+  })
+  const classIds = classes.map((c) => c.id)
+  const classNameById = new Map(classes.map((c) => [c.id, c.name]))
+
+  const statusParam = typeof req.query.status === 'string' ? req.query.status : 'OPEN'
+  const statusIn: Array<'OPEN' | 'RESOLVED' | 'DISMISSED'> | null =
+    statusParam === 'ALL'
+      ? null
+      : statusParam === 'HANDLED'
+        ? ['RESOLVED', 'DISMISSED']
+        : ['OPEN']
+
+  const events = await prisma.riskEvent.findMany({
+    where: {
+      classId: { in: classIds },
+      ...(statusIn ? { status: { in: statusIn } } : {}),
+    },
+    orderBy: { lastSeenAt: 'desc' },
+    take: 100,
+  })
+
+  const studentIds = [...new Set(events.map((e) => e.studentId))]
+  const students = await prisma.user.findMany({
+    where: { id: { in: studentIds } },
+    select: { id: true, nickname: true, grade: true },
+  })
+  const studentById = new Map(students.map((s) => [s.id, s]))
+
+  // 侧边栏角标用：未处理总数
+  const openCount = classIds.length
+    ? await prisma.riskEvent.count({ where: { classId: { in: classIds }, status: 'OPEN' } })
+    : 0
+
+  res.json({
+    success: true,
+    openCount,
+    events: events.map((e) =>
+      serializeRiskEvent(e, studentById.get(e.studentId), e.classId ? classNameById.get(e.classId) : undefined),
+    ),
+  })
+})
+
+const HandleRiskEventSchema = z.object({
+  status: z.enum(['RESOLVED', 'DISMISSED']),
+  note: z.string().max(500).optional(),
+})
+
+/** 标记预警已处理 / 误报。归属校验沿用 classId + teacherId 的方式，越权返回 404 而不是 403 */
+router.post('/risk-events/:id/handle', async (req: Request, res: Response) => {
+  const parsed = HandleRiskEventSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ success: false, error: 'BAD_REQUEST' })
+    return
+  }
+
+  const classes = await prisma.class.findMany({
+    where: { teacherId: req.user!.id },
+    select: { id: true },
+  })
+  const event = await prisma.riskEvent.findFirst({
+    where: { id: req.params.id, classId: { in: classes.map((c) => c.id) } },
+  })
+  if (!event) {
+    res.status(404).json({ success: false, error: 'NOT_FOUND' })
+    return
+  }
+
+  const updated = await prisma.riskEvent.update({
+    where: { id: event.id },
+    data: {
+      status: parsed.data.status,
+      handledBy: req.user!.id,
+      handledNote: parsed.data.note ?? null,
+      handledAt: new Date(),
+    },
+  })
+
+  const student = await prisma.user.findUnique({
+    where: { id: updated.studentId },
+    select: { nickname: true, grade: true },
+  })
+
+  res.json({ success: true, event: serializeRiskEvent(updated, student ?? undefined, undefined) })
+})
+
+/**
+ * 实时推送通道。前端用 fetch + ReadableStream 消费（原生 EventSource 带不了
+ * Authorization 头），收到 risk-event 后重新拉一次列表即可。
+ */
+router.get('/risk-events/stream', (req: Request, res: Response) => {
+  addRiskStreamClient(req.user!.id, res)
 })
 
 export default router

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { env } from '../lib/env.js'
 import { prisma } from '../lib/prisma.js'
+import { CRISIS_CARD, isRiskCandidate, quickScreen, runRiskDetection } from '../lib/riskDetect.js'
 
 const router = Router()
 
@@ -36,6 +37,15 @@ router.post('/chat', async (req: Request, res: Response) => {
       data: { studentId: req.user!.id, role: 'user', content: message, sessionId },
     })
   } catch { /* ignore */ }
+
+  // ── 风险预警 ──
+  // 同步窄规则：命中就在回复最前面强制插入求助卡片，不等模型
+  const crisis = quickScreen(message)
+  // 异步判定：先过关键词预筛（决定值不值得花一次模型调用），再 fire-and-forget，
+  // 绝不 await —— 检测不能拖慢学生这边的回复
+  if (isRiskCandidate(message)) {
+    void runRiskDetection(req.user!.id, message, sessionId, crisis)
+  }
 
   // ── 获取用户上下文用于个性化 ──
   let userContext = ''
@@ -83,15 +93,19 @@ router.post('/chat', async (req: Request, res: Response) => {
     const fallbackAnswer =
       '我可以帮你用“学习用途”的方式解释法律概念与风险提示。当前未配置AI密钥，所以我先给你一份学习建议：\n\n1) 先确认情境（校园/网络/家庭/消费）\n2) 先保证安全，再求助可信成年人\n3) 保留证据（截图/聊天记录/转账凭证）\n4) 需要紧急帮助可拨打 110 或 12348\n'
 
+    // 卡片由代码层拼接，所以即使没配 AI Key、走的是兜底文案，求助出口也一定出现
+    const answerWithCard = crisis ? CRISIS_CARD + fallbackAnswer : fallbackAnswer
+
     try {
       await prisma.aiChatMessage.create({
-        data: { studentId: req.user!.id, role: 'assistant', content: fallbackAnswer, sessionId },
+        data: { studentId: req.user!.id, role: 'assistant', content: answerWithCard, sessionId },
       })
     } catch { /* ignore */ }
 
     res.json({
       success: true,
-      answer: fallbackAnswer,
+      answer: answerWithCard,
+      crisis,
       citations,
     })
     return
@@ -142,17 +156,19 @@ router.post('/chat', async (req: Request, res: Response) => {
   const data = (await r.json()) as unknown
   const answer = readOpenAiAnswer(data)
   const finalAnswer = answer ?? '我暂时没想好，你可以换个说法问问。'
+  const answerWithCard = crisis ? CRISIS_CARD + finalAnswer : finalAnswer
 
   // ── 保存 AI 回复 ──
   try {
     await prisma.aiChatMessage.create({
-      data: { studentId: req.user!.id, role: 'assistant', content: finalAnswer, sessionId },
+      data: { studentId: req.user!.id, role: 'assistant', content: answerWithCard, sessionId },
     })
   } catch { /* ignore */ }
 
   res.json({
     success: true,
-    answer: finalAnswer,
+    answer: answerWithCard,
+    crisis,
     citations,
   })
 })

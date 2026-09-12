@@ -36,6 +36,18 @@ enum AssignmentTargetType {
   RESOURCE
 }
 
+enum RiskLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum RiskStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -57,6 +69,7 @@ model User {
   profiles         StudentProfile[]
   chatMessages     AiChatMessage[]
   goals            StudentGoal[]
+  riskEvents       RiskEvent[]
 }
 
 model Class {
@@ -260,4 +273,30 @@ model StudentGoal {
 
   @@unique([studentId, weekStart, targetType])
   @@index([studentId, weekStart])
+}
+
+// 学生与 AI 对话中识别出的风险事件。同一学生同一类型在 24h 内聚合成一条，
+// triggerCount 累加而不是生成新记录，避免刷屏把教师端淹掉。
+model RiskEvent {
+  id           String     @id @default(cuid())
+  studentId    String
+  // 触发时学生所属班级。用来把事件归到某位班主任名下，也保证学生退班后历史仍可查
+  classId      String?
+  kind         String     // '自伤风险' | '遭受侵害' | '校园欺凌' | '网络风险' | '情绪困扰' 等
+  level        RiskLevel
+  snippet      String     @db.Text // 触发的原句（仅此一句，不存整段对话）
+  summary      String?    @db.Text // 模型生成的风险描述
+  suggestion   String?    @db.Text // 模型生成的疏导建议
+  triggerCount Int        @default(1)
+  lastSeenAt   DateTime
+  status       RiskStatus @default(OPEN)
+  handledBy    String? // 处置教师的 userId，仅作留痕
+  handledNote  String?    @db.Text
+  handledAt    DateTime?
+  createdAt    DateTime   @default(now())
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, kind, status])
+  @@index([status, lastSeenAt])
 }
