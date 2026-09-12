@@ -13,6 +13,20 @@ type MemberRow = {
   attemptCount: number
   avgScore: number
   completedLevels: number
+  openRiskCount: number
+  riskLevel: 'HIGH' | 'MEDIUM' | 'LOW' | null
+}
+
+const RISK_STYLE: Record<string, string> = {
+  HIGH: 'bg-red-50 text-red-600 border-red-200',
+  MEDIUM: 'bg-amber-50 text-amber-700 border-amber-200',
+  LOW: 'bg-zinc-50 text-zinc-600 border-zinc-200',
+}
+
+const RISK_LABEL: Record<string, string> = {
+  HIGH: '高风险',
+  MEDIUM: '需关注',
+  LOW: '轻微',
 }
 
 export default function Classes() {
@@ -99,6 +113,7 @@ export default function Classes() {
                   <th className="py-2">闯关次数</th>
                   <th className="py-2">平均分</th>
                   <th className="py-2">已完成关卡</th>
+                  <th className="py-2">风险提示</th>
                 </tr>
               </thead>
               <tbody>
@@ -109,6 +124,18 @@ export default function Classes() {
                     <td className="py-2 text-zinc-700">{m.attemptCount}</td>
                     <td className="py-2 text-zinc-700">{m.avgScore}</td>
                     <td className="py-2 text-zinc-700">{m.completedLevels}</td>
+                    <td className="py-2">
+                      {m.riskLevel ? (
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${RISK_STYLE[m.riskLevel]}`}
+                        >
+                          {RISK_LABEL[m.riskLevel]}
+                          {m.openRiskCount > 1 && ` ×${m.openRiskCount}`}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-zinc-400">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

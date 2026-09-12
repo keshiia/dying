@@ -1,21 +1,26 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import Login from '@/pages/Login'
-import Assistant from '@/pages/Assistant'
-import Learn from '@/pages/student/Learn'
-import Growth from '@/pages/student/Growth'
-import Resources from '@/pages/student/Resources'
-import Tasks from '@/pages/student/Tasks'
-import Comics from '@/pages/student/Comics'
-import Court from '@/pages/student/games/Court'
-import Detective from '@/pages/student/games/Detective'
-import Dashboard from '@/pages/teacher/Dashboard'
-import Classes from '@/pages/teacher/Classes'
-import Assignments from '@/pages/teacher/Assignments'
-import TeacherResources from '@/pages/teacher/Resources'
 import AppShell from '@/components/AppShell'
+import RouteFallback from '@/components/ui/RouteFallback'
 import { ToastProvider } from '@/components/ui/Toast'
 import { useAuthStore } from '@/stores/auth'
+
+// 页面按需加载：登录页和 Shell 保持同步加载（首屏就要用），
+// 其余页面拆成独立 chunk，避免进任何一个页面都下载全部功能与游戏数据
+const Assistant = lazy(() => import('@/pages/Assistant'))
+const Learn = lazy(() => import('@/pages/student/Learn'))
+const Growth = lazy(() => import('@/pages/student/Growth'))
+const Resources = lazy(() => import('@/pages/student/Resources'))
+const Tasks = lazy(() => import('@/pages/student/Tasks'))
+const Comics = lazy(() => import('@/pages/student/Comics'))
+const Court = lazy(() => import('@/pages/student/games/Court'))
+const Detective = lazy(() => import('@/pages/student/games/Detective'))
+const Dashboard = lazy(() => import('@/pages/teacher/Dashboard'))
+const Classes = lazy(() => import('@/pages/teacher/Classes'))
+const Assignments = lazy(() => import('@/pages/teacher/Assignments'))
+const TeacherResources = lazy(() => import('@/pages/teacher/Resources'))
+const RiskAlerts = lazy(() => import('@/pages/teacher/RiskAlerts'))
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { status, user, bootstrap } = useAuthStore()
@@ -31,6 +36,7 @@ export default function App() {
   return (
     <ToastProvider>
       <Router>
+      <Suspense fallback={<RouteFallback fullscreen />}>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
@@ -75,10 +81,12 @@ export default function App() {
           <Route path="classes" element={<Classes />} />
           <Route path="assignments" element={<Assignments />} />
           <Route path="resources" element={<TeacherResources />} />
+          <Route path="risk-alerts" element={<RiskAlerts />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      </Suspense>
       </Router>
     </ToastProvider>
   )

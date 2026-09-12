@@ -1,9 +1,12 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Bot, ChevronLeft, ChevronRight, Fingerprint, Gavel, GraduationCap, LogOut, Menu, Scale, UserRound, type LucideIcon } from 'lucide-react'
+import { Bot, ChevronLeft, ChevronRight, Fingerprint, Gavel, GraduationCap, LogOut, Menu, Scale, ShieldAlert, UserRound, type LucideIcon } from 'lucide-react'
 import { clsx } from 'clsx'
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import Button from '@/components/ui/Button'
 import ProgressBar from '@/components/ui/ProgressBar'
+import RouteFallback from '@/components/ui/RouteFallback'
+import { apiFetch } from '@/utils/api'
+import { useRiskStream } from '@/hooks/useRiskStream'
 import { useAuthStore } from '@/stores/auth'
 import Sheet from '@/components/ui/Sheet'
 
@@ -17,6 +20,8 @@ type NavItem = {
   emoji?: string
   icon?: LucideIcon
   game?: boolean
+  /** 需要提醒的未读数量，大于 0 时在导航项右侧显示角标 */
+  badge?: number
 }
 
 function getLevelTitle(level: number) {
@@ -107,12 +112,32 @@ export default function AppShell({ mode }: Props) {
   const { user, clear } = useAuthStore()
   const [navOpen, setNavOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [riskOpenCount, setRiskOpenCount] = useState(0)
 
   useEffect(() => {
     if (!user) return
     if (mode === 'student' && user.role !== 'STUDENT') navigate('/teacher', { replace: true })
     if (mode === 'teacher' && user.role !== 'TEACHER') navigate('/app', { replace: true })
   }, [mode, user, navigate])
+
+  const loadRiskCount = useCallback(async () => {
+    try {
+      const data = await apiFetch<{ success: true; openCount: number }>('/api/teacher/risk-events/count')
+      setRiskOpenCount(data.openCount)
+    } catch {
+      // 角标拉取失败不影响导航本身
+    }
+  }, [])
+
+  useEffect(() => {
+    if (mode !== 'teacher' || user?.role !== 'TEACHER') return
+    void loadRiskCount()
+  }, [mode, user, loadRiskCount])
+
+  // 教师在任意页面都能第一时间看到角标变化，不必先点进预警页
+  useRiskStream(() => {
+    void loadRiskCount()
+  }, mode === 'teacher' && user?.role === 'TEACHER')
 
   const levelPct = user ? user.xp % 100 : 0
 
@@ -129,6 +154,7 @@ export default function AppShell({ mode }: Props) {
   const teacherNav: NavItem[] = [
     { to: '/teacher/dashboard', label: '进度看板', emoji: '📊' },
     { to: '/teacher/classes', label: '班级管理', emoji: '🏫' },
+    { to: '/teacher/risk-alerts', label: '风险预警', icon: ShieldAlert, badge: riskOpenCount },
     { to: '/teacher/assignments', label: '任务布置', emoji: '🗂️' },
     { to: '/teacher/resources', label: '资源发布', emoji: '📤' },
   ]
@@ -273,7 +299,10 @@ export default function AppShell({ mode }: Props) {
         </header>
 
         <main className={clsx('flex-1 p-4 lg:p-6', mode === 'student' ? 'pb-28 lg:pb-6' : 'pb-6')}>
-          <Outlet />
+          {/* 内层 Suspense：切换懒加载页面时只有内容区转圈，侧边栏/顶栏不卸载 */}
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 
@@ -349,6 +378,11 @@ export default function AppShell({ mode }: Props) {
                     {n.icon ? <n.icon className="h-[18px] w-[18px]" strokeWidth={2.1} /> : n.emoji}
                   </span>
                   <span className="truncate">{n.label}</span>
+                  {n.badge ? (
+                    <span className="ml-auto grid h-5 min-w-[20px] shrink-0 place-items-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white">
+                      {n.badge > 99 ? '99+' : n.badge}
+                    </span>
+                  ) : null}
                 </>
               )}
             </NavLink>
