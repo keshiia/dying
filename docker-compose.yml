@@ -8,8 +8,12 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-lft_db}
       MYSQL_USER: ${MYSQL_USER:-lft_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-lft_pass123}
-    # 本地开发需要发布到宿主机：用数据库客户端直连，或在宿主机执行 prisma 命令。
-    # 部署时不需要，见 deploy/docker-compose.yml（那里不发布 db 与 backend 端口）。
+    # 只有在「需要从宿主机直连容器里的 MySQL」时才需要这条（GUI 客户端、宿主机跑 prisma）。
+    # 但注意：若宿主机 3306 已被本机安装的 MySQL 占用，Docker 会静默跳过绑定——
+    # 此时 docker inspect 的 HostConfig.PortBindings 仍显示配置，NetworkSettings.Ports 却是空的，
+    # 端口能连通但连到的是本机那个 MySQL。判断实际状态要看 NetworkSettings.Ports。
+    # 遇到冲突就改用 docker exec 访问，或把左侧换成一个没被占用的端口。
+    # 部署时不需要这条，见 deploy/docker-compose.yml。
     ports:
       - "3306:3306"
     volumes:

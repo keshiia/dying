@@ -242,7 +242,7 @@ docker compose up -d
 | 服务 | 地址 |
 |------|------|
 | 前端页面 | http://localhost 或 http://你的服务器IP |
-| 后端健康检查 | http://localhost:3001/api/health |
+| 后端健康检查 | http://你的服务器IP/api/health（经前端 nginx 反代；本地开发也可直接访问 http://localhost:3001/api/health） |
 
 **种子账号：**
 
