@@ -423,7 +423,9 @@ AI 对话接口每次请求动态注入画像 / 进度 / 历史提问 → 个性
 ### 5.6 数据初始化与容器编排
 
 - `start.sh` 容器启动时自动执行迁移与幂等 seed（`upsert`），首次启动即填充 60 关题库与测试账号，重复启动不产生重复数据
-- db / backend 端口不对外暴露，仅前端 80 对外，兼顾安全与端口冲突规避
+- 端口发布策略按用途区分，仓库内有两份 compose：
+  - 根目录 `docker-compose.yml` 用于**本地开发**：db(3306) 与 backend(3001) 发布到宿主机，以便在宿主机运行 `npm run dev`（vite 的 `/api` 代理指向 `localhost:3001`）以及 prisma 命令直连数据库
+  - `deploy/docker-compose.yml` 用于**部署**：仅前端 80 对外，db 与 backend 不发布端口，只在容器网络内可达（后端走 `db:3306`，前端 nginx 走 `backend:3001`），兼顾安全与端口冲突规避
 
 ---
 

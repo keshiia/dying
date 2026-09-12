@@ -8,8 +8,8 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-lft_db}
       MYSQL_USER: ${MYSQL_USER:-lft_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-lft_pass123}
-    ports:
-      - "3306:3306"
+    # 不发布到宿主机：后端通过服务名 db:3306 访问，对外只暴露前端 80。
+    # 需要从宿主机连库时用 docker exec，或临时加一份 override。
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -36,8 +36,7 @@ services:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://integrate.api.nvidia.com}
       NODE_ENV: production
       PORT: 3001
-    ports:
-      - "3001:3001"
+    # 不发布到宿主机：前端 nginx 走服务名 backend:3001，对外只暴露前端 80
 
   frontend:
     image: legal-for-teen-frontend:latest

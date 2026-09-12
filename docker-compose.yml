@@ -8,6 +8,8 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-lft_db}
       MYSQL_USER: ${MYSQL_USER:-lft_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-lft_pass123}
+    # 本地开发需要发布到宿主机：用数据库客户端直连，或在宿主机执行 prisma 命令。
+    # 部署时不需要，见 deploy/docker-compose.yml（那里不发布 db 与 backend 端口）。
     ports:
       - "3306:3306"
     volumes:
@@ -38,6 +40,8 @@ services:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://integrate.api.nvidia.com}
       NODE_ENV: production
       PORT: 3001
+    # 本地开发需要发布到宿主机：vite dev 的 /api 代理指向 localhost:3001。
+    # 容器内的前端 nginx 走服务名 backend:3001，不依赖这条映射。
     ports:
       - "3001:3001"
 
