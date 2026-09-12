@@ -263,9 +263,9 @@ export default function Learn() {
     <div className="grid gap-5">
       <BannerCarousel
         slides={[
-          { src: '/images/banners/learn/banner-1.jpg', alt: '学习闯关' },
-          { src: '/images/banners/learn/banner-2.png', alt: '学习闯关' },
-          { src: '/images/banners/learn/banner-3.jpg', alt: '学习闯关' },
+          { src: '/images/banners/learn/banner-1.webp', alt: '学习闯关' },
+          { src: '/images/banners/learn/banner-2.webp', alt: '学习闯关' },
+          { src: '/images/banners/learn/banner-3.webp', alt: '学习闯关' },
         ]}
       />
 

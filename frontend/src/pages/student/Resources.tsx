@@ -99,21 +99,39 @@ export default function Resources() {
     return () => window.clearTimeout(debounceRef.current)
   }, [q])
 
+  const hasLoadedRef = useRef(false)
+  const toolCatalogRef = useRef<ResourceListItem[] | null>(null)
+
   const load = useCallback(async () => {
-    setLoading(true)
     setError(null)
+    // 只有首屏才切骨架屏：搜索/筛选时保留当前列表，否则每敲一个字整页闪一下
+    if (!hasLoadedRef.current) setLoading(true)
     try {
+      // 无搜索词、无场景筛选的「全部文章」与工具目录是同一个查询，直接复用
+      const isPlainArticleList = !debouncedQ && type === 'ARTICLE' && scene === 'ALL'
+      if (isPlainArticleList && toolCatalogRef.current) {
+        setItems(toolCatalogRef.current)
+        setVisibleResourceCount(8)
+        return
+      }
+
       const params = new URLSearchParams()
       if (debouncedQ) params.set('q', debouncedQ)
       if (type !== 'ALL') params.set('type', type)
       if (scene !== 'ALL') params.set('tag', scene)
       const data = await apiFetch<{ success: true; resources: ResourceListItem[] }>(`/api/resources?${params.toString()}`)
       setItems(data.resources)
+      // 这次拿到的正好是文章全集，顺手当作工具目录，省掉一次同样的请求
+      if (isPlainArticleList) {
+        toolCatalogRef.current = data.resources
+        setToolCatalog(data.resources)
+      }
       setVisibleResourceCount(8)
     } catch {
       setError('资源加载失败，请稍后重试')
     } finally {
       setLoading(false)
+      hasLoadedRef.current = true
     }
   }, [debouncedQ, type, scene])
 
@@ -127,17 +145,28 @@ export default function Resources() {
     }
   }, [type, toolCategory])
 
+  // 工具分类计数需要「文章全集」。无筛选时上面的 load 已经把它填好了，
+  // 只有带搜索词/场景筛选时主列表不是全集，才需要单独补一次。
   useEffect(() => {
-    async function loadToolCatalog() {
+    if (type !== 'ARTICLE') return
+    if (!debouncedQ && scene === 'ALL') return
+    if (toolCatalogRef.current) return
+
+    let cancelled = false
+    void (async () => {
       try {
         const data = await apiFetch<{ success: true; resources: ResourceListItem[] }>('/api/resources?type=ARTICLE')
+        if (cancelled) return
+        toolCatalogRef.current = data.resources
         setToolCatalog(data.resources)
       } catch {
         // 工具目录加载失败时静默降级，不影响主列表
       }
+    })()
+    return () => {
+      cancelled = true
     }
-    void loadToolCatalog()
-  }, [])
+  }, [type, debouncedQ, scene])
 
   const title = useMemo(() => {
     const t = types.find((x) => x.value === type)?.label ?? '全部'
@@ -195,8 +224,8 @@ export default function Resources() {
     <div className="resource-center grid gap-4">
       <BannerCarousel
         slides={[
-          { src: '/images/banners/resources/banner-1.png', alt: '资源中心' },
-          { src: '/images/banners/resources/banner-2.jpg', alt: '资源中心' },
+          { src: '/images/banners/resources/banner-1.webp', alt: '资源中心' },
+          { src: '/images/banners/resources/banner-2.webp', alt: '资源中心' },
         ]}
       />
 
