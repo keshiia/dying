@@ -3,7 +3,8 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Tag from '@/components/ui/Tag'
-import { apiFetch } from '@/utils/api'
+import { clsx } from 'clsx'
+import { apiFetch, errorMessage } from '@/utils/api'
 import type { ResourceType } from '@/types'
 
 export default function TeacherResources() {
@@ -12,29 +13,40 @@ export default function TeacherResources() {
   const [tags, setTags] = useState('')
   const [contentUrl, setContentUrl] = useState('')
   const [contentMd, setContentMd] = useState('')
-  const [msg, setMsg] = useState<string | null>(null)
+  const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
+  const [publishing, setPublishing] = useState(false)
 
   async function publish() {
+    if (publishing) return
     setMsg(null)
-    const data = await apiFetch<{ success: true; resource: { id: string } }>('/api/teacher/resources', {
-      method: 'POST',
-      body: JSON.stringify({
-        title,
-        type,
-        tags: tags
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean),
-        contentUrl: contentUrl || undefined,
-        contentMd: contentMd || undefined,
-      }),
-    })
+    setPublishing(true)
+    try {
+      await apiFetch<{ success: true; resource: { id: string } }>('/api/teacher/resources', {
+        method: 'POST',
+        body: JSON.stringify({
+          title,
+          type,
+          tags: tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean),
+          contentUrl: contentUrl || undefined,
+          contentMd: contentMd || undefined,
+        }),
+      })
 
-    setMsg(`发布成功：${data.resource.id}`)
-    setTitle('')
-    setTags('')
-    setContentUrl('')
-    setContentMd('')
+      // 原先是 `发布成功：${data.resource.id}` —— 把数据库内部 ID 显示给老师，
+      // 对老师毫无意义。改成告诉他结果去了哪里。
+      setMsg({ kind: 'ok', text: '发布成功，学生端「案例中心」已可见。' })
+      setTitle('')
+      setTags('')
+      setContentUrl('')
+      setContentMd('')
+    } catch (e: unknown) {
+      setMsg({ kind: 'err', text: errorMessage(e) })
+    } finally {
+      setPublishing(false)
+    }
   }
 
   return (
@@ -94,14 +106,22 @@ export default function TeacherResources() {
             <Tag>建议优先放权威工具链接</Tag>
             <Tag>可配合关卡主题</Tag>
           </div>
-          <Button onClick={publish} disabled={!title.trim()}>
-            发布
+          <Button onClick={publish} disabled={!title.trim() || publishing}>
+            {publishing ? '发布中…' : '发布'}
           </Button>
         </div>
 
         {msg && (
-          <div className="mt-4 rounded-2xl border border-[color:var(--p-primary)]/20 bg-[color:var(--p-primary)]/10 px-4 py-3 text-sm text-zinc-800">
-            {msg}
+          <div
+            role={msg.kind === 'err' ? 'alert' : 'status'}
+            className={clsx(
+              'mt-4 rounded-2xl border px-4 py-3 text-sm',
+              msg.kind === 'ok'
+                ? 'border-[color:var(--p-primary)]/20 bg-[color:var(--p-primary)]/10 text-zinc-800'
+                : 'border-red-200 bg-red-50 text-red-700',
+            )}
+          >
+            {msg.text}
           </div>
         )}
       </Card>
