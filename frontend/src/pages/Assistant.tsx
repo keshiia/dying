@@ -4,6 +4,7 @@ import { ArrowUp, Bot, User, ChevronLeft, RefreshCw, BookOpen, MessageSquare, Pl
 import { clsx } from 'clsx'
 import ReactMarkdown from 'react-markdown'
 import { apiFetch } from '@/utils/api'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useAuthStore } from '@/stores/auth'
 
 // ── Types ──
@@ -77,6 +78,8 @@ export default function Assistant() {
   const navigate = useNavigate()
   const { user, clear } = useAuthStore()
   const [sessions, setSessions] = useState<Session[]>(() => loadSessions())
+  // 待确认删除的会话（删除不可撤销，先确认再执行）
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string; count: number } | null>(null)
   const [activeId, setActiveId] = useState<string>('')
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -121,8 +124,21 @@ export default function Assistant() {
     setLoading(false)
   }
 
-  function deleteSession(id: string, e: React.MouseEvent) {
+  // 删除会话会连同该会话的全部聊天记录一起丢掉，且没有恢复入口，
+  // 所以先弹确认框（原先点了即删，误触就永久丢失）。
+  function askDeleteSession(id: string, e: React.MouseEvent) {
     e.stopPropagation()
+    const target = sessions.find((s) => s.id === id)
+    setPendingDelete({
+      id,
+      title: target?.title || '这个会话',
+      count: target?.messages.length ?? 0,
+    })
+  }
+
+  function confirmDeleteSession() {
+    if (!pendingDelete) return
+    const id = pendingDelete.id
     setSessions((prev) => {
       const next = prev.filter((s) => s.id !== id)
       saveSessions(next)
@@ -131,6 +147,7 @@ export default function Assistant() {
     if (activeId === id) {
       setActiveId('')
     }
+    setPendingDelete(null)
   }
 
   // Auto-init first session
@@ -210,11 +227,24 @@ export default function Assistant() {
 
   return (
     <div className="flex h-dvh bg-[var(--p-bg)] overflow-hidden">
-      {/* ── Sidebar (桌面端始终显示，移动端可开关) ── */}
+      {/* 移动端打开会话列表时的遮罩：点空白处收起，与其它抽屉一致 */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar ──
+          桌面端常驻在布局里；移动端改为浮层抽屉。
+          原先移动端只是 `flex w-52` —— 208px 的侧栏作为普通 flex 子项挤进去，
+          375px 屏上聊天区只剩约 165px，而且没有遮罩、不能点外部关闭。 */}
       <aside
         className={clsx(
-          'flex-col shrink-0 h-full bg-white border-r border-zinc-200/60 transition-all duration-300',
-          sidebarOpen ? 'flex w-52' : 'hidden lg:flex lg:w-52',
+          'flex-col shrink-0 h-full bg-white border-r border-zinc-200/60',
+          'fixed inset-y-0 left-0 z-50 w-52 transition-transform duration-300',
+          sidebarOpen ? 'flex translate-x-0' : 'hidden -translate-x-full',
+          'lg:static lg:z-auto lg:flex lg:translate-x-0',
         )}
       >
         <div className="flex items-center gap-2 px-3 h-12 shrink-0 border-b border-zinc-100">
@@ -261,7 +291,7 @@ export default function Assistant() {
               </button>
               <button
                 type="button"
-                onClick={(e) => deleteSession(s.id, e)}
+                onClick={(e) => askDeleteSession(s.id, e)}
                 aria-label="删除会话"
                 title="删除会话"
                 className="shrink-0 grid h-7 w-7 place-items-center rounded-lg text-zinc-300 hover:bg-red-50 hover:text-red-400 transition-all max-lg:opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
@@ -434,7 +464,8 @@ export default function Assistant() {
 
             {/* Quick prompts (only on empty session) */}
             {showQuick && (
-              <div className="mt-6 grid grid-cols-2 gap-3 animate-slide-up">
+              /* 窄屏改单列：375px 下双列每格只有约 170px，中文提示要折好几行 */
+              <div className="mt-6 grid grid-cols-1 gap-3 animate-slide-up sm:grid-cols-2">
                 {QUICK_PROMPTS.map((prompt, i) => (
                   <button
                     key={i}
@@ -496,6 +527,20 @@ export default function Assistant() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="删除这个会话？"
+        description={
+          pendingDelete
+            ? `「${pendingDelete.title}」里的 ${pendingDelete.count} 条对话记录会一并删除，且无法恢复。`
+            : ''
+        }
+        confirmLabel="删除"
+        danger
+        onConfirm={confirmDeleteSession}
+        onClose={() => setPendingDelete(null)}
+      />
     </div>
   )
 }

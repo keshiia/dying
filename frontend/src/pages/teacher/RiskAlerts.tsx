@@ -3,6 +3,7 @@ import { ShieldAlert, AlertTriangle, Check, X } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { apiFetch } from '@/utils/api'
 import { useRiskStream } from '@/hooks/useRiskStream'
 
@@ -66,6 +67,9 @@ export default function RiskAlerts() {
   const [error, setError] = useState<string | null>(null)
   const [noteFor, setNoteFor] = useState<string | null>(null)
   const [note, setNote] = useState('')
+  // 待确认「标为误报」的预警 id
+  const [dismissFor, setDismissFor] = useState<string | null>(null)
+  const [handling, setHandling] = useState(false)
 
   const load = useCallback(async () => {
     setError(null)
@@ -92,6 +96,9 @@ export default function RiskAlerts() {
   })
 
   async function handle(id: string, status: 'RESOLVED' | 'DISMISSED', withNote = '') {
+    setHandling(true)
+    // 成功后要清掉上一次的红色错误条，否则它会一直挂着
+    setError(null)
     try {
       await apiFetch(`/api/teacher/risk-events/${id}/handle`, {
         method: 'POST',
@@ -99,9 +106,12 @@ export default function RiskAlerts() {
       })
       setNoteFor(null)
       setNote('')
+      setDismissFor(null)
       await load()
     } catch {
       setError('操作失败，请稍后重试')
+    } finally {
+      setHandling(false)
     }
   }
 
@@ -126,11 +136,13 @@ export default function RiskAlerts() {
       </Card>
 
       <Card className="p-5">
-        <div className="flex flex-wrap items-center gap-2">
+        <div role="tablist" className="flex flex-wrap items-center gap-2">
           {TABS.map((t) => (
             <button
               key={t.value}
               type="button"
+              role="tab"
+              aria-selected={tab === t.value}
               onClick={() => setTab(t.value)}
               className={
                 tab === t.value
@@ -236,7 +248,9 @@ export default function RiskAlerts() {
                         >
                           <Check className="h-4 w-4" /> 标记已处理
                         </Button>
-                        <Button variant="ghost" onClick={() => handle(e.id, 'DISMISSED')}>
+                        {/* 标为误报之后界面没有恢复入口，属于不可撤销操作，
+                            原先一击即发；危险性更低的「标记已处理」反倒要两步。 */}
+                        <Button variant="ghost" onClick={() => setDismissFor(e.id)}>
                           <X className="h-4 w-4" /> 误报
                         </Button>
                       </div>
@@ -248,6 +262,19 @@ export default function RiskAlerts() {
           )}
         </div>
       </Card>
+
+      <ConfirmDialog
+        open={!!dismissFor}
+        title="标为误报？"
+        description="这条预警会被标记为误报并归入「已处理」。系统目前没有恢复入口，请确认这是误报。"
+        confirmLabel="标为误报"
+        danger
+        loading={handling}
+        onConfirm={() => {
+          if (dismissFor) void handle(dismissFor, 'DISMISSED')
+        }}
+        onClose={() => setDismissFor(null)}
+      />
     </div>
   )
 }

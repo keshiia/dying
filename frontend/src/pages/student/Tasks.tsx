@@ -7,6 +7,8 @@ import Button from '@/components/ui/Button'
 import Tag from '@/components/ui/Tag'
 import ChallengeModal from '@/components/student/ChallengeModal'
 import { apiFetch, errorMessage } from '@/utils/api'
+import { useToast } from '@/components/ui/Toast'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import type { LearningUnit, ReviewLevel, StudentTask } from '@/types'
 
 export default function Tasks() {
@@ -20,6 +22,9 @@ export default function Tasks() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [openLevel, setOpenLevel] = useState<null | { id: string; title: string; xpReward: number }>(null)
+  const [markingId, setMarkingId] = useState<string | null>(null)
+  const [confirmLeave, setConfirmLeave] = useState(false)
+  const { toast } = useToast()
 
   async function load() {
     setLoading(true)
@@ -84,7 +89,7 @@ export default function Tasks() {
   }
 
   async function leave() {
-    if (!window.confirm('确定要退出当前班级吗？学习进度和错题都会保留，重新加入即可继续。')) return
+    setConfirmLeave(false)
     setJoinMsg(null)
     try {
       await apiFetch('/api/student/leave-class', { method: 'POST', body: JSON.stringify({}) })
@@ -96,8 +101,19 @@ export default function Tasks() {
   }
 
   async function markDone(id: string) {
-    await apiFetch('/api/student/tasks/' + id + '/submit', { method: 'POST', body: JSON.stringify({}) })
-    await load()
+    if (markingId) return
+    setMarkingId(id)
+    try {
+      await apiFetch('/api/student/tasks/' + id + '/submit', { method: 'POST', body: JSON.stringify({}) })
+      toast('已标记完成')
+      await load()
+    } catch (e: unknown) {
+      // 原先这里没有 try/catch：点击后按钮无任何变化，学生不知道点没点上会连点；
+      // 失败时是未处理的 rejection，界面什么都不发生，任务还留在「待完成」里。
+      toast(errorMessage(e), 'error')
+    } finally {
+      setMarkingId(null)
+    }
   }
 
   return (
@@ -237,7 +253,7 @@ export default function Tasks() {
               <div className="text-sm font-semibold text-zinc-900">{myClass.name}</div>
               <div className="mt-0.5 text-xs text-zinc-500">加入码 {myClass.joinCode}</div>
             </div>
-            <Button variant="secondary" onClick={leave}>
+            <Button variant="secondary" onClick={() => setConfirmLeave(true)}>
               退出班级
             </Button>
             {joinMsg && <div className="text-sm text-zinc-700">{joinMsg}</div>}
@@ -293,8 +309,12 @@ export default function Tasks() {
                   >
                     去完成
                   </Button>
-                  <Button variant="primary" onClick={() => markDone(t.id)}>
-                    标记完成
+                  <Button
+                    variant="primary"
+                    onClick={() => void markDone(t.id)}
+                    disabled={markingId === t.id}
+                  >
+                    {markingId === t.id ? '处理中…' : '标记完成'}
                   </Button>
                 </div>
               </div>
@@ -323,6 +343,15 @@ export default function Tasks() {
       </Card>
 
       <ChallengeModal openLevel={openLevel} onClose={() => setOpenLevel(null)} onCompleted={load} />
+
+      <ConfirmDialog
+        open={confirmLeave}
+        title="退出当前班级？"
+        description="学习进度、XP 与错题记录都会保留，重新输入加入码即可继续。"
+        confirmLabel="退出班级"
+        onConfirm={() => void leave()}
+        onClose={() => setConfirmLeave(false)}
+      />
         </>
       )}
     </div>
