@@ -118,6 +118,18 @@ export default function Tasks() {
             </Card>
           ))}
         </div>
+      ) : error ? (
+        // 原先错误卡片渲染在整页最底部：首屏加载失败时，学生先看到的是满屏
+        // 「暂无任务」「暂无错题」，要滚到页面底部才发现一行红字。
+        // 加载失败时只渲染错误本身，不给会误导人的空列表。
+        <Card className="p-5 border-red-100 bg-red-50">
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-sm text-red-700">
+            <span>任务加载失败：{error}</span>
+            <Button size="sm" variant="secondary" onClick={() => void load()}>
+              重试
+            </Button>
+          </div>
+        </Card>
       ) : (
         <>
       <Card className="p-5 min-h-[136px]">
@@ -309,8 +321,6 @@ export default function Tasks() {
           )}
         </div>
       </Card>
-
-      {error && <Card className="p-5 text-sm text-red-700 bg-red-50 border-red-100">⚠️ {error}</Card>}
 
       <ChallengeModal openLevel={openLevel} onClose={() => setOpenLevel(null)} onCompleted={load} />
         </>
