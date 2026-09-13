@@ -18,7 +18,7 @@ import Button from '@/components/ui/Button'
 import ProgressBar from '@/components/ui/ProgressBar'
 import Tag from '@/components/ui/Tag'
 import { courtCases, type CourtCaseData, type SceneHotspot, type EvidenceItem, type DebateStage } from '@/data/courtCases'
-import { apiFetch } from '@/utils/api'
+import { apiFetch, errorMessage } from '@/utils/api'
 import { useAuthStore } from '@/stores/auth'
 
 // ── Types ──────────────────────────────────────────
@@ -233,12 +233,15 @@ export default function Court() {
   // ── Result submission ──
   const [submitting, setSubmitting] = useState(false)
   const [xpGained, setXpGained] = useState(0)
+  // 提交失败时如实告知，而不是伪造一个奖励数字
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const scoreData = theCase ? calcScore(choices, theCase) : null
 
   async function submitResult() {
     if (!theCase || !scoreData) return
     setSubmitting(true)
+    setSubmitError(null)
     // Simulate a slight delay for the "submitting" feel
     await new Promise((r) => setTimeout(r, 800))
     try {
@@ -260,9 +263,12 @@ export default function Court() {
           store.setAuth(store.token, { ...store.user, xp: res.user.xp, level: res.user.level })
         }
       }
-    } catch {
-      // Offline fallback — still show result
-      setXpGained(theCase.result.xpReward)
+    } catch (e: unknown) {
+      // 原先是 `setXpGained(theCase.result.xpReward)`（注释写着 Offline fallback）——
+      // 提交失败也编一个奖励数字，学生看到结算页大字「+30 XP」，服务端却什么都没落库。
+      // 失败就是失败：XP 置 0，并在结算页如实提示、给一个重试入口。
+      setXpGained(0)
+      setSubmitError(errorMessage(e))
     }
     setSubmitting(false)
     goToStep('result')
@@ -868,6 +874,18 @@ export default function Court() {
               )}
             </div>
           </div>
+
+          {submitError && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+              <span>成绩未能保存：{submitError}</span>
+              <Button size="sm" variant="secondary" onClick={submitResult} disabled={submitting}>
+                {submitting ? '重试中…' : '重试'}
+              </Button>
+            </div>
+          )}
 
           {/* Score breakdown */}
           <Card className="p-5">

@@ -24,7 +24,7 @@ import {
   type DetectiveHotspot,
   type DetectiveNpc,
 } from '@/data/detectiveCases'
-import { apiFetch } from '@/utils/api'
+import { apiFetch, errorMessage } from '@/utils/api'
 import { useAuthStore } from '@/stores/auth'
 
 // ── Types ──────────────────────────────────────────
@@ -372,6 +372,8 @@ export default function Detective() {
   const [currentNpc, setCurrentNpc] = useState<string | null>(null)
   const [xpGained, setXpGained] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+  // 提交失败时如实告知，而不是伪造一个奖励数字
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [clueDetail, setClueDetail] = useState<DetectiveHotspot | null>(null)
   const user = useAuthStore((s) => s.user)
 
@@ -437,6 +439,7 @@ export default function Detective() {
     if (!theCase) return
     const scoreData = calcDetectiveScore(state, theCase)
     setSubmitting(true)
+    setSubmitError(null)
     await new Promise((r) => setTimeout(r, 600))
     try {
       const res = await apiFetch<{ success: true; xpGain: number; user: { xp: number; level: number } }>(
@@ -453,8 +456,10 @@ export default function Detective() {
           store.setAuth(store.token, { ...store.user, xp: res.user.xp, level: res.user.level })
         }
       }
-    } catch {
-      setXpGained(theCase.result.xpReward)
+    } catch (e: unknown) {
+      // 与模拟法庭一致：提交失败不伪造奖励，如实提示并给重试入口
+      setXpGained(0)
+      setSubmitError(errorMessage(e))
     }
     setSubmitting(false)
     setStep('result')
@@ -813,6 +818,18 @@ export default function Detective() {
             </div>
           )}
         </div>
+
+        {submitError && (
+          <div
+            role="alert"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            <span>成绩未能保存：{submitError}</span>
+            <Button size="sm" variant="secondary" onClick={submitResult} disabled={submitting}>
+              {submitting ? '重试中…' : '重试'}
+            </Button>
+          </div>
+        )}
 
         {/* Score */}
         <Card className="p-5">
