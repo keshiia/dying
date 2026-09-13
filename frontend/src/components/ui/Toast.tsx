@@ -2,7 +2,9 @@ import { useEffect, useState, useCallback, createContext, useContext, type React
 import { clsx } from 'clsx'
 import { CheckCircle2, Info, AlertTriangle, X } from 'lucide-react'
 
-type ToastType = 'success' | 'info' | 'warning'
+// error 原先缺失 —— 最需要提示的失败场景在这个体系里没有位置，
+// 各处只能自己造内联的红色卡片。
+type ToastType = 'success' | 'info' | 'warning' | 'error'
 
 type Toast = {
   id: number
@@ -24,18 +26,21 @@ const iconMap: Record<ToastType, typeof CheckCircle2> = {
   success: CheckCircle2,
   info: Info,
   warning: AlertTriangle,
+  error: AlertTriangle,
 }
 
 const styleMap: Record<ToastType, string> = {
   success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
   info: 'border-sky-200 bg-sky-50 text-sky-900',
   warning: 'border-amber-200 bg-amber-50 text-amber-900',
+  error: 'border-red-200 bg-red-50 text-red-900',
 }
 
 const iconColorMap: Record<ToastType, string> = {
   success: 'text-emerald-500',
   info: 'text-sky-500',
   warning: 'text-amber-500',
+  error: 'text-red-500',
 }
 
 let nextId = 0
@@ -43,13 +48,20 @@ let nextId = 0
 function ToastItem({ t, onRemove }: { t: Toast; onRemove: (id: number) => void }) {
   const [exiting, setExiting] = useState(false)
 
+  // 错误留久一点：2.5 秒读不完一段失败原因
+  const DURATION = t.type === 'error' ? 6000 : 2500
+
   useEffect(() => {
+    let inner: number | undefined
     const timer = window.setTimeout(() => {
       setExiting(true)
-      setTimeout(() => onRemove(t.id), 300)
-    }, 2500)
-    return () => window.clearTimeout(timer)
-  }, [t.id, onRemove])
+      inner = window.setTimeout(() => onRemove(t.id), 300)
+    }, DURATION)
+    return () => {
+      window.clearTimeout(timer)
+      if (inner) window.clearTimeout(inner)
+    }
+  }, [t.id, onRemove, DURATION])
 
   const Icon = iconMap[t.type]
 
@@ -92,7 +104,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ toast }}>
       {children}
-      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+      <div
+        role="status"
+        aria-live="polite"
+        className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"
+      >
         {toasts.map((t) => (
           <div key={t.id} className="pointer-events-auto">
             <ToastItem t={t} onRemove={remove} />
