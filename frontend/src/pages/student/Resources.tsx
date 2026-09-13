@@ -466,7 +466,12 @@ export default function Resources() {
         }}
       >
         {!detail ? (
-          <div className="text-sm text-zinc-600">加载中...</div>
+          // 与全站其它加载态一致用骨架屏，原来这里是唯一的纯文字「加载中...」
+          <div className="animate-pulse space-y-3">
+            <div className="h-6 w-32 rounded-full bg-zinc-100" />
+            <div className="h-28 rounded-2xl bg-zinc-100" />
+            <div className="h-16 rounded-2xl bg-zinc-100" />
+          </div>
         ) : (
           <div>
             <div className="flex flex-wrap gap-2">
