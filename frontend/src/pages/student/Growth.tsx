@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
@@ -92,6 +92,7 @@ export default function Growth() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [stats, setStats] = useState<GrowthStats | null>(null)
+  const [statsFailed, setStatsFailed] = useState(false)
   const [units, setUnits] = useState<LearningUnit[]>([])
   const [showAllBadges, setShowAllBadges] = useState(false)
   const [showAllUpcomingSummary, setShowAllUpcomingSummary] = useState(false)
@@ -106,21 +107,27 @@ export default function Growth() {
   const prevUnlockedIdsRef = useRef<Set<string>>(new Set())
   const dataLoadedRef = useRef(false)
 
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const [summaryData, unitsData] = await Promise.all([
-          apiFetch<{ success: true; stats: GrowthStats }>('/api/student/summary'),
-          apiFetch<{ success: true; units: LearningUnit[] }>('/api/student/units'),
-        ])
-        setStats(summaryData.stats)
-        setUnits(unitsData.units)
-        dataLoadedRef.current = true
-      } catch {
-        // 接口失败时保持兜底数据（stats 各字段均用 ?? 0 兜底），不抛未处理异常
-      }
-    })()
+  const load = useCallback(async () => {
+    setStatsFailed(false)
+    try {
+      const [summaryData, unitsData] = await Promise.all([
+        apiFetch<{ success: true; stats: GrowthStats }>('/api/student/summary'),
+        apiFetch<{ success: true; units: LearningUnit[] }>('/api/student/units'),
+      ])
+      setStats(summaryData.stats)
+      setUnits(unitsData.units)
+      dataLoadedRef.current = true
+    } catch {
+      // 原来是静默忽略 + stats 各字段用 `?? 0` 兜底：接口失败时学生看到的是
+      // 「闯关次数 0 / 连续学习 0 天」，等于告诉他这周什么都没干。
+      // 失败和「真的是 0」必须能区分开。
+      setStatsFailed(true)
+    }
   }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
 
   const pct = user ? user.xp % 100 : 0
   const attemptCount = stats?.attemptCount ?? 0
@@ -426,6 +433,27 @@ export default function Growth() {
 
     return () => window.clearTimeout(timer)
   }, [badgeList])
+
+  // 加载失败时不渲染下面那些用 0 兜底的统计 —— 否则学生看到的是
+  // 「闯关次数 0 / 连续学习 0 天」，等于被告知这周什么都没干。
+  if (statsFailed && !stats) {
+    return (
+      <div className="grid gap-4">
+        <Card className="p-5">
+          <div className="text-lg font-extrabold text-zinc-900">个人成长中心</div>
+          <div className="mt-1 text-sm text-zinc-600">你的每一次学习和闯关都会转化为XP与等级。</div>
+        </Card>
+        <Card className="p-5 border-red-100 bg-red-50">
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-sm text-red-700">
+            <span>成长数据加载失败，暂时无法显示你的学习统计。</span>
+            <Button size="sm" variant="secondary" onClick={() => void load()}>
+              重试
+            </Button>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="grid gap-4">
