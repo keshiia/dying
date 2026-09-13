@@ -310,7 +310,9 @@ export default function Assistant() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-base font-extrabold text-zinc-900 truncate">AI咨询助手</h1>
-                <p className="text-xs text-zinc-500">学习用途 · 不构成法律意见</p>
+                {/* 模块改名为「AI咨询助手」后，标题里不再出现「普法」，
+                    这行副标题就是本页唯一传达「这是学习工具、不是法律咨询」的地方 */}
+                <p className="text-xs text-zinc-500">普法学习用途 · 不构成法律意见</p>
               </div>
             </div>
 
