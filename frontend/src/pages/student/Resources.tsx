@@ -87,6 +87,8 @@ export default function Resources() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
+  // 正在预取内容的条目，用于按钮上给出等待反馈（内容到手才打开弹窗）
+  const [openingId, setOpeningId] = useState<string | null>(null)
   const [detail, setDetail] = useState<ResourceDetail | null>(null)
   const [showChecklist, setShowChecklist] = useState(false)
   const [visibleResourceCount, setVisibleResourceCount] = useState(8)
@@ -210,13 +212,20 @@ export default function Resources() {
   }, [filteredItems, visibleResourceCount])
 
   async function open(itemId: string) {
-    setOpenId(itemId)
-    setDetail(null)
+    // 先取到内容再打开弹窗。
+    //
+    // 原来是立刻打开、内容后到：弹窗一边播放 scale 打开动画，内容一边插进来把高度
+    // 从 275px 撑到 522px 并持续增长约 150ms，边长边缩放，看起来就是卡顿。
+    // 数据就绪后再打开，动画跑在稳定布局上；按钮在等待期间给出反馈。
+    setOpeningId(itemId)
     try {
       const data = await apiFetch<{ success: true; resource: ResourceDetail }>(`/api/resources/${itemId}`)
       setDetail(data.resource)
+      setOpenId(itemId)
     } catch {
-      setOpenId(null)
+      setError('资源加载失败，请稍后重试')
+    } finally {
+      setOpeningId(null)
     }
   }
 
@@ -423,8 +432,12 @@ export default function Resources() {
                     ))}
                   </div>
                 </div>
-                <Button variant="secondary" onClick={() => open(r.id)}>
-                  {actionLabelByType[r.type]}
+                <Button
+                  variant="secondary"
+                  onClick={() => open(r.id)}
+                  disabled={openingId === r.id}
+                >
+                  {openingId === r.id ? '打开中…' : actionLabelByType[r.type]}
                 </Button>
               </div>
             ))}

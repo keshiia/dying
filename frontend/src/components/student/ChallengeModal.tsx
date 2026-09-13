@@ -68,6 +68,8 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<SubmitData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // 已经取到题目的关卡 id。用于「数据就绪后才渲染弹窗」，见下方 ready 的说明。
+  const [loadedLevelId, setLoadedLevelId] = useState<string | null>(null)
 
   const total = questions.length
   const pct = total ? Math.round((Math.min(step + 1, total) / total) * 100) : 0
@@ -92,11 +94,14 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
     setResult(null)
     setAnswerMap({})
     setStep(0)
+    // 取数期间一律不算就绪，否则重开同一关时会拿上一次的题目提前把弹窗打开
+    setLoadedLevelId(null)
 
     try {
       const data = await apiFetch<LevelQuestionsResponse>(`/api/student/levels/${levelId}/questions`)
       setLevel(data.level)
       setQuestions(data.questions)
+      setLoadedLevelId(levelId)
     } catch (e: unknown) {
       setError(errorMessage(e))
       setLevel(null)
@@ -158,9 +163,16 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
     return map
   }, [result])
 
+  // 数据就绪后才渲染弹窗。
+  //
+  // 原来是立刻打开、题目后到：弹窗先以加载态出现，实测 41ms 时被题目从 139px
+  // 撑到 499px，而打开动画有 400ms——布局变化整个落在动画里，看上去就是边长边缩放。
+  // 等题目到位再打开，动画跑在稳定布局上（案例中心已用同一方式改好并验证）。
+  const ready = !!openLevel && (loadedLevelId === openLevel.id || !!error)
+
   return (
     <Modal
-      open={!!openLevel}
+      open={ready}
       title={openLevel ? `闯关：${openLevel.title}` : ''}
       onClose={close}
       className="max-w-3xl"
