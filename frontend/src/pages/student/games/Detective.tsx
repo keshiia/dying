@@ -17,6 +17,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Tag from '@/components/ui/Tag'
 import ProgressBar from '@/components/ui/ProgressBar'
+import ClueDetailModal from '@/components/student/ClueDetailModal'
 import {
   detectiveCases,
   type DetectiveCaseData,
@@ -581,6 +582,7 @@ export default function Detective() {
   // ── Render: Investigation ──
   if (step === 'investigation') {
     return (
+      <>
       <div className="grid gap-4">
         {/* Top bar */}
         <div className="rounded-2xl bg-white border border-zinc-200/80 px-4 py-3 shadow-sm">
@@ -726,6 +728,11 @@ export default function Detective() {
           {canDeduce ? '🧩 进入推理 — 还原真相！' : `还需找到 ${theCase.minCluesToUnlock - state.foundClues.length} 条线索才能推理`}
         </Button>
       </div>
+
+      {/* 线索详情弹窗必须渲染在「调查」阶段里 —— findClue 就是在这个阶段设置 clueDetail 的。
+          原先它只写在文件末尾那个永远走不到的兜底分支里。 */}
+      <ClueDetailModal clue={clueDetail} onClose={() => setClueDetail(null)} />
+      </>
     )
   }
 
@@ -882,54 +889,7 @@ export default function Detective() {
     )
   }
 
-  // ── Clue Detail Modal ──
-  return (
-    <>
-      {clueDetail && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-          onClick={() => setClueDetail(null)}
-        >
-          <div
-            className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-gradient-to-r from-[var(--p-primary)] to-[var(--p-primary-dark)] p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{clueDetail.emoji}</span>
-                  <span className="text-base font-extrabold">{clueDetail.content.title}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setClueDetail(null)}
-                  className="grid h-7 w-7 place-items-center rounded-full bg-white/20 text-white hover:bg-white/30"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-            <div className="p-5 grid gap-3">
-              <div className="text-sm text-zinc-700 leading-relaxed">{clueDetail.content.detail}</div>
-              <div className="rounded-2xl bg-sky-50 border border-sky-200 p-3">
-                <div className="flex items-start gap-2">
-                  <Lightbulb className="h-4 w-4 text-sky-600 shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-xs font-bold text-sky-800">🔎 推理提示</div>
-                    <div className="mt-1 text-xs text-zinc-700">{clueDetail.content.insight}</div>
-                  </div>
-                </div>
-              </div>
-              <Button variant="ghost" onClick={() => setClueDetail(null)} className="w-full">
-                收起
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edge case: returning null because we shouldn't reach here */}
-      {null}
-    </>
-  )
+  // 四个阶段各有自己的提前 return，正常不会走到这里。
+  // 保留兜底，以防将来新增阶段时漏渲染线索弹窗。
+  return <ClueDetailModal clue={clueDetail} onClose={() => setClueDetail(null)} />
 }
