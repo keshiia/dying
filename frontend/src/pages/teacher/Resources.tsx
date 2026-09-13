@@ -41,7 +41,7 @@ export default function TeacherResources() {
     <div className="grid gap-4">
       <Card className="p-5">
         <div className="text-lg font-extrabold text-zinc-900">资源发布</div>
-        <div className="mt-1 text-sm text-zinc-600">发布后学生端“资源中心”可见。</div>
+        <div className="mt-1 text-sm text-zinc-600">发布后学生端“案例中心”可见。</div>
 
         <div className="mt-4 grid grid-cols-12 gap-3">
           <div className="col-span-12 md:col-span-7">

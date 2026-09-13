@@ -115,7 +115,7 @@ export default function RiskAlerts() {
           <div className="min-w-0">
             <div className="text-lg font-extrabold text-zinc-900">风险预警</div>
             <div className="mt-1 text-sm text-zinc-600">
-              学生在 AI 普法助手中的对话经系统识别后，可能涉及心理或法治风险的内容会汇总到这里。
+              学生在 AI 咨询助手中的对话经系统识别后，可能涉及心理或法治风险的内容会汇总到这里。
             </div>
             <div className="mt-2 text-xs leading-relaxed text-zinc-500">
               系统只保留触发预警的原句与自动生成的摘要，不会展示学生的完整对话。

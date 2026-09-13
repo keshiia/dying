@@ -194,7 +194,7 @@ export type RiskVerdict = {
 const LEVELS: RiskLevel[] = ['HIGH', 'MEDIUM', 'LOW']
 
 const CLASSIFY_SYSTEM_PROMPT =
-  '你在帮助一位中学老师判断学生是否需要被关心。下面是学生与校园普法助手的一段对话。\n' +
+  '你在帮助一位中学老师判断学生是否需要被关心。下面是学生与校园咨询助手的一段对话。\n' +
   '请判断【最后那条学生发言】是否透露出需要成年人介入的风险。\n' +
   '\n' +
   '只输出一个 JSON 对象，不要任何其它文字、不要代码块标记：\n' +

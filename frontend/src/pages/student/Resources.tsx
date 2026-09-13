@@ -170,7 +170,7 @@ export default function Resources() {
 
   const title = useMemo(() => {
     const t = types.find((x) => x.value === type)?.label ?? '全部'
-    return `资源中心 · ${t}`
+    return `案例中心 · ${t}`
   }, [type])
 
   const activeSceneLabel = useMemo(
@@ -224,8 +224,8 @@ export default function Resources() {
     <div className="resource-center grid gap-4">
       <BannerCarousel
         slides={[
-          { src: '/images/banners/resources/banner-1.webp', alt: '资源中心' },
-          { src: '/images/banners/resources/banner-2.webp', alt: '资源中心' },
+          { src: '/images/banners/resources/banner-1.webp', alt: '案例中心' },
+          { src: '/images/banners/resources/banner-2.webp', alt: '案例中心' },
         ]}
       />
 

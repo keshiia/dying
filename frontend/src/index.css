@@ -300,7 +300,7 @@ h6 {
     box-shadow: 0 0 8px rgba(28, 176, 246, 0.45);
 }
 
-/* 资源中心专用字体优化：提升中文标题与小字号可读性 */
+/* 案例中心专用字体优化：提升中文标题与小字号可读性 */
 .resource-center {
     font-family:
         "MiSans", "HarmonyOS Sans SC", "PingFang SC",

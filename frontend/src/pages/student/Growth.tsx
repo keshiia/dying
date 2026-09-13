@@ -340,15 +340,15 @@ export default function Growth() {
         desc: '你状态不错，趁热完成更多关卡可以快速拉开成长差距。',
         primaryLabel: '继续闯关',
         primaryTo: '/app/learn',
-        secondaryLabel: '去资源中心',
+        secondaryLabel: '去案例中心',
         secondaryTo: '/app/resources',
       }
     }
 
     return {
       title: '进入法条速查，扩展法律知识面',
-      desc: '基础闯关已不错，可以通过资源中心补充高频法条与案例。',
-      primaryLabel: '去资源中心',
+      desc: '基础闯关已不错，可以通过案例中心补充高频法条与案例。',
+      primaryLabel: '去案例中心',
       primaryTo: '/app/resources',
       secondaryLabel: '继续闯关',
       secondaryTo: '/app/learn',
@@ -623,7 +623,7 @@ export default function Growth() {
                 已完成当前全部关卡，太棒了
               </div>
               <div className="mt-1 text-sm text-zinc-600">
-                下一步建议做一次错题复盘，或去资源中心扩展法条知识。
+                下一步建议做一次错题复盘，或去案例中心扩展法条知识。
               </div>
             </div>
             <Tag color="blue">全通关</Tag>
@@ -633,7 +633,7 @@ export default function Growth() {
               错题复盘
             </Button>
             <Button variant="secondary" size="sm" onClick={() => navigate('/app/resources')}>
-              资源中心
+              案例中心
             </Button>
           </div>
         </Card>

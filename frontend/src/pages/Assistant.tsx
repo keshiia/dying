@@ -309,7 +309,7 @@ export default function Assistant() {
                 )}
               </div>
               <div className="min-w-0">
-                <h1 className="text-base font-extrabold text-zinc-900 truncate">AI普法助手</h1>
+                <h1 className="text-base font-extrabold text-zinc-900 truncate">AI咨询助手</h1>
                 <p className="text-xs text-zinc-500">学习用途 · 不构成法律意见</p>
               </div>
             </div>

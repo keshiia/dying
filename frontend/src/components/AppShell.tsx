@@ -146,7 +146,7 @@ export default function AppShell({ mode }: Props) {
     { to: '/app/games/court', label: '模拟法庭', icon: Gavel, game: true },
     { to: '/app/games/detective', label: '案件侦查', icon: Fingerprint, game: true },
     { to: '/app/learn', label: '学习闯关', emoji: '🧒' },
-    { to: '/app/resources', label: '资源中心', emoji: '📚' },
+    { to: '/app/resources', label: '案例中心', emoji: '📚' },
     { to: '/app/tasks', label: '任务中心', emoji: '📝' },
     { to: '/app/growth', label: '成长中心', emoji: '🌱' },
   ]
@@ -262,7 +262,7 @@ export default function AppShell({ mode }: Props) {
                 <span className="grid h-7 w-7 place-items-center rounded-xl bg-slate-100 text-slate-600">
                   <Bot className="h-4 w-4 shrink-0" />
                 </span>
-                AI普法助手
+                AI咨询助手
               </button>
             )}
             <button
@@ -315,7 +315,7 @@ export default function AppShell({ mode }: Props) {
         >
           <span className="inline-flex items-center gap-2">
             <Bot className="h-4 w-4" />
-            AI普法助手
+            AI咨询助手
           </span>
         </button>
       )}
@@ -399,7 +399,7 @@ export default function AppShell({ mode }: Props) {
               }}
             >
               <Bot className="h-4 w-4 mr-1.5" />
-              AI普法助手
+              AI咨询助手
             </Button>
           )}
           <Button variant="ghost" onClick={logout}>
