@@ -8,8 +8,10 @@ type Props = HTMLAttributes<HTMLSpanElement> & {
 export default function Tag({ className, color = "zinc", ...props }: Props) {
   const colors = {
     zinc: "bg-zinc-100 text-zinc-700",
-    green: "border border-slate-200/80 bg-slate-100 text-slate-600",
-    blue: "border border-slate-200/80 bg-slate-100 text-slate-600",
+    // green 与 blue 原先都写成了同一个 slate 灰，与其它 5 个颜色的写法不一致，
+    // 调用方按语义传 green / blue 时实际看不出区别。
+    green: "bg-green-100 text-green-700",
+    blue: "bg-blue-100 text-blue-700",
     purple: "bg-purple-100 text-purple-700",
     orange: "bg-orange-100 text-orange-700",
     red: "bg-red-100 text-red-700",

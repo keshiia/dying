@@ -10,6 +10,11 @@
     --p-accent-dark: #39b4e0;
     --p-warning: #ffb020;
     --p-danger: #ff4b4b;
+    /* 原主题只有 warning / danger，没有 success —— 于是 ProgressBar 的 green
+       被直接复制成了蓝色值，导致按语义传 green / blue 的地方（满分绿、未满分蓝，
+       正确率 ≥80 绿 / ≥60 蓝）实际完全同色。补上这个 token。 */
+    --p-success: #22c55e;
+    --p-success-light: #4ade80;
     --p-purple: #a855f7;
     --p-pink: #ec4899;
     --p-orange: #f97316;
