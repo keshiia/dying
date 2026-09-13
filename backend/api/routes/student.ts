@@ -248,6 +248,75 @@ router.get('/levels/:levelId/questions', async (req: Request, res: Response) => 
   })
 })
 
+const CheckAnswerSchema = z.object({
+  questionId: z.string().min(1),
+  answer: z.string().min(1).max(200),
+})
+
+/**
+ * 单题判题。
+ *
+ * 取题接口刻意不下发 answerKey，所以「答完立刻判对错」必须在服务端做：
+ * 学生选中后点「提交」，这里比对并返回对错与正确答案（解析仍留到交卷后统一看）。
+ *
+ * 顺带把这次作答落库 —— 原先只有每关的总分，错题复盘里的题型正确率只能靠
+ * 把错题数按题目数量平均分摊来估算，与题型无关。
+ *
+ * 关卡解锁校验与取题接口一致：题目必须属于该关卡，避免拿别的关卡的题目 id 探测答案。
+ */
+router.post('/levels/:levelId/check', async (req: Request, res: Response) => {
+  const parsed = CheckAnswerSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ success: false, error: 'BAD_REQUEST' })
+    return
+  }
+
+  const resolved = await resolveUnlockedLevel(req.user!.id, req.params.levelId)
+  if (!resolved.level) {
+    res.status(404).json({ success: false, error: 'LEVEL_NOT_FOUND' })
+    return
+  }
+  if (resolved.lockedByLevel) {
+    res.status(403).json({
+      success: false,
+      error: 'LEVEL_LOCKED',
+      requiredLevelId: resolved.lockedByLevel.id,
+      requiredLevelTitle: resolved.lockedByLevel.title,
+      requiredLevelOrderNo: resolved.lockedByLevel.orderNo,
+    })
+    return
+  }
+
+  const question = await prisma.question.findUnique({
+    where: { id: parsed.data.questionId },
+    select: { id: true, levelId: true, answerKey: true },
+  })
+  if (!question || question.levelId !== req.params.levelId) {
+    res.status(404).json({ success: false, error: 'NOT_FOUND' })
+    return
+  }
+
+  const given = parsed.data.answer.trim().toUpperCase()
+  const expected = question.answerKey.trim().toUpperCase()
+  const correct = given === expected
+
+  try {
+    await prisma.questionAnswer.create({
+      data: {
+        studentId: req.user!.id,
+        levelId: question.levelId,
+        questionId: question.id,
+        answer: given.slice(0, 100),
+        correct,
+      },
+    })
+  } catch {
+    // 记录失败不应影响判题本身
+  }
+
+  res.json({ success: true, correct, expected })
+})
+
 const SubmitSchema = z.object({
   answers: z.array(
     z.object({
@@ -790,31 +859,26 @@ router.get('/error-analysis', async (req: Request, res: Response) => {
     }
   }
 
-  // 按题型聚合（从 questions 表反查）
-  const levelIds = [...new Set(recentAttempts.map((a) => a.levelId))]
-  const questions = await prisma.question.findMany({
-    where: { levelId: { in: levelIds } },
-    select: { levelId: true, type: true },
+  // 按题型聚合 —— 用真正的逐题作答记录。
+  //
+  // 此前这里是把每关的错题数按题目数量平均分摊来估算：某关 5 题错 1~2 题则
+  // 所有题型都算 100%，错 3 题以上则全部算 0%，阈值卡在 50%，与题型毫无关系。
+  // 那种「情境分析题正确率低」的结论其实是编出来的，现在改为真实统计。
+  const answerRecords = await prisma.questionAnswer.findMany({
+    where: { studentId: req.user!.id },
+    orderBy: { createdAt: 'desc' },
+    take: 800,
+    select: { questionId: true, correct: true, question: { select: { type: true } } },
   })
-  const questionsByLevel = new Map<string, string[]>()
-  for (const q of questions) {
-    const list = questionsByLevel.get(q.levelId) ?? []
-    list.push(q.type)
-    questionsByLevel.set(q.levelId, list)
-  }
-
-  for (const a of recentAttempts) {
-    const types = questionsByLevel.get(a.levelId) ?? []
-    const errors = a.totalCount - a.correctCount
-    if (errors > 0 && types.length > 0) {
-      const errorsPerType = Math.round(errors / types.length)
-      for (const t of types) {
-        const ts = typeMap.get(t) ?? { total: 0, correct: 0 }
-        ts.total += 1
-        if (errorsPerType < 1) ts.correct += 1
-        typeMap.set(t, ts)
-      }
-    }
+  // 同一题多次作答只取最近一次
+  const seenQuestions = new Set<string>()
+  for (const rec of answerRecords) {
+    if (seenQuestions.has(rec.questionId)) continue
+    seenQuestions.add(rec.questionId)
+    const ts = typeMap.get(rec.question.type) ?? { total: 0, correct: 0 }
+    ts.total += 1
+    if (rec.correct) ts.correct += 1
+    typeMap.set(rec.question.type, ts)
   }
 
   const byTopic = [...topicMap.entries()]

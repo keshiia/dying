@@ -71,6 +71,7 @@ model User {
   goals            StudentGoal[]
   riskEvents       RiskEvent[]
   gameResults      GameResult[]
+  questionAnswers  QuestionAnswer[]
 }
 
 model Class {
@@ -141,6 +142,7 @@ model Question {
   difficulty  Int          @default(0) // 0=auto, 1=easy, 2=medium, 3=hard (for adaptive difficulty)
 
   level Level @relation(fields: [levelId], references: [id])
+  answers QuestionAnswer[]
 
   @@index([levelId, orderNo])
 }
@@ -159,6 +161,31 @@ model Attempt {
 
   @@index([studentId, createdAt])
   @@index([levelId])
+}
+
+// 逐题作答记录。
+//
+// 原先 Attempt 只存每关的总分与做对题数，没有任何逐题信息，导致「智能错题复盘」
+// 里的题型正确率只能靠把错题数按题目数量平均分摊来估算 —— 实际效果是：
+// 某关 5 题错 1~2 题则所有题型都算 100%，错 3 题以上则所有题型都算 0%，
+// 阈值卡在 50%，与题型毫无关系。
+//
+// 名称刻意不叫 AnswerRecord：项目历史上有过一张同名表（已随迁移清除），
+// 重名会让后来者困惑。
+model QuestionAnswer {
+  id         String   @id @default(cuid())
+  studentId  String
+  levelId    String
+  questionId String
+  answer     String // 学生所选
+  correct    Boolean
+  createdAt  DateTime @default(now())
+
+  student  User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, questionId])
+  @@index([studentId, createdAt])
 }
 
 model UserProgress {
