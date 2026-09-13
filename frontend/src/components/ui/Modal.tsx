@@ -58,7 +58,7 @@ export default function Modal({
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div
           className={clsx(
-            "animate-bounce-in w-full max-w-2xl max-h-[92vh] overflow-hidden rounded-3xl bg-white shadow-2xl border border-zinc-100",
+            "animate-modal-in w-full max-w-2xl max-h-[92vh] overflow-hidden rounded-3xl bg-white shadow-2xl border border-zinc-100",
             className,
           )}
         >
