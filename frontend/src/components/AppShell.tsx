@@ -198,8 +198,11 @@ export default function AppShell({ mode }: Props) {
           >
             <BrandMark className="group-hover:shadow-blue-200 transition-shadow" />
             <div className="min-w-0">
-              <div className="text-base font-extrabold text-zinc-900 leading-tight">青少年普法智能体</div>
-              <div className="text-xs text-zinc-400 mt-0.5">让法治成为青春的底色</div>
+              {/* 品牌名统一为「青知法苑」，与登录页一致；「青少年普法智能体」
+                  是品类描述，作为副标题。原先侧边栏把品类当主名，
+                  导致登录后产品名看起来变了。 */}
+              <div className="text-base font-extrabold text-zinc-900 leading-tight">青知法苑</div>
+              <div className="text-xs text-zinc-400 mt-0.5">青少年普法智能体</div>
             </div>
           </Link>
 
