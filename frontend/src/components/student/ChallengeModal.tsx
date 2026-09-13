@@ -70,29 +70,63 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
   const [error, setError] = useState<string | null>(null)
   // 已经取到题目的关卡 id。用于「数据就绪后才渲染弹窗」，见下方 ready 的说明。
   const [loadedLevelId, setLoadedLevelId] = useState<string | null>(null)
+  // 每题的判定结果。判定过就锁定该题，不能再改（否则交卷时人人满分）。
+  // 判定在服务端做 —— 取题接口不下发 answerKey。
+  const [checked, setChecked] = useState<Record<string, { correct: boolean; expected: string }>>({})
+  const [checking, setChecking] = useState(false)
 
   const total = questions.length
   const pct = total ? Math.round((Math.min(step + 1, total) / total) * 100) : 0
 
   const current = useMemo(() => questions[step] ?? null, [questions, step])
+  const currentCheck = current ? checked[current.id] : undefined
+  // 正确答案的可读形式：优先显示选项文本，找不到就退回选项字母
+  const expectedLabel = useMemo(() => {
+    if (!currentCheck || !current) return ''
+    const hit = safeParseOptions(current.optionsJson).find(
+      (o) => o.key.toUpperCase() === currentCheck.expected.toUpperCase(),
+    )
+    return hit ? `${hit.key}. ${hit.text}` : currentCheck.expected
+  }, [currentCheck, current])
 
   const answeredCount = useMemo(
-    () => questions.filter((q) => (answerMap[q.id] ?? '').trim()).length,
-    [answerMap, questions],
+    () => questions.filter((q) => checked[q.id]).length,
+    [checked, questions],
   )
 
+  // 必须「提交并判定」之后才能进入下一题
   const canGoNext = useMemo(() => {
     if (!current) return false
-    return !!(answerMap[current.id] ?? '').trim()
-  }, [answerMap, current])
+    return !!checked[current.id]
+  }, [checked, current])
 
   const allAnswered = total > 0 && answeredCount === total
+
+  async function checkCurrent() {
+    if (!current || checking || checked[current.id]) return
+    const answer = (answerMap[current.id] ?? '').trim()
+    if (!answer) return
+    setChecking(true)
+    setError(null)
+    try {
+      const data = await apiFetch<{ success: true; correct: boolean; expected: string }>(
+        `/api/student/levels/${level.id}/check`,
+        { method: 'POST', body: JSON.stringify({ questionId: current.id, answer }) },
+      )
+      setChecked((m) => ({ ...m, [current.id]: { correct: data.correct, expected: data.expected } }))
+    } catch (e: unknown) {
+      setError(errorMessage(e))
+    } finally {
+      setChecking(false)
+    }
+  }
 
   async function start(levelId: string) {
     setLoading(true)
     setError(null)
     setResult(null)
     setAnswerMap({})
+    setChecked({})
     setStep(0)
     // 取数期间一律不算就绪，否则重开同一关时会拿上一次的题目提前把弹窗打开
     setLoadedLevelId(null)
@@ -248,27 +282,58 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
               <div className="mt-4 grid gap-2">
                 {safeParseOptions(current.optionsJson).map((o) => {
                   const active = (answerMap[current.id] ?? '') === o.key
+                  const isExpected =
+                    !!currentCheck && o.key.toUpperCase() === currentCheck.expected.toUpperCase()
+                  const isWrongPick = !!currentCheck && active && !currentCheck.correct
                   return (
                     <button
                       key={o.key}
                       type="button"
+                      disabled={!!currentCheck}
                       onClick={() => {
                         setAnswerMap((m) => ({ ...m, [current.id]: o.key }))
                         setError(null)
                       }}
                       className={clsx(
-                        'rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.99]',
-                        active
-                          ? 'border-[var(--p-primary)] bg-[color:var(--p-primary)]/10 text-zinc-900'
-                          : 'border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50',
+                        'flex items-center justify-between gap-2 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition',
+                        !currentCheck && 'active:scale-[0.99]',
+                        currentCheck
+                          ? isExpected
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+                            : isWrongPick
+                              ? 'border-red-300 bg-red-50 text-red-900'
+                              : 'border-zinc-200 bg-white text-zinc-400'
+                          : active
+                            ? 'border-[var(--p-primary)] bg-[color:var(--p-primary)]/10 text-zinc-900'
+                            : 'border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50',
                       )}
                     >
-                      <span className="mr-2 text-zinc-500">{o.key}.</span>
-                      {o.text}
+                      <span className="min-w-0">
+                        <span className="mr-2 text-zinc-500">{o.key}.</span>
+                        {o.text}
+                      </span>
+                      {isExpected && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />}
+                      {isWrongPick && <XCircle className="h-4 w-4 shrink-0 text-red-500" />}
                     </button>
                   )
                 })}
               </div>
+
+              {currentCheck && (
+                <div
+                  role="status"
+                  className={clsx(
+                    'mt-3 rounded-2xl border px-4 py-3 text-sm font-semibold',
+                    currentCheck.correct
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                      : 'border-red-200 bg-red-50 text-red-700',
+                  )}
+                >
+                  {currentCheck.correct
+                    ? '✓ 回答正确'
+                    : `✗ 回答错误。正确答案是 ${expectedLabel}。题目解析会在交卷后连同全部题目一起展示。`}
+                </div>
+              )}
 
               <div className="mt-4 flex items-center justify-between gap-2">
                 <Button
@@ -279,7 +344,15 @@ export default function ChallengeModal({ openLevel, onClose, onCompleted }: Prop
                   <ChevronLeft className="mr-1 h-4 w-4" /> 上一题
                 </Button>
 
-                {step < total - 1 ? (
+                {!currentCheck ? (
+                  // 每题一个提交按钮：选中后点它才判定，判定在服务端做，判定后该题锁定
+                  <Button
+                    onClick={() => void checkCurrent()}
+                    disabled={!(answerMap[current.id] ?? '').trim() || checking}
+                  >
+                    {checking ? '判定中…' : '提交本题'}
+                  </Button>
+                ) : step < total - 1 ? (
                   <Button
                     onClick={() => setStep((s) => Math.min(total - 1, s + 1))}
                     disabled={!canGoNext}
