@@ -1,6 +1,6 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Scale } from 'lucide-react'
-import Markdown from 'react-markdown'
+import Markdown from '@/components/ui/SimpleMarkdown'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Tag from '@/components/ui/Tag'
@@ -482,7 +482,9 @@ export default function Resources() {
               </div>
             )}
             {detail.contentMd && (
-              <div className="mt-4 rounded-2xl bg-zinc-50 border border-zinc-100 p-4 text-sm text-zinc-800 prose prose-zinc prose-sm max-w-none prose-headings:font-extrabold prose-headings:text-zinc-900 prose-strong:text-zinc-900 prose-li:marker:text-zinc-400 prose-a:text-sky-600 prose-a:no-underline hover:prose-a:underline">
+              // 列表与段落样式由 SimpleMarkdown 自己负责，这里不再套 prose，
+              // 否则两套列表样式会叠加
+              <div className="mt-4 rounded-2xl bg-zinc-50 border border-zinc-100 p-4 text-sm leading-relaxed text-zinc-800">
                 <Markdown>{detail.contentMd}</Markdown>
               </div>
             )}
