@@ -139,7 +139,13 @@ export default function Comics() {
         }
       })
       .catch(() => {
-        toast("阅读完成", "success");
+        // 原先这里也报「阅读完成」成功 —— 但服务端没记上、XP 也没到账，
+        // 而角标已经变成「已读」、弹层还显示 +10 XP。回滚本地状态并如实提示。
+        const rolled = new Set(readSet);
+        setReadSet(rolled);
+        localStorage.setItem(`comic_read_${userId ?? ""}`, JSON.stringify([...rolled]));
+        setXpAnim(false);
+        toast("阅读记录同步失败，请稍后重试", "warning");
       });
   }
 
