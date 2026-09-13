@@ -317,6 +317,9 @@ export default function Comics() {
           className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
+          role="dialog"
+          aria-modal="true"
+          aria-label={readingStory?.title ?? '漫画阅读'}
         >
           <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col bg-white rounded-3xl overflow-hidden shadow-2xl">
             {/* XP Reward Animation Overlay */}

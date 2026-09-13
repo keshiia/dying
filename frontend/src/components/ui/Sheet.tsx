@@ -22,10 +22,25 @@ export default function Sheet({ open, title, onClose, children, side = 'left', c
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  // 与 Modal 一致：抽屉打开时锁住背景滚动，否则滚动会穿透到背后的页面
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open])
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div
+      className="fixed inset-0 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title ?? '侧边抽屉'}
+    >
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
       <div className={clsx('absolute inset-y-0 w-[88vw] max-w-sm bg-white shadow-xl border border-zinc-100', side === 'left' ? 'left-0' : 'right-0', className)}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">

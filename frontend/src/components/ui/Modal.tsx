@@ -1,6 +1,6 @@
 import { clsx } from "clsx";
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Button from "./Button";
 
 type Props = {
@@ -22,6 +22,9 @@ export default function Modal({
   className,
   hideClose,
 }: Props) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -42,6 +45,43 @@ export default function Modal({
     };
   }, [open]);
 
+  // 焦点管理：打开时把焦点移进弹窗、关闭时归还给原来的元素、Tab 在弹窗内循环。
+  // 没有这一层时，键盘用户按 Tab 会在背后的页面上游走 —— 视觉上在弹窗里，
+  // 焦点却在别处，看不见自己在操作什么。
+  useEffect(() => {
+    if (!open) return;
+    prevFocusRef.current = document.activeElement as HTMLElement | null;
+    const card = cardRef.current;
+    card?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !card) return;
+      const focusables = card.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+
+      if (e.shiftKey && (active === first || active === card)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      // 归还焦点：元素可能已经不在文档里（例如触发它的按钮被卸载）
+      const prev = prevFocusRef.current;
+      if (prev && document.contains(prev)) prev.focus();
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -57,8 +97,10 @@ export default function Modal({
       />
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div
+          ref={cardRef}
+          tabIndex={-1}
           className={clsx(
-            "animate-modal-in w-full max-w-2xl max-h-[92vh] overflow-hidden rounded-3xl bg-white shadow-2xl border border-zinc-100",
+            "animate-modal-in w-full max-w-2xl max-h-[92vh] overflow-hidden rounded-3xl bg-white shadow-2xl border border-zinc-100 outline-none",
             className,
           )}
         >

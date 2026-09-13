@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { clsx } from 'clsx'
 import {
   ArrowLeft,
@@ -150,6 +150,22 @@ export default function Court() {
 
   // Viewing a detail modal
   const [detailModal, setDetailModal] = useState<{ type: 'hotspot' | 'evidence'; data: unknown } | null>(null)
+
+  // 这个详情弹窗是自绘的（没有复用 ui/Modal），原先既不能用 Esc 关、
+  // 也不锁背景滚动 —— 而 ui/Modal 两样都有，两条路径行为不一致。
+  useEffect(() => {
+    if (!detailModal) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDetailModal(null)
+    }
+    window.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [detailModal])
 
   const theCase = activeCase
 
@@ -969,6 +985,8 @@ export default function Court() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
           onClick={() => setDetailModal(null)}
+          role="dialog"
+          aria-modal="true"
         >
           <div
             className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden"
