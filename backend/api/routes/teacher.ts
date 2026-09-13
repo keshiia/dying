@@ -293,6 +293,26 @@ function serializeRiskEvent(
   }
 }
 
+/**
+ * 布置任务时选择关卡用。原先教师端让老师手打 `level-campus-1` 这类内部 ID，
+ * 既容易填错也没人记得住；这里按单元分组返回可选的关卡。
+ */
+router.get('/levels', async (_req: Request, res: Response) => {
+  const units = await prisma.learningUnit.findMany({
+    orderBy: { orderNo: 'asc' },
+    select: {
+      id: true,
+      title: true,
+      category: true,
+      levels: {
+        orderBy: { orderNo: 'asc' },
+        select: { id: true, title: true, orderNo: true },
+      },
+    },
+  })
+  res.json({ success: true, units })
+})
+
 /** 侧边栏角标用：只返回未处理数量，不必为了一个数字拉整个列表 */
 router.get('/risk-events/count', async (req: Request, res: Response) => {
   const classes = await prisma.class.findMany({

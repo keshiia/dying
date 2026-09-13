@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Tag from '@/components/ui/Tag'
-import { apiFetch } from '@/utils/api'
+import { apiFetch, errorMessage } from '@/utils/api'
 import type { TeacherClass } from '@/types'
 
 type MemberRow = {
@@ -34,27 +34,54 @@ export default function Classes() {
   const [classes, setClasses] = useState<TeacherClass[]>([])
   const [open, setOpen] = useState<TeacherClass | null>(null)
   const [members, setMembers] = useState<MemberRow[]>([])
+  // 原先三个请求都是裸 await、无 try/catch：失败会变成未处理的 rejection，
+  // 创建班级失败时输入框不清空、也没有任何提示，老师会反复点。
+  const [error, setError] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [loadingMembers, setLoadingMembers] = useState(false)
 
-  async function load() {
-    const data = await apiFetch<{ success: true; classes: TeacherClass[] }>('/api/teacher/classes')
-    setClasses(data.classes)
-  }
+  const load = useCallback(async () => {
+    try {
+      const data = await apiFetch<{ success: true; classes: TeacherClass[] }>('/api/teacher/classes')
+      setClasses(data.classes)
+      setError(null)
+    } catch (e: unknown) {
+      setError(errorMessage(e))
+    }
+  }, [])
 
   useEffect(() => {
     void load()
-  }, [])
+  }, [load])
 
   async function create() {
-    if (!name.trim()) return
-    await apiFetch('/api/teacher/classes', { method: 'POST', body: JSON.stringify({ name }) })
-    setName('')
-    await load()
+    if (!name.trim() || creating) return
+    setCreating(true)
+    setError(null)
+    try {
+      await apiFetch('/api/teacher/classes', { method: 'POST', body: JSON.stringify({ name }) })
+      setName('')
+      await load()
+    } catch (e: unknown) {
+      setError(errorMessage(e))
+    } finally {
+      setCreating(false)
+    }
   }
 
   async function view(c: TeacherClass) {
     setOpen(c)
-    const data = await apiFetch<{ success: true; members: MemberRow[] }>(`/api/teacher/classes/${c.id}/members`)
-    setMembers(data.members)
+    setLoadingMembers(true)
+    setError(null)
+    try {
+      const data = await apiFetch<{ success: true; members: MemberRow[] }>(`/api/teacher/classes/${c.id}/members`)
+      setMembers(data.members)
+    } catch (e: unknown) {
+      setMembers([])
+      setError(errorMessage(e))
+    } finally {
+      setLoadingMembers(false)
+    }
   }
 
   return (
@@ -66,14 +93,28 @@ export default function Classes() {
           <div className="w-[260px]">
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="例如：高一(1)班" />
           </div>
-          <Button onClick={create}>创建班级</Button>
+          <Button onClick={create} disabled={!name.trim() || creating}>
+            {creating ? '创建中…' : '创建班级'}
+          </Button>
         </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            <span>操作失败：{error}</span>
+            <Button size="sm" variant="secondary" onClick={() => void load()}>
+              重新加载
+            </Button>
+          </div>
+        )}
       </Card>
 
       <Card className="p-5">
         <div className="grid gap-2">
           {classes.length === 0 ? (
-            <div className="text-sm text-zinc-600">暂无班级</div>
+            <div className="text-sm text-zinc-600">{error ? '班级列表加载失败' : '暂无班级'}</div>
           ) : (
             classes.map((c) => (
               <div key={c.id} className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-100 px-4 py-3">
@@ -84,8 +125,12 @@ export default function Classes() {
                     <div className="text-sm font-extrabold text-zinc-900 tracking-wider">{c.joinCode}</div>
                   </div>
                 </div>
-                <Button variant="secondary" onClick={() => view(c)}>
-                  查看成员
+                <Button
+                  variant="secondary"
+                  onClick={() => void view(c)}
+                  disabled={loadingMembers && open?.id === c.id}
+                >
+                  {loadingMembers && open?.id === c.id ? '加载中…' : '查看成员'}
                 </Button>
               </div>
             ))
@@ -104,6 +149,21 @@ export default function Classes() {
               收起
             </Button>
           </div>
+          {loadingMembers && (
+            <div className="mt-4 animate-pulse space-y-2">
+              <div className="h-6 rounded-lg bg-zinc-100" />
+              <div className="h-6 rounded-lg bg-zinc-100" />
+              <div className="h-6 rounded-lg bg-zinc-100" />
+            </div>
+          )}
+
+          {!loadingMembers && error && members.length === 0 && (
+            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              成员加载失败：{error}
+            </div>
+          )}
+
+          {!loadingMembers && !(error && members.length === 0) && (
           <div className="mt-4 overflow-auto">
             <table className="w-full text-left text-sm">
               <thead className="text-xs text-zinc-500">
@@ -141,6 +201,7 @@ export default function Classes() {
               </tbody>
             </table>
           </div>
+          )}
         </Card>
       )}
     </div>
