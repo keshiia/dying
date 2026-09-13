@@ -30,8 +30,12 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // 按字段分开存：原先所有校验错误都塞进同一个 error，渲染在表单最下方，
+  // 邮箱出错时红字出现在密码框下面，用户得先扫一遍才能对上号。
+  const [errors, setErrors] = useState<{ email?: string; password?: string; nickname?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
+
+  const clearErrors = () => setErrors({});
 
   const sample = {
     student: { email: "student@example.com", password: "Student123!" },
@@ -40,31 +44,23 @@ export default function Login() {
 
   async function onSubmit() {
     if (loading) return;
-    setError(null);
+    clearErrors();
 
-    // 先在前端校验，否则空值只会换回后端一个笼统的 BAD_REQUEST
+    // 先在前端校验，否则空值只会换回后端一个笼统的 BAD_REQUEST。
+    // 一次收齐所有字段的错误，每个提示留在对应输入框下面。
     const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setError("请输入邮箱");
+    const next: typeof errors = {};
+    if (!trimmedEmail) next.email = "请输入邮箱";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) next.email = "邮箱格式不正确，例如 name@example.com";
+
+    if (!password) next.password = "请输入密码";
+    else if (mode === "register" && password.length < 8) next.password = "密码至少需要 8 位";
+
+    if (mode === "register" && !nickname.trim()) next.nickname = "请输入昵称";
+
+    if (Object.keys(next).length > 0) {
+      setErrors(next);
       return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      setError("邮箱格式不正确，例如 name@example.com");
-      return;
-    }
-    if (!password) {
-      setError("请输入密码");
-      return;
-    }
-    if (mode === "register") {
-      if (password.length < 8) {
-        setError("密码至少需要 8 位");
-        return;
-      }
-      if (!nickname.trim()) {
-        setError("请输入昵称");
-        return;
-      }
     }
 
     setLoading(true);
@@ -111,7 +107,7 @@ export default function Login() {
         { replace: true },
       );
     } catch (e: unknown) {
-      setError(errorMessage(e));
+      setErrors({ general: errorMessage(e) });
       clear();
       setToken(null);
     } finally {
@@ -179,7 +175,11 @@ export default function Login() {
               </div>
 
               {/* 角色切换 */}
-              <div className="mb-6 grid grid-cols-2 gap-1 rounded-2xl border border-zinc-200/80 bg-zinc-100/80 p-1">
+              <div
+                role="tablist"
+                aria-label="选择身份"
+                className="mb-6 grid grid-cols-2 gap-1 rounded-2xl border border-zinc-200/80 bg-zinc-100/80 p-1"
+              >
                 {(
                   [
                     { value: "student", label: "我是学生", icon: GraduationCap },
@@ -192,7 +192,12 @@ export default function Login() {
                     <button
                       key={r.value}
                       type="button"
-                      onClick={() => setTab(r.value)}
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => {
+                        setTab(r.value);
+                        clearErrors();
+                      }}
                       className={clsx(
                         "flex items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
                         active
@@ -216,7 +221,7 @@ export default function Login() {
                   type="button"
                   onClick={() => {
                     setMode(mode === "login" ? "register" : "login");
-                    setError(null);
+                    clearErrors();
                   }}
                   className="shrink-0 text-sm font-semibold text-sky-600 transition-colors hover:text-sky-700"
                 >
@@ -233,13 +238,19 @@ export default function Login() {
                     className="h-12 rounded-2xl border-zinc-200 bg-white pl-11 pr-4 text-[15px] placeholder:text-zinc-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="邮箱 name@example.com"
+                    placeholder="邮箱（必填）name@example.com"
                     type="email"
                     autoComplete="email"
+                    aria-invalid={!!errors.email}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") void onSubmit();
                     }}
                   />
+                  {errors.email && (
+                    <p role="alert" className="mt-1.5 pl-1 text-xs text-red-600">
+                      {errors.email}
+                    </p>
+                  )}
                 </div>
 
                 {/* 密码 */}
@@ -249,9 +260,10 @@ export default function Login() {
                     className="h-12 rounded-2xl border-zinc-200 bg-white pl-11 pr-12 text-[15px] placeholder:text-zinc-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="密码（至少8位）"
+                    placeholder={mode === "register" ? "密码（必填，至少 8 位）" : "密码（必填）"}
                     type={showPassword ? "text" : "password"}
                     autoComplete={mode === "login" ? "current-password" : "new-password"}
+                    aria-invalid={!!errors.password}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") void onSubmit();
                     }}
@@ -265,18 +277,34 @@ export default function Login() {
                   >
                     {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                   </button>
+                  {errors.password && (
+                    <p role="alert" className="mt-1.5 pl-1 text-xs text-red-600">
+                      {errors.password}
+                    </p>
+                  )}
                 </div>
 
                 {/* 昵称（仅注册） */}
                 {mode === "register" && (
+                  <div>
                   <div className="relative animate-slide-up">
                     <User className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
                     <Input
                       className="h-12 rounded-2xl border-zinc-200 bg-white pl-11 pr-4 text-[15px] placeholder:text-zinc-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                       value={nickname}
                       onChange={(e) => setNickname(e.target.value)}
-                      placeholder="昵称，例如：小法同学"
+                      placeholder="昵称（必填），例如：小法同学"
+                      aria-invalid={!!errors.nickname}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void onSubmit();
+                      }}
                     />
+                  </div>
+                  {errors.nickname && (
+                    <p role="alert" className="mt-1.5 pl-1 text-xs text-red-600">
+                      {errors.nickname}
+                    </p>
+                  )}
                   </div>
                 )}
               </div>
@@ -301,9 +329,12 @@ export default function Login() {
               </button>
               )}
 
-              {error && (
-                <div className="mt-4 animate-slide-up rounded-2xl border border-red-200/90 bg-red-50/85 px-4 py-3 text-sm text-red-600">
-                  {error}
+              {errors.general && (
+                <div
+                  role="alert"
+                  className="mt-4 animate-slide-up rounded-2xl border border-red-200/90 bg-red-50/85 px-4 py-3 text-sm text-red-600"
+                >
+                  {errors.general}
                 </div>
               )}
 
