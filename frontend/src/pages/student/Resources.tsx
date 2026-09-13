@@ -212,6 +212,7 @@ export default function Resources() {
   }, [filteredItems, visibleResourceCount])
 
   async function open(itemId: string) {
+    if (openingId) return
     // 先取到内容再打开弹窗。
     //
     // 原来是立刻打开、内容后到：弹窗一边播放 scale 打开动画，内容一边插进来把高度
@@ -289,7 +290,7 @@ export default function Resources() {
             <div className="mt-1 text-sm text-zinc-600">按主题快速查找案例、法条摘要与权威工具。</div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-[220px]">
+            <div className="w-full sm:w-[220px]">
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="搜索资源标题" />
             </div>
             <Button variant="secondary" onClick={load}>
@@ -432,11 +433,10 @@ export default function Resources() {
                     ))}
                   </div>
                 </div>
-                <Button
-                  variant="secondary"
-                  onClick={() => open(r.id)}
-                  disabled={openingId === r.id}
-                >
+                {/* 这里刻意不用 disabled：元素一旦 disabled 就会失去焦点，
+                    弹窗关闭时「把焦点归还给触发它的按钮」就落空了
+                    （Modal 记录的 activeElement 已经变成 body）。改用防重入 + 文案变化。 */}
+                <Button variant="secondary" onClick={() => open(r.id)}>
                   {openingId === r.id ? '打开中…' : actionLabelByType[r.type]}
                 </Button>
               </div>

@@ -164,7 +164,10 @@ export default function Classes() {
           )}
 
           {!loadingMembers && !(error && members.length === 0) && (
-          <div className="mt-4 overflow-auto">
+          <>
+          {/* 6 列在窄屏只能横向滚动，给一句提示，否则老师不知道右边还有内容 */}
+          <div className="mt-1 text-xs text-zinc-400 lg:hidden">左右滑动可查看更多</div>
+          <div className="mt-2 overflow-auto">
             <table className="w-full text-left text-sm">
               <thead className="text-xs text-zinc-500">
                 <tr>
@@ -201,6 +204,7 @@ export default function Classes() {
               </tbody>
             </table>
           </div>
+          </>
           )}
         </Card>
       )}
