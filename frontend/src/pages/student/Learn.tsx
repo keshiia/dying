@@ -149,6 +149,7 @@ export default function Learn() {
   const [streakDays, setStreakDays] = useState(0);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [profileFailed, setProfileFailed] = useState(false);
   const [filter, setFilter] = useState<string>("全部");
   const [showPendingOnly, setShowPendingOnly] = useState(true);
   const [openLevel, setOpenLevel] = useState<null | {
@@ -184,11 +185,14 @@ export default function Learn() {
 
   async function loadProfile() {
     setProfileLoading(true);
+    setProfileFailed(false);
     try {
       const data = await apiFetch<{ success: true; profile: StudentProfile }>("/api/student/profile");
       setProfile(data.profile);
     } catch {
-      // ignore
+      // 原来是 `// ignore`：失败时 profile 为 null，雷达图直接 return null 消失，
+      // 学生看到的是缺了一块的页面且没有任何解释
+      setProfileFailed(true);
     } finally {
       setProfileLoading(false);
     }
@@ -306,7 +310,7 @@ export default function Learn() {
       {/* 学习画像 + 本周目标 */}
       {!loading && !error && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <ProfileRadar profile={profile} loading={profileLoading} />
+          <ProfileRadar profile={profile} loading={profileLoading} failed={profileFailed} />
           <GoalCard />
         </div>
       )}

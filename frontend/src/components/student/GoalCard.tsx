@@ -1,7 +1,7 @@
 /**
  * 本周学习目标卡片
  */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { clsx } from 'clsx'
 import { Target, CheckCircle2, Circle, Sparkles } from 'lucide-react'
 import Card from '@/components/ui/Card'
@@ -17,8 +17,11 @@ type Props = {
 export default function GoalCard({ className }: Props) {
   const [goals, setGoals] = useState<StudentGoal[]>([])
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
 
-  async function load() {
+  const load = useCallback(async () => {
+    setLoading(true)
+    setFailed(false)
     try {
       const data = await apiFetch<{ success: true; goals: StudentGoal[] }>('/api/student/goals')
       if (data.goals.length === 0) {
@@ -30,15 +33,17 @@ export default function GoalCard({ className }: Props) {
         setGoals(data.goals)
       }
     } catch {
-      // ignore
+      // 原来是 `catch { // ignore }` + 下面 `if (goals.length === 0) return null`：
+      // 请求失败时整张「本周学习目标」卡片直接消失，学生以为功能被砍了。
+      setFailed(true)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     void load()
-  }, [])
+  }, [load])
 
   if (loading) {
     return (
@@ -47,6 +52,19 @@ export default function GoalCard({ className }: Props) {
         <div className="mt-3 space-y-2">
           <div className="h-16 bg-zinc-100 rounded-2xl" />
           <div className="h-16 bg-zinc-100 rounded-2xl" />
+        </div>
+      </Card>
+    )
+  }
+
+  if (failed && goals.length === 0) {
+    return (
+      <Card className={clsx('p-4 border-red-100 bg-red-50', className)}>
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-sm text-red-700">
+          <span>本周目标加载失败</span>
+          <Button size="sm" variant="secondary" onClick={() => void load()}>
+            重试
+          </Button>
         </div>
       </Card>
     )

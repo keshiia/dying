@@ -1,7 +1,7 @@
 /**
  * 智能错题复盘面板
  */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { AlertTriangle, Lightbulb, TrendingDown, ArrowRight } from 'lucide-react'
@@ -20,19 +20,27 @@ export default function ErrorAnalysisPanel({ className }: Props) {
   const navigate = useNavigate()
   const [analysis, setAnalysis] = useState<ErrorAnalysis | null>(null)
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setFailed(false)
+    try {
+      const data = await apiFetch<{ success: true; analysis: ErrorAnalysis }>('/api/student/error-analysis')
+      setAnalysis(data.analysis)
+    } catch {
+      // 原来是 `catch { // ignore }`：失败时 analysis 保持 null，
+      // 于是走下面的空状态分支，把一次网络失败显示成
+      // 「暂无错题记录，继续保持当前学习状态」——把失败说成了学习成果。
+      setFailed(true)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    void (async () => {
-      try {
-        const data = await apiFetch<{ success: true; analysis: ErrorAnalysis }>('/api/student/error-analysis')
-        setAnalysis(data.analysis)
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false)
-      }
-    })()
-  }, [])
+    void load()
+  }, [load])
 
   if (loading) {
     return (
@@ -41,6 +49,19 @@ export default function ErrorAnalysisPanel({ className }: Props) {
         <div className="mt-3 space-y-2">
           <div className="h-16 bg-zinc-100 rounded-2xl" />
           <div className="h-16 bg-zinc-100 rounded-2xl" />
+        </div>
+      </Card>
+    )
+  }
+
+  if (failed && !analysis) {
+    return (
+      <Card className={clsx('p-5 border-red-100 bg-red-50', className)}>
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-sm text-red-700">
+          <span>错题分析加载失败</span>
+          <Button size="sm" variant="secondary" onClick={() => void load()}>
+            重试
+          </Button>
         </div>
       </Card>
     )

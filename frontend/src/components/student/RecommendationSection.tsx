@@ -2,7 +2,7 @@
  * 个性化推荐区域组件
  * 显示智能推荐的学习内容
  */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { Sparkles, ArrowRight, BookOpen, RotateCcw, Gamepad2, BookMarked } from 'lucide-react'
@@ -29,19 +29,26 @@ export default function RecommendationSection({ className, onStartLevel }: Props
   const navigate = useNavigate()
   const [recs, setRecs] = useState<Recommendation[]>([])
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setFailed(false)
+    try {
+      const data = await apiFetch<{ success: true; recommendations: Recommendation[] }>('/api/student/recommendations')
+      setRecs(data.recommendations)
+    } catch {
+      // 原来是 `catch { // ignore }` + 下面 `if (recs.length === 0) return null`：
+      // 请求失败时整块「智能推荐」直接消失，学生以为功能被砍了。
+      setFailed(true)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    void (async () => {
-      try {
-        const data = await apiFetch<{ success: true; recommendations: Recommendation[] }>('/api/student/recommendations')
-        setRecs(data.recommendations)
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false)
-      }
-    })()
-  }, [])
+    void load()
+  }, [load])
 
   if (loading) {
     return (
@@ -49,6 +56,19 @@ export default function RecommendationSection({ className, onStartLevel }: Props
         <div className="h-5 w-36 bg-zinc-100 rounded-full" />
         <div className="h-20 bg-zinc-100 rounded-2xl" />
         <div className="h-20 bg-zinc-100 rounded-2xl" />
+      </div>
+    )
+  }
+
+  if (failed && recs.length === 0) {
+    return (
+      <div className={clsx('rounded-2xl border border-red-100 bg-red-50 px-4 py-3', className)}>
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-sm text-red-700">
+          <span>智能推荐加载失败</span>
+          <Button size="sm" variant="secondary" onClick={() => void load()}>
+            重试
+          </Button>
+        </div>
       </div>
     )
   }

@@ -10,6 +10,8 @@ import type { StudentProfile } from '@/types'
 type Props = {
   profile: StudentProfile | null
   loading?: boolean
+  /** 加载失败。与「还没有画像数据」是两回事，失败时不能静默消失 */
+  failed?: boolean
   className?: string
 }
 
@@ -22,7 +24,7 @@ const TOPIC_COLORS = [
   { fill: 'rgba(239,68,68,0.15)', stroke: '#EF4444' },   // 禁毒教育 - red
 ]
 
-export default function ProfileRadar({ profile, loading, className }: Props) {
+export default function ProfileRadar({ profile, loading, failed, className }: Props) {
   const { points, labels, center } = useMemo(() => {
     if (!profile || profile.topicMasteries.length === 0) {
       return { points: [], labels: [], center: { x: 120, y: 120 } }
@@ -67,6 +69,18 @@ export default function ProfileRadar({ profile, loading, className }: Props) {
         <div className="animate-pulse space-y-3">
           <div className="h-5 w-32 bg-zinc-100 rounded-full" />
           <div className="h-52 bg-zinc-100 rounded-2xl" />
+        </div>
+      </Card>
+    )
+  }
+
+  // 与「还没有画像数据」区分开：加载失败时不能静默消失，
+  // 否则学生看到的是一个缺了几块的页面，而且没有任何解释
+  if (failed && !profile) {
+    return (
+      <Card className={clsx('p-5 border-red-100 bg-red-50', className)}>
+        <div role="alert" className="text-sm text-red-700">
+          学习画像加载失败，刷新页面可重试。
         </div>
       </Card>
     )
