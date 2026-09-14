@@ -30,7 +30,9 @@ export default function ComicReader() {
   const [panel, setPanel] = useState(0);
   const [readDone, setReadDone] = useState(false);
   const [xpAnim, setXpAnim] = useState(false);
-  const [lastXpGain, setLastXpGain] = useState(10);
+  // 初始必须是 0：这是一篇已经读过的漫画时 markRead 会提前返回，lastXpGain
+  // 不会被赋值。留 10 的话小结屏会谎报「阅读完成！获得 10 XP」。
+  const [lastXpGain, setLastXpGain] = useState(0);
   const [quiz, setQuiz] = useState<QuizState>({ chosen: null, correct: null });
   const [quizSubmitting, setQuizSubmitting] = useState(false);
 
