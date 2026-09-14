@@ -9,6 +9,7 @@ import { apiFetch } from '@/utils/api'
 import { useRiskStream } from '@/hooks/useRiskStream'
 import { useAuthStore } from '@/stores/auth'
 import Sheet from '@/components/ui/Sheet'
+import AgentAvatar, { AGENT_NAME } from '@/components/student/AgentAvatar'
 
 type Props = {
   mode: 'student' | 'teacher'
@@ -143,8 +144,8 @@ export default function AppShell({ mode }: Props) {
 
   const studentNav: NavItem[] = [
     { to: '/app/comics', label: '漫画学法', emoji: '📖' },
-    { to: '/app/games/court', label: '模拟法庭', icon: Gavel, game: true },
     { to: '/app/games/detective', label: '案件侦查', icon: Fingerprint, game: true },
+    { to: '/app/games/court', label: '模拟法庭', icon: Gavel, game: true },
     { to: '/app/learn', label: '学习闯关', emoji: '🧒' },
     { to: '/app/resources', label: '案例中心', emoji: '📚' },
     { to: '/app/tasks', label: '任务中心', emoji: '📝' },
@@ -262,10 +263,8 @@ export default function AppShell({ mode }: Props) {
                 onClick={() => navigate('/assistant')}
                 className="w-full flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100/80 transition-all"
               >
-                <span className="grid h-7 w-7 place-items-center rounded-xl bg-slate-100 text-slate-600">
-                  <Bot className="h-4 w-4 shrink-0" />
-                </span>
-                AI咨询助手
+                <AgentAvatar size="sm" />
+                {AGENT_NAME}
               </button>
             )}
             <button
@@ -318,7 +317,7 @@ export default function AppShell({ mode }: Props) {
         >
           <span className="inline-flex items-center gap-2">
             <Bot className="h-4 w-4" />
-            AI咨询助手
+            {AGENT_NAME}
           </span>
         </button>
       )}
@@ -402,7 +401,7 @@ export default function AppShell({ mode }: Props) {
               }}
             >
               <Bot className="h-4 w-4 mr-1.5" />
-              AI咨询助手
+              {AGENT_NAME}
             </Button>
           )}
           <Button variant="ghost" onClick={logout}>

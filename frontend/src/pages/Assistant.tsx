@@ -5,6 +5,7 @@ import { clsx } from 'clsx'
 import ReactMarkdown from 'react-markdown'
 import { apiFetch } from '@/utils/api'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import AgentAvatar, { AGENT_NAME } from '@/components/student/AgentAvatar'
 import { useAuthStore } from '@/stores/auth'
 
 // ── Types ──
@@ -331,17 +332,18 @@ export default function Assistant() {
                 <MessageSquare className="h-5 w-5" />
               </button>
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-cyan-500 text-white shadow-md shadow-cyan-200/60 shrink-0">
-                {loading ? (
+              {loading ? (
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-400">
                   <RefreshCw className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Bot className="h-5 w-5" />
-                )}
-              </div>
+                </span>
+              ) : (
+                <AgentAvatar size="lg" />
+              )}
               <div className="min-w-0">
-                <h1 className="text-base font-extrabold text-zinc-900 truncate">AI咨询助手</h1>
-                {/* 模块改名为「AI咨询助手」后，标题里不再出现「普法」，
-                    这行副标题就是本页唯一传达「这是学习工具、不是法律咨询」的地方 */}
+                <h1 className="text-base font-extrabold text-zinc-900 truncate">{AGENT_NAME}</h1>
+                {/* 与结算页复盘卡、侧边栏入口统一成同一个角色后，标题里不再出现
+                    「普法」。这行副标题就是本页唯一传达「这是学习工具、
+                    不是法律咨询」的地方 */}
                 <p className="text-xs text-zinc-500">普法学习用途 · 不构成法律意见</p>
               </div>
             </div>
