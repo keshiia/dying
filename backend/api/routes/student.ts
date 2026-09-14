@@ -3,7 +3,13 @@ import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { requireRole } from '../middleware/requireRole.js'
-import { ABILITY_AXES, COMIC_INDEX, type AbilityAxis } from '../lib/contentIndex.js'
+import {
+  ABILITY_AXES,
+  ABILITY_LABELS,
+  COMIC_INDEX,
+  MIN_SAMPLES_FOR_DIAGNOSIS,
+  type AbilityAxis,
+} from '../lib/contentIndex.js'
 import {
   diagnoseAfterGame,
   recomputeSkillAxes,
@@ -760,6 +766,37 @@ router.post('/court-result', (req: Request, res: Response) =>
 router.post('/detective-result', (req: Request, res: Response) =>
   settleAndDiagnose(req, res, 'DETECTIVE', 35),
 )
+
+/**
+ * 六条能力轴的掌握度，供 Learn 页展示。
+ *
+ * 这是闭环的「回访」那一端：学生在侦查/法庭/漫画里产生的行为经过诊断引擎
+ * 汇聚到 SkillAxis，回到 Learn 页要能看见它变了 —— 否则推荐按钮点完之后，
+ * 数据回流是看不见的。
+ *
+ * `sampleEnough` 交给前端判断怎么显示：样本不足的轴不该报「0 分」，
+ * 只玩过侦查的学生在 ARGUE（表达论辩）上一条样本都没有。
+ */
+router.get('/skill-axes', async (req: Request, res: Response) => {
+  const rows = await prisma.skillAxis.findMany({ where: { studentId: req.user!.id } })
+  const byAxis = new Map(rows.map((r) => [r.axis, r]))
+
+  const axes = ABILITY_AXES.map((axis) => {
+    const row = byAxis.get(axis)
+    const correct = row?.correct ?? 0
+    const total = row?.total ?? 0
+    return {
+      axis,
+      label: ABILITY_LABELS[axis],
+      correct,
+      total,
+      rate: total > 0 ? Math.round((correct / total) * 100) : 0,
+      sampleEnough: total >= MIN_SAMPLES_FOR_DIAGNOSIS,
+    }
+  })
+
+  res.json({ success: true, axes })
+})
 
 router.get('/comic-reads', async (req: Request, res: Response) => {
   const reads = await prisma.comicRead.findMany({

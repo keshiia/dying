@@ -21,6 +21,7 @@ import BannerCarousel from "@/components/ui/BannerCarousel";
 import ProfileRadar from "@/components/student/ProfileRadar";
 import GoalCard from "@/components/student/GoalCard";
 import RecommendationSection from "@/components/student/RecommendationSection";
+import SkillAxesCard from "@/components/student/SkillAxesCard";
 import { apiFetch, errorMessage } from "@/utils/api";
 import type { LearningUnit, StudentProfile } from "@/types";
 import { useAuthStore } from "@/stores/auth";
@@ -307,13 +308,17 @@ export default function Learn() {
         />
       )}
 
-      {/* 学习画像 + 本周目标 */}
+      {/* 学习画像 + 本周目标 + 能力轴 */}
       {!loading && !error && (
         <div className="grid gap-4 lg:grid-cols-2">
           <ProfileRadar profile={profile} loading={profileLoading} failed={profileFailed} />
           <GoalCard />
         </div>
       )}
+
+      {/* 能力轴：闭环的「回访」端。学生在侦查/法庭/漫画里的行为汇聚成这六条，
+          回到这里能看见它变了 —— 否则推荐按钮点完之后数据回流是看不见的。 */}
+      {!loading && !error && <SkillAxesCard />}
 
       {!loading && !error && categories.length > 1 && (
         <div className="sticky top-[68px] lg:top-2 z-20">
