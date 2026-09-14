@@ -18,7 +18,7 @@ import AgentAvatar, { AGENT_NAME } from '@/components/student/AgentAvatar'
 
 export type InterventionFinding = {
   axis: string
-  kind: 'SINGLE' | 'PATTERN' | 'CROSS_MODULE' | 'STRENGTH'
+  kind: 'SINGLE' | 'PATTERN' | 'REPEATED' | 'STRENGTH'
   text: string
   evidence: string
   crossCase?: string

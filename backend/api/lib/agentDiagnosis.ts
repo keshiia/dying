@@ -22,7 +22,6 @@ import {
   crossGameCaseForTopic,
   type AbilityAxis,
   type GameType,
-  type Topic,
 } from './contentIndex.js'
 
 /** 漏掉的东西的分类。clue-* 用于识别「类型盲区」 */
@@ -52,7 +51,13 @@ export type GameDetail = {
 
 export type Finding = {
   axis: AbilityAxis
-  kind: 'SINGLE' | 'PATTERN' | 'CROSS_MODULE' | 'STRENGTH'
+  /**
+   * - SINGLE      本局这条轴没达标
+   * - PATTERN     不是「这条没找到」，而是「这一类你都没查」
+   * - REPEATED    同一条轴最近几局反复不达标（不是偶然）
+   * - STRENGTH    全对。只报忧是失败的产品，有强项必须先肯定
+   */
+  kind: 'SINGLE' | 'PATTERN' | 'REPEATED' | 'STRENGTH'
   text: string
   /** 指回具体是哪条线索/哪道题 —— 没有这个就不是诊断，是评价 */
   evidence: string
@@ -79,6 +84,15 @@ export type Intervention = {
 
 /** 及格线。低于此值的轴会被拿出来说 */
 const PASS_RATE = 0.6
+/**
+ * 单局内判定「这条轴样本够不够」的下限。
+ *
+ * 比累计口径（MIN_SAMPLES_FOR_DIAGNOSIS = 3）低，是因为有些轴在一局里天然
+ * 只有 2~3 个观测点：法庭的 LAW 由「法条适用 1 + 裁决 1 + 处分措施 0~1」拼成，
+ * 案件没有处分措施时就只有 2 个。用 3 做门槛会把整条轴静音。
+ * 代价是 1/2 也会被拿出来说 —— 但文案里带原始分数，学生看得见基数。
+ */
+const MIN_SAMPLES_PER_GAME = 2
 /** 「连续几局」的口径 */
 const RECENT_GAMES = 3
 const MAX_FINDINGS = 3
@@ -145,8 +159,7 @@ export async function diagnoseAfterGame(
 ): Promise<Intervention> {
   await recomputeSkillAxes(studentId)
 
-  const [axes, recentResults, reads] = await Promise.all([
-    prisma.skillAxis.findMany({ where: { studentId } }),
+  const [recentResults, reads] = await Promise.all([
     prisma.gameResult.findMany({
       where: { studentId, gameType },
       orderBy: { updatedAt: 'desc' },
@@ -163,11 +176,11 @@ export async function diagnoseAfterGame(
 
   // ── 本局哪些轴没达标（样本不足的轴不参与，见文件头第 3 条） ──
   const weak = detail.axes
-    .filter((a) => a.total >= MIN_SAMPLES_FOR_DIAGNOSIS && a.correct / a.total < PASS_RATE)
+    .filter((a) => a.total >= MIN_SAMPLES_PER_GAME && a.correct / a.total < PASS_RATE)
     .sort((a, b) => a.correct / a.total - b.correct / b.total)
 
   const strong = detail.axes.filter(
-    (a) => a.total >= MIN_SAMPLES_FOR_DIAGNOSIS && a.correct === a.total,
+    (a) => a.total >= MIN_SAMPLES_PER_GAME && a.correct === a.total,
   )
 
   // ── R2 类型盲区：比"这条没找到"更值得说的是"这类你都没查" ──
@@ -185,8 +198,12 @@ export async function diagnoseAfterGame(
   }
 
   // ── R1 单局弱项 + R3 跨局重复 ──
-  for (const w of weak.slice(0, digitalMissed.length >= 2 ? 1 : 2)) {
-    if (findings.some((f) => f.axis === w.axis && f.kind === 'PATTERN')) continue
+  // 先剔掉已经被 PATTERN 说过的轴，再取前两条。反过来的话，PATTERN 占掉的那条
+  // 会连带吃掉一个名额（slice 之后再 continue），排序第二的弱项就永远报不出来。
+  const weakToReport = weak.filter(
+    (w) => !findings.some((f) => f.axis === w.axis && f.kind === 'PATTERN'),
+  )
+  for (const w of weakToReport.slice(0, 2)) {
     const label = ABILITY_LABELS[w.axis]
     const rate = Math.round((w.correct / w.total) * 100)
 
@@ -194,14 +211,16 @@ export async function diagnoseAfterGame(
     const weakRounds = recentResults.filter((r) => {
       const d = r.detail as unknown as GameDetail | null
       const a = d?.axes?.find((x) => x.axis === w.axis)
-      return a && a.total >= MIN_SAMPLES_FOR_DIAGNOSIS && a.correct / a.total < PASS_RATE
+      return a && a.total >= MIN_SAMPLES_PER_GAME && a.correct / a.total < PASS_RATE
     }).length
 
     const sample = detail.missed.find((m) => m.kind.startsWith('clue-')) ?? detail.missed[0]
+    // 只有真正垫底的那条能说「最弱」，否则两条并列时每句都在自称最弱
+    const ranking = w === weak[0] ? '，是这局最弱的一环。' : '，也低于及格线。'
     findings.push({
       axis: w.axis,
-      kind: weakRounds >= 2 ? 'CROSS_MODULE' : 'SINGLE',
-      text: `「${label}」本局 ${w.correct}/${w.total}（${rate}%），是这局最弱的一环。`,
+      kind: weakRounds >= 2 ? 'REPEATED' : 'SINGLE',
+      text: `「${label}」本局 ${w.correct}/${w.total}（${rate}%）${ranking}`,
       evidence: sample ? `漏掉的是「${sample.label}」这类。` : '',
       crossCase:
         weakRounds >= 2
@@ -224,9 +243,11 @@ export async function diagnoseAfterGame(
   // ── R4 跨模块呼应：把弱点接到具体资源上 ──
   const weakest = weak[0]?.axis ?? null
 
-  // 证据审查弱 → 推同主题漫画。
-  // 三篇漫画讲的都是"保留证据""及时求助"这类行为，正好是这条轴的教材。
-  if (weakest === 'EVIDENCE' && topic) {
+  // 取证类弱点 → 推同主题漫画。
+  // 三篇漫画讲的都是"保留证据""及时求助"这类行为，是 EVIDENCE 的教材；
+  // OBSERVE（找得到线索）和 EVIDENCE（判断得了证据）是同一族 —— 找不到的人
+  // 往往也不会判断，所以两条轴都算。
+  if ((weakest === 'EVIDENCE' || weakest === 'OBSERVE') && topic) {
     const comic = comicForTopic(topic)
     if (comic && !readIds.has(comic.id)) {
       recommendations.push({
@@ -292,8 +313,8 @@ export async function diagnoseAfterGame(
 function buildHeadline(findings: Finding[], weakCount: number, strongCount: number): string {
   const pattern = findings.find((f) => f.kind === 'PATTERN')
   if (pattern) return '找到 1 个可以马上改的习惯'
-  const cross = findings.find((f) => f.kind === 'CROSS_MODULE')
-  if (cross) return '同一处卡了两局了，来看看'
+  const repeated = findings.find((f) => f.kind === 'REPEATED')
+  if (repeated) return '同一处卡了两局了，来看看'
   if (weakCount > 0 && strongCount > 0) return '有强项也有短板，看一眼短板在哪'
   if (weakCount > 0) return '这局有可以提升的地方'
   if (strongCount > 0) return '这局打得漂亮，没有明显短板'
