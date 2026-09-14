@@ -18,6 +18,8 @@ import Button from '@/components/ui/Button'
 import ProgressBar from '@/components/ui/ProgressBar'
 import Tag from '@/components/ui/Tag'
 import { courtCases, type CourtCaseData, type SceneHotspot, type EvidenceItem, type DebateStage } from '@/data/courtCases'
+import InterventionCard, { type Intervention } from '@/components/student/InterventionCard'
+import { clueKind, clipLabel, MISSED_LIMIT, type GameDetail } from '@/utils/gameDetail'
 import { apiFetch, errorMessage } from '@/utils/api'
 import { useAuthStore } from '@/stores/auth'
 
@@ -97,6 +99,74 @@ function calcScore(choices: PlayerChoices, theCase: CourtCaseData): { score: num
   return { score: totalEarned, maxScore: totalMax, details }
 }
 
+// ── 诊断明细 ───────────────────────────────────────
+
+/**
+ * 把已有的选择整理成服务端要的明细。
+ *
+ * 与 calcScore 用的是同一份 `choices`，没有新增埋点。轴的口径也刻意跟
+ * calcScore 的评分维度对齐 —— 两边对不上就会出现「结算说 6/6 满分、
+ * 诊断说这条轴很弱」这种自相矛盾。
+ */
+function buildDetail(
+  choices: PlayerChoices,
+  theCase: CourtCaseData,
+  durationMs: number,
+): GameDetail {
+  const missedHotspots = theCase.scene.hotspots.filter((h) => !choices.foundHotspots.includes(h.id))
+  const wrongEvidence = theCase.evidence.items.filter((e) =>
+    e.correctAccept
+      ? !choices.acceptedEvidence.includes(e.id)
+      : !choices.rejectedEvidence.includes(e.id),
+  )
+  const wrongDebate = theCase.debate.stages.filter((s) => {
+    const chosen = s.choices.find((c) => c.id === choices.debateChoices[s.id])
+    return !chosen?.isRecommended
+  })
+
+  const verdictCorrect =
+    choices.verdictChoice !== null &&
+    (theCase.deliberation.verdict.options.find((o) => o.id === choices.verdictChoice)?.isCorrect ??
+      false)
+  const penalty = theCase.deliberation.penalty
+  const penaltyCorrect =
+    !!penalty &&
+    choices.penaltyChoice !== null &&
+    (penalty.options.find((o) => o.id === choices.penaltyChoice)?.isCorrect ?? false)
+  const lawsCorrect = theCase.deliberation.laws.filter(
+    (l) => l.isCorrect && choices.selectedLaws.includes(l.id),
+  ).length
+
+  return {
+    v: 1,
+    axes: [
+      // 与 calcScore 一致：现场搜证按 6 封顶
+      { axis: 'OBSERVE', correct: Math.min(choices.foundHotspots.length, 6), total: 6 },
+      {
+        axis: 'EVIDENCE',
+        correct: theCase.evidence.items.length - wrongEvidence.length,
+        total: theCase.evidence.items.length,
+      },
+      {
+        axis: 'ARGUE',
+        correct: theCase.debate.stages.length - wrongDebate.length,
+        total: theCase.debate.stages.length,
+      },
+      {
+        axis: 'LAW',
+        correct: lawsCorrect + (verdictCorrect ? 1 : 0) + (penaltyCorrect ? 1 : 0),
+        total: 2 + (penalty ? 1 : 0),
+      },
+    ],
+    missed: [
+      ...missedHotspots.map((h) => ({ label: clipLabel(h.content.title), kind: clueKind(h.type) })),
+      ...wrongEvidence.map((e) => ({ label: clipLabel(e.title), kind: 'evidence' as const })),
+      ...wrongDebate.map((s) => ({ label: clipLabel(`${s.speaker}的发言`), kind: 'debate' as const })),
+    ].slice(0, MISSED_LIMIT),
+    durationMs,
+  }
+}
+
 // ── Step Components ────────────────────────────────
 
 function StepIndicator({ currentStep }: { currentStep: StepId }) {
@@ -146,6 +216,8 @@ export default function Court() {
     penaltyChoice: null,
   })
   const [animatingHotspot, setAnimatingHotspot] = useState<string | null>(null)
+  const [intervention, setIntervention] = useState<Intervention | null>(null)
+  const [startedAt, setStartedAt] = useState(0)
   const user = useAuthStore((s) => s.user)
 
   // Viewing a detail modal
@@ -181,6 +253,8 @@ export default function Court() {
       verdictChoice: null,
       penaltyChoice: null,
     })
+    setIntervention(null)
+    setStartedAt(Date.now())
   }
 
   function goToStep(s: StepId) {
@@ -261,18 +335,22 @@ export default function Court() {
     // Simulate a slight delay for the "submitting" feel
     await new Promise((r) => setTimeout(r, 800))
     try {
-      const res = await apiFetch<{ success: true; xpGain: number; user: { xp: number; level: number } }>(
-        '/api/student/court-result',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            caseId: theCase.id,
-            score: scoreData.score,
-            maxScore: scoreData.maxScore,
-          }),
-        },
-      )
+      const res = await apiFetch<{
+        success: true
+        xpGain: number
+        user: { xp: number; level: number }
+        intervention: Intervention | null
+      }>('/api/student/court-result', {
+        method: 'POST',
+        body: JSON.stringify({
+          caseId: theCase.id,
+          score: scoreData.score,
+          maxScore: scoreData.maxScore,
+          detail: buildDetail(choices, theCase, startedAt ? Date.now() - startedAt : 0),
+        }),
+      })
       setXpGained(res.xpGain)
+      setIntervention(res.intervention ?? null)
       if (res.user) {
         const store = useAuthStore.getState()
         if (store.token && store.user) {
@@ -959,6 +1037,10 @@ export default function Court() {
               {theCase.result.lawExplanation}
             </div>
           </Card>
+
+          {/* 智能体复盘。放在宣判与法律小课堂之后 —— 学生先看完「正确答案是
+              什么、为什么」，再看自己哪一步偏了。 */}
+          <InterventionCard data={intervention} />
 
           {/* Actions */}
           <div className="grid gap-3 sm:grid-cols-2">

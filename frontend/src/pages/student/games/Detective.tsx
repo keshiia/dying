@@ -18,6 +18,8 @@ import Button from '@/components/ui/Button'
 import Tag from '@/components/ui/Tag'
 import ProgressBar from '@/components/ui/ProgressBar'
 import ClueDetailModal from '@/components/student/ClueDetailModal'
+import InterventionCard, { type Intervention } from '@/components/student/InterventionCard'
+import { clueKind, clipLabel, MISSED_LIMIT, type GameDetail } from '@/utils/gameDetail'
 import {
   detectiveCases,
   type DetectiveCaseData,
@@ -66,6 +68,47 @@ const NPC_POSITIONS: Record<string, { x: number; y: number }> = {
 
 function npcPos(npcId: string) {
   return NPC_POSITIONS[npcId] ?? { x: 50, y: 50 };
+}
+
+// ── 诊断明细 ───────────────────────────────────────
+
+/**
+ * 把已有的对局状态整理成服务端要的明细。
+ *
+ * 这里没有任何新增埋点 —— `foundClues` / `npcSecretsRevealed` / `deductionAnswers`
+ * 本来就是判分要用的，原先算完就扔了，现在顺手报上去。
+ */
+function buildDetail(
+  state: PlayerState,
+  theCase: DetectiveCaseData,
+  durationMs: number,
+): GameDetail {
+  const allClues = theCase.scenes.flatMap((s) => s.hotspots);
+  const missedClues = allClues.filter((h) => !state.foundClues.includes(h.id));
+  const missedSecrets = theCase.npcs.filter((n) => !state.npcSecretsRevealed.includes(n.id));
+  const wrongQuestions = theCase.deduction.questions.filter((q) => {
+    const chosen = state.deductionAnswers[q.id];
+    return !q.options.find((o) => o.id === chosen)?.isCorrect;
+  });
+
+  return {
+    v: 1,
+    axes: [
+      { axis: 'OBSERVE', correct: state.foundClues.length, total: allClues.length },
+      { axis: 'INTERVIEW', correct: state.npcSecretsRevealed.length, total: theCase.npcs.length },
+      {
+        axis: 'REASONING',
+        correct: theCase.deduction.questions.length - wrongQuestions.length,
+        total: theCase.deduction.questions.length,
+      },
+    ],
+    missed: [
+      ...missedClues.map((h) => ({ label: clipLabel(h.content.title), kind: clueKind(h.type) })),
+      ...missedSecrets.map((n) => ({ label: clipLabel(`${n.name}隐瞒的事`), kind: 'clue-testimony' as const })),
+      ...wrongQuestions.map((q) => ({ label: clipLabel(q.question), kind: 'evidence' as const })),
+    ].slice(0, MISSED_LIMIT),
+    durationMs,
+  };
 }
 
 // ── Helpers ────────────────────────────────────────
@@ -376,6 +419,8 @@ export default function Detective() {
   // 提交失败时如实告知，而不是伪造一个奖励数字
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [clueDetail, setClueDetail] = useState<DetectiveHotspot | null>(null)
+  const [intervention, setIntervention] = useState<Intervention | null>(null)
+  const [startedAt, setStartedAt] = useState(0)
   const user = useAuthStore((s) => s.user)
 
   function startCase(c: DetectiveCaseData) {
@@ -385,6 +430,8 @@ export default function Detective() {
     setActiveSceneId(null)
     setCurrentNpc(null)
     setXpGained(0)
+    setIntervention(null)
+    setStartedAt(Date.now())
   }
 
   const activeScene = useMemo(() => {
@@ -443,14 +490,22 @@ export default function Detective() {
     setSubmitError(null)
     await new Promise((r) => setTimeout(r, 600))
     try {
-      const res = await apiFetch<{ success: true; xpGain: number; user: { xp: number; level: number } }>(
-        '/api/student/detective-result',
-        {
-          method: 'POST',
-          body: JSON.stringify({ caseId: theCase.id, score: scoreData.score, maxScore: scoreData.maxScore }),
-        },
-      )
+      const res = await apiFetch<{
+        success: true
+        xpGain: number
+        user: { xp: number; level: number }
+        intervention: Intervention | null
+      }>('/api/student/detective-result', {
+        method: 'POST',
+        body: JSON.stringify({
+          caseId: theCase.id,
+          score: scoreData.score,
+          maxScore: scoreData.maxScore,
+          detail: buildDetail(state, theCase, startedAt ? Date.now() - startedAt : 0),
+        }),
+      })
       setXpGained(res.xpGain)
+      setIntervention(res.intervention ?? null)
       if (res.user) {
         const store = useAuthStore.getState()
         if (store.token && store.user) {
@@ -875,6 +930,10 @@ export default function Detective() {
             {theCase.result.fullStory}
           </div>
         </Card>
+
+        {/* 智能体复盘。放在「真相大白」之后：学生先读完案子发生了什么，
+            再看自己漏了什么。放在最前面等于在颁奖典礼上念检讨。 */}
+        <InterventionCard data={intervention} />
 
         {/* Actions */}
         <div className="grid gap-3 sm:grid-cols-2">
