@@ -3,6 +3,13 @@ import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { requireRole } from '../middleware/requireRole.js'
+import { ABILITY_AXES, COMIC_INDEX, type AbilityAxis } from '../lib/contentIndex.js'
+import {
+  diagnoseAfterGame,
+  recomputeSkillAxes,
+  type GameDetail,
+  type MissedKind,
+} from '../lib/agentDiagnosis.js'
 
 const router = Router()
 
@@ -599,10 +606,61 @@ router.post('/comic-read', async (req: Request, res: Response) => {
 // 只能对客户端上报的数字做钳制，并像关卡一样按最好成绩结算 XP。
 const MAX_GAME_SCORE = 200
 
+/**
+ * 单局明细。它由前端上报、服务端无法复算，所以形状和大小都必须卡死 ——
+ * 否则这就是一个可以塞任意 JSON 的口子。
+ *
+ * `.strict()` 挡多余键；数组长度与标签长度都设了上限，单条 JSON 约 8 KB 封顶。
+ * 注意它**只用于诊断**，绝不参与 XP 结算（XP 仍只由 score/maxScore 驱动）。
+ */
+const MissedKindSchema = z.enum([
+  'clue-physical',
+  'clue-digital',
+  'clue-testimony',
+  'clue-observation',
+  'evidence',
+  'debate',
+  'law',
+  'verdict',
+])
+
+// 断言输出类型。原因是后端 tsconfig 里 `"strict": false`（strictNullChecks 关闭）——
+// zod 判断属性是否可选用的 `undefined extends T[k]` 在关闭 strictNullChecks 后恒为真，
+// 于是 `z.output` 把对象的每个属性都算成可选，直接传给需要必填字段的函数会报错。
+// 运行时校验完全不受影响（.strict() 与各 max 上限照常生效），受影响的只是类型。
+//
+// 这里不改 tsconfig：打开 strict 会让整个后端（既有 schema、既有路由）一起爆错，
+// 远超本次改动范围。等哪天要整体收紧类型时，这一处可以直接删掉断言。
+const DetailSchema = z
+  .object({
+    v: z.literal(1),
+    axes: z
+      .array(
+        z.object({
+          // ABILITY_AXES 是 as const 的只读元组，z.enum 的签名要可变元组
+          axis: z.enum(ABILITY_AXES as unknown as [AbilityAxis, ...AbilityAxis[]]),
+          correct: z.number().int().min(0).max(200),
+          total: z.number().int().min(0).max(200),
+        }),
+      )
+      .max(ABILITY_AXES.length),
+    missed: z
+      .array(
+        z.object({
+          label: z.string().min(1).max(40),
+          kind: MissedKindSchema,
+        }),
+      )
+      .max(40),
+    durationMs: z.number().int().min(0).max(6 * 60 * 60 * 1000),
+  })
+  .strict() as unknown as z.ZodType<GameDetail, z.ZodTypeDef, unknown>
+
 const GameResultSchema = z.object({
   caseId: z.string().min(1).max(120),
   score: z.number().min(0).max(MAX_GAME_SCORE),
   maxScore: z.number().min(1).max(MAX_GAME_SCORE),
+  detail: DetailSchema.optional(),
 })
 
 /** 完成度百分比 → XP。0 分保底不发，否则空提交可以反复薅 */
@@ -619,7 +677,7 @@ const gameXpFor = (pctInt: number, cap: number) =>
 async function settleGameResult(
   studentId: string,
   gameType: 'COURT' | 'DETECTIVE',
-  input: { caseId: string; score: number; maxScore: number },
+  input: { caseId: string; score: number; maxScore: number; detail?: GameDetail },
   cap: number,
 ) {
   const pct = Math.min(1, Math.max(0, input.score / Math.max(1, input.maxScore)))
@@ -634,11 +692,15 @@ async function settleGameResult(
     const prevAwarded = gameXpFor(existing?.bestPct ?? 0, cap)
     const bestPct = Math.max(existing?.bestPct ?? 0, pctInt)
     const xpGain = Math.max(0, gameXpFor(bestPct, cap) - prevAwarded)
+    // detail 描述的是**最好那一局**，只在刷新记录时覆盖。
+    // 否则重玩一局打得更差会把能力轴拉低 —— 练习反而让画像变糟，说不通。
+    const improves = pctInt > (existing?.bestPct ?? 0) || !existing
+    const detail = input.detail as unknown as object | undefined
 
     await tx.gameResult.upsert({
       where: { studentId_gameType_caseId: key },
-      update: { bestPct },
-      create: { ...key, bestPct },
+      update: improves && detail ? { bestPct, detail } : { bestPct },
+      create: { ...key, bestPct, detail },
     })
 
     const current = await tx.user.findUnique({
@@ -657,44 +719,141 @@ async function settleGameResult(
   })
 }
 
-router.post('/court-result', async (req: Request, res: Response) => {
+/**
+ * 结算一局并顺带产出智能体诊断。
+ *
+ * 诊断搭在结算响应里返回，不另开接口 —— 学生点完"揭晓真相"本来就要等这一次
+ * 请求，多一次往返只会让复盘卡片迟到。诊断失败也绝不能让结算失败（XP 已经
+ * 发了），所以整段包在 try 里，失败就只回 xpGain。
+ */
+async function settleAndDiagnose(
+  req: Request,
+  res: Response,
+  gameType: 'COURT' | 'DETECTIVE',
+  cap: number,
+) {
   const parsed = GameResultSchema.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ success: false, error: 'BAD_REQUEST' })
     return
   }
 
-  const { xpGain, user } = await settleGameResult(
-    req.user!.id,
-    'COURT',
-    { caseId: parsed.data.caseId, score: parsed.data.score, maxScore: parsed.data.maxScore },
-    30,
-  )
-  res.json({ success: true, xpGain, user })
-})
+  const { caseId, score, maxScore, detail } = parsed.data
+  const { xpGain, user } = await settleGameResult(req.user!.id, gameType, { caseId, score, maxScore, detail }, cap)
 
-router.post('/detective-result', async (req: Request, res: Response) => {
-  const parsed = GameResultSchema.safeParse(req.body)
-  if (!parsed.success) {
-    res.status(400).json({ success: false, error: 'BAD_REQUEST' })
-    return
+  let intervention = null
+  if (detail) {
+    try {
+      intervention = await diagnoseAfterGame(req.user!.id, gameType, caseId, detail as GameDetail)
+    } catch {
+      // 诊断是锦上添花，不能把已经发出去的 XP 一起吞掉
+    }
   }
 
-  const { xpGain, user } = await settleGameResult(
-    req.user!.id,
-    'DETECTIVE',
-    { caseId: parsed.data.caseId, score: parsed.data.score, maxScore: parsed.data.maxScore },
-    35,
-  )
-  res.json({ success: true, xpGain, user })
-})
+  res.json({ success: true, xpGain, user, intervention })
+}
+
+router.post('/court-result', (req: Request, res: Response) =>
+  settleAndDiagnose(req, res, 'COURT', 30),
+)
+
+router.post('/detective-result', (req: Request, res: Response) =>
+  settleAndDiagnose(req, res, 'DETECTIVE', 35),
+)
 
 router.get('/comic-reads', async (req: Request, res: Response) => {
   const reads = await prisma.comicRead.findMany({
     where: { studentId: req.user!.id },
-    select: { storyId: true },
+    select: { storyId: true, quizOptionId: true, quizCorrect: true },
   })
-  res.json({ success: true, storyIds: reads.map((r) => r.storyId) })
+
+  // quizResults 让阅读器能把答过的题显示成答过的 —— 否则每次打开
+  // 都像没做过，学生会反复作答（并且以为自己没答过）
+  const quizResults: Record<string, { optionId: string; correct: boolean }> = {}
+  for (const r of reads) {
+    if (r.quizOptionId) {
+      quizResults[r.storyId] = { optionId: r.quizOptionId, correct: r.quizCorrect ?? false }
+    }
+  }
+
+  res.json({ success: true, storyIds: reads.map((r) => r.storyId), quizResults })
+})
+
+const ComicQuizSchema = z.object({
+  storyId: z.string().min(1).max(120),
+  optionId: z.string().min(1).max(8),
+})
+
+/**
+ * 漫画读完后那道总结题的作答。
+ *
+ * 与「读完 +10 XP」分开成两个接口，是因为它们是两件事：读完就该给 XP
+ * （低门槛入口的定位不能动），答对是额外的 +5。合在一起会让「不答题就拿不到
+ * 阅读 XP」，把入口变成一道关卡。
+ *
+ * 对错在服务端判 —— 这是一次直接发放的 XP，不像游戏成绩那样受"最好成绩差额"
+ * 保护，交给客户端自报等于白送。
+ */
+router.post('/comic-quiz', async (req: Request, res: Response) => {
+  const parsed = ComicQuizSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ success: false, error: 'BAD_REQUEST' })
+    return
+  }
+
+  const { storyId, optionId } = parsed.data
+  const comic = COMIC_INDEX[storyId]
+  if (!comic) {
+    res.status(404).json({ success: false, error: 'COMIC_NOT_FOUND' })
+    return
+  }
+
+  const read = await prisma.comicRead.findUnique({
+    where: { studentId_storyId: { studentId: req.user!.id, storyId } },
+  })
+  // 没读过就不给答 —— 否则可以绕开阅读直接刷满所有漫画的 +5
+  if (!read) {
+    res.status(409).json({ success: false, error: 'NOT_READ_YET' })
+    return
+  }
+
+  // 只认第一次作答，重复提交返回既有结果而不重复发 XP
+  if (read.quizOptionId) {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: { id: true, xp: true, level: true },
+    })
+    res.json({ success: true, correct: read.quizCorrect ?? false, xpGain: 0, user })
+    return
+  }
+
+  const correct = optionId === comic.quizCorrectId
+  const xpGain = correct ? 5 : 0
+
+  const [, user] = await prisma.$transaction([
+    prisma.comicRead.update({
+      where: { studentId_storyId: { studentId: req.user!.id, storyId } },
+      data: { quizOptionId: optionId, quizCorrect: correct },
+    }),
+    prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        xp: { increment: xpGain },
+        level: 1 + Math.floor((req.user!.xp + xpGain) / 100),
+      },
+      select: { id: true, xp: true, level: true },
+    }),
+  ])
+
+  // 漫画总结题计入「证据审查」轴。这里立刻重算，否则学生答完题回 Learn 页
+  // 看到的还是旧数据 —— 闭环的最后一环要当场合上，不能等下一次游戏结算。
+  try {
+    await recomputeSkillAxes(req.user!.id)
+  } catch {
+    // 画像刷新失败不该让作答失败，XP 已经发出去了
+  }
+
+  res.json({ success: true, correct, xpGain, user })
 })
 
 router.post('/join-class', async (req: Request, res: Response) => {

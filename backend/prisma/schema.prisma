@@ -72,6 +72,7 @@ model User {
   riskEvents       RiskEvent[]
   gameResults      GameResult[]
   questionAnswers  QuestionAnswer[]
+  skillAxes        SkillAxis[]
 }
 
 model Class {
@@ -250,6 +251,10 @@ model ComicRead {
   id        String   @id @default(cuid())
   studentId String
   storyId   String
+  // 读完后的总结题作答。未作答时为 null —— 读完整篇的 +10 XP 不受影响，
+  // 答对才另发 +5，低门槛入门的定位不能动。
+  quizOptionId String?
+  quizCorrect  Boolean?
   createdAt DateTime @default(now())
 
   student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -338,6 +343,10 @@ model GameResult {
   gameType  String // 'COURT' | 'DETECTIVE'
   caseId    String
   bestPct   Int      @default(0) // 0-100
+  // 具体错在哪：漏了哪条线索、哪个证人的秘密没问出、哪道题选错。
+  // 只用于诊断，绝不参与 XP 结算 —— XP 仍只由 bestPct 驱动。
+  // 形状与大小由 zod 在入口校验（见 routes/student.ts 的 DetailSchema）。
+  detail    Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -345,4 +354,21 @@ model GameResult {
 
   @@unique([studentId, gameType, caseId])
   @@index([studentId, gameType])
+}
+
+// 学生的能力轴累计计数器。存计数而不是百分比，因为诊断必须能区分
+// 「样本不足」和「掌握度低」—— 只玩过侦查的学生在 ARGUE 轴上一条样本
+// 都没有，报「表达论辩 0 分」既错误又打击人。百分比随时可算，样本量算不回来。
+model SkillAxis {
+  id        String   @id @default(cuid())
+  studentId String
+  axis      String // 'OBSERVE' | 'INTERVIEW' | 'EVIDENCE' | 'REASONING' | 'LAW' | 'ARGUE'
+  correct   Int      @default(0)
+  total     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, axis])
+  @@index([studentId])
 }
