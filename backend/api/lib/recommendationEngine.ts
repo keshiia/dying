@@ -5,6 +5,7 @@
  */
 
 import { prisma } from './prisma.js'
+import { comicForTopic, type Topic } from './contentIndex.js'
 import type { StudentProfileData } from './studentProfile.js'
 
 export type Recommendation = {
@@ -143,9 +144,18 @@ export async function generateRecommendations(
   }
 
   // 5. 推荐法治游戏（如果近期没玩过）
-  const recentAttempts = attempts.slice(0, 20)
-  const hasCourtRecently = recentAttempts.some((a) => a.levelId.startsWith('court-'))
-  if (!hasCourtRecently) {
+  //
+  // 原先查的是 `a.levelId.startsWith('court-')`，但关卡 id 的格式是
+  // `level-{slug}-{orderNo}`，从来不存在 `court-` 前缀；而且这两个游戏根本不写
+  // Attempt 表（它们写 GameResult）。所以这个条件恒为 false —— 不论学生刚玩过
+  // 多少次，推荐区永远挂着「试试模拟法庭游戏」。改查 GameResult。
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const recentGames = await prisma.gameResult.findMany({
+    where: { studentId, updatedAt: { gte: weekAgo } },
+    select: { gameType: true },
+  })
+  const playedRecently = new Set(recentGames.map((g) => g.gameType))
+  if (!playedRecently.has('COURT')) {
     recs.push({
       type: 'GAME',
       targetId: 'court',
@@ -154,32 +164,37 @@ export async function generateRecommendations(
       urgency: 'low',
     })
   }
+  if (!playedRecently.has('DETECTIVE')) {
+    recs.push({
+      type: 'GAME',
+      targetId: 'detective',
+      title: '案件侦查',
+      reason: '到现场搜集线索、询问证人，训练证据思维',
+      urgency: 'low',
+    })
+  }
 
   // 6. 推荐阅读漫画（如果弱项匹配）
-  const weakTopics = profile.weakAreas
-    .filter((w) => w.failCount >= 2)
-    .slice(0, 2)
-  const comicMap: Record<string, { id: string; title: string }> = {
-    '校园安全': { id: 'campus', title: '「校园欺凌」普法漫画' },
-    '网络安全': { id: 'network', title: '「网络诈骗」普法漫画' },
-    '消费者权益': { id: 'consumer', title: '「消费者权益」普法漫画' },
-  }
+  //
+  // 原先这里的 id 是 'campus' / 'network' / 'consumer'，而前端上报的 storyId 是
+  // 'comic-bullying-1' 之类 —— 两个 id 空间完全对不上，`findUnique` 永远查不到，
+  // 于是「已读」判断永远为「未读」，会反复推荐学生已经读过的漫画。
+  // 现在统一走 contentIndex 里的 COMIC_INDEX。
+  const weakTopics = profile.weakAreas.filter((w) => w.failCount >= 2).slice(0, 2)
   for (const wt of weakTopics) {
-    const comic = comicMap[wt.topic]
-    if (comic) {
-      // 检查是否已读过
-      const read = await prisma.comicRead.findUnique({
-        where: { studentId_storyId: { studentId, storyId: comic.id } },
+    const comic = comicForTopic(wt.topic as Topic)
+    if (!comic) continue
+    const read = await prisma.comicRead.findUnique({
+      where: { studentId_storyId: { studentId, storyId: comic.id } },
+    })
+    if (!read) {
+      recs.push({
+        type: 'COMIC',
+        targetId: comic.id,
+        title: `《${comic.title}》`,
+        reason: `你的「${wt.topic}」薄弱，建议阅读相关普法漫画`,
+        urgency: 'medium',
       })
-      if (!read) {
-        recs.push({
-          type: 'COMIC',
-          targetId: comic.id,
-          title: comic.title,
-          reason: `你的「${wt.topic}」薄弱，建议阅读相关普法漫画`,
-          urgency: 'medium',
-        })
-      }
     }
   }
 

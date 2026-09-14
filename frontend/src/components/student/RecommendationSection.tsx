@@ -86,9 +86,14 @@ export default function RecommendationSection({ className, onStartLevel }: Props
     } else if (rec.type === 'RESOURCE') {
       navigate('/app/resources')
     } else if (rec.type === 'COMIC') {
-      navigate('/app/comics')
+      // 直接进具体篇目。原先只跳列表页 —— 推荐说「建议阅读网络诈骗漫画」，
+      // 点进去是一个列表要学生自己找，说服力就损失在这一步。
+      if (rec.targetId) navigate(`/play/comics/${rec.targetId}`)
+      else navigate('/app/comics')
     } else if (rec.type === 'GAME') {
-      navigate('/app/games/court')
+      // 推荐引擎给的是游戏名（'court' | 'detective'），落到对应案件的列表页。
+      // 原来两样都硬编码跳 /app/games/court，侦查的推荐会把人送错地方。
+      navigate(rec.targetId === 'detective' ? '/app/games/detective' : '/app/games/court')
     }
   }
 
