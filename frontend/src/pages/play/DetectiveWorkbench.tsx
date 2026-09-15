@@ -957,7 +957,7 @@ function ResultView({
       </Panel>
 
       {/* 智能体复盘。放在「真相大白」之后：先读完案子发生了什么，再看自己漏了什么 */}
-      <InterventionCard data={intervention} />
+      <InterventionCard data={intervention} caseContext={{ id: theCase.id, title: theCase.title }} />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Button variant="primary" onClick={onRestart} className="w-full">

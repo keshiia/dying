@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/requireAuth.js'
 import { env } from '../lib/env.js'
 import { prisma } from '../lib/prisma.js'
 import { CRISIS_CARD, isRiskCandidate, quickScreen, runRiskDetection } from '../lib/riskDetect.js'
+import { ABILITY_AXES, ABILITY_LABELS, GAME_CASE_INDEX } from '../lib/contentIndex.js'
 
 const router = Router()
 
@@ -17,6 +18,10 @@ const ChatSchema = z.object({
       unitId: z.string().optional(),
       levelId: z.string().optional(),
       resourceId: z.string().optional(),
+      // 来自结算页复盘卡的「追问」按钮：学生想问的正是刚刚那一局的短板。
+      // 这两个字段一直存在于 schema 里但从没被用过，追问按钮是把它们接上的地方。
+      caseId: z.string().max(120).optional(),
+      axis: z.enum(ABILITY_AXES).optional(),
     })
     .optional(),
 })
@@ -85,6 +90,18 @@ router.post('/chat', async (req: Request, res: Response) => {
     const recentQuestions = recentChats.map((c) => c.content).join(' | ')
 
     userContext = `当前用户：${user?.nickname ?? '同学'}${user?.grade ? `，${user.grade}` : ''}。`
+
+    // 结算页「追问」带过来的诊断上下文。学生问的就是刚才那一局的短板，
+    // 不把案件和短板说清楚，回答只能泛泛而谈。
+    const ctx = parsed.data.context
+    if (ctx?.caseId) {
+      const meta = GAME_CASE_INDEX[ctx.caseId]
+      if (meta) {
+        userContext += `刚玩完${meta.gameType === 'COURT' ? '模拟法庭' : '案件侦查'}的「${meta.title}」（主题：${meta.topic}）。`
+      }
+    }
+    if (ctx?.axis) userContext += `那一局最弱的一项是「${ABILITY_LABELS[ctx.axis]}」。`
+
     if (topicSummary) userContext += `已完成：${topicSummary}。`
     if (recentQuestions) userContext += `最近提问：${recentQuestions}。`
   } catch { /* ignore context build errors */ }

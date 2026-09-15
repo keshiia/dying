@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronRight, Sparkles, TriangleAlert } from 'lucide-react'
+import { ChevronDown, ChevronRight, MessageCircleQuestion, Sparkles, TriangleAlert } from 'lucide-react'
 import { clsx } from 'clsx'
 import AgentAvatar, { AGENT_NAME } from '@/components/student/AgentAvatar'
+import { ABILITY_LABELS, type AbilityAxis } from '@/data/topics'
 
 /**
  * 结算页的智能体复盘卡。
@@ -64,9 +65,12 @@ function findingTone(kind: InterventionFinding['kind'], tone: 'light' | 'dark') 
 export default function InterventionCard({
   data,
   tone = 'light',
+  caseContext,
 }: {
   data: Intervention | null
   tone?: 'light' | 'dark'
+  /** 当前这一局是哪个案件。用来拼「追问」带过去的上下文，不传就不显示追问入口 */
+  caseContext?: { id: string; title: string }
 }) {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -74,6 +78,20 @@ export default function InterventionCard({
   if (!data || (data.findings.length === 0 && data.recommendations.length === 0)) return null
 
   const dark = tone === 'dark'
+
+  // 追问用的轴：取第一条不是「强项」的发现 —— 学生想问的就是自己弱的那块
+  const askAxis = data.findings.find((f) => f.kind !== 'STRENGTH')?.axis
+
+  function askAgent() {
+    const label = askAxis ? ABILITY_LABELS[askAxis as AbilityAxis] : '这几项'
+    const q = caseContext
+      ? `我在《${caseContext.title}》里「${label}」没做好，能展开讲讲这一项该怎么练吗？`
+      : `我的「${label}」偏弱，能展开讲讲该怎么练吗？`
+    const params = new URLSearchParams({ q })
+    if (caseContext) params.set('caseId', caseContext.id)
+    if (askAxis) params.set('axis', askAxis)
+    navigate(`/assistant?${params.toString()}`)
+  }
 
   return (
     <div
@@ -187,9 +205,30 @@ export default function InterventionCard({
             </div>
           )}
 
+          {/* 追问入口：把案件与短板一起带给智能体，
+              否则对话只能泛泛而谈，等于把闭环又断回断点。 */}
+          <button
+            type="button"
+            onClick={askAgent}
+            className={clsx(
+              'flex items-center justify-center gap-2 rounded-2xl border px-3.5 py-2.5 text-xs font-bold transition-colors',
+              dark
+                ? 'border-white/10 bg-white/[0.04] text-white/80 hover:bg-white/[0.08]'
+                : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100',
+            )}
+          >
+            <MessageCircleQuestion className="h-3.5 w-3.5" />
+            问问{AGENT_NAME}
+          </button>
+
           {data.generatedBy === 'RULE' && (
             <div className={clsx('text-[11px]', dark ? 'text-white/35' : 'text-slate-400')}>
               结论由学习数据直接算出，未经模型改写 —— 每个判断都能指回具体是哪条线索。
+            </div>
+          )}
+          {data.generatedBy === 'LLM' && (
+            <div className={clsx('text-[11px]', dark ? 'text-white/35' : 'text-slate-400')}>
+              结论由学习数据直接算出，措辞经模型润色 —— 每个判断都能指回具体是哪条线索。
             </div>
           )}
         </div>

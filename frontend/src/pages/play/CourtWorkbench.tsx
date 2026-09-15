@@ -1145,7 +1145,7 @@ export default function CourtWorkbench() {
 
               {/* 智能体复盘。放在宣判与法律小课堂之后 —— 学生先看完「正确答案是
                   什么、为什么」，再看自己哪一步偏了。 */}
-              <InterventionCard data={intervention} />
+              <InterventionCard data={intervention} caseContext={{ id: theCase.id, title: theCase.title }} />
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button variant="primary" onClick={restart} className="w-full">

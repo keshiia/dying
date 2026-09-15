@@ -42,6 +42,8 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-meta/llama-3.3-70b-instruct}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://integrate.api.nvidia.com}
+      # 推理模型不关思考的话，一句话改写要 26 秒（实测 mimo-v2.5）。见 backend/api/lib/env.ts
+      OPENAI_DISABLE_THINKING: ${OPENAI_DISABLE_THINKING:-true}
       NODE_ENV: production
       PORT: 3001
     # 本地开发需要发布到宿主机：vite dev 的 /api 代理指向 localhost:3001。

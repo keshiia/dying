@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowUp, Bot, User, ChevronLeft, RefreshCw, BookOpen, MessageSquare, Plus, Trash2, LogOut, ShieldAlert } from 'lucide-react'
 import { clsx } from 'clsx'
 import ReactMarkdown from 'react-markdown'
@@ -87,6 +87,33 @@ export default function Assistant() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  // 结算页的「追问」按钮会带 q / caseId / axis 过来。
+  // 预填问题，并把上下文留到下一次发送 —— 只发一次，之后学生自己接着聊。
+  const [searchParams] = useSearchParams()
+  const [pendingContext, setPendingContext] = useState<{
+    caseId?: string
+    axis?: string
+  } | null>(null)
+  const prefilledRef = useRef(false)
+
+  useEffect(() => {
+    if (prefilledRef.current) return
+    const q = searchParams.get('q')
+    if (!q) {
+      prefilledRef.current = true
+      return
+    }
+    // 必须等会话就绪：挂载时那一段会话初始化会调用 newSession()/switchSession()，
+    // 两者都会 setInput('')。抢在它们前面填会被立刻清掉。
+    if (!activeId) return
+    prefilledRef.current = true
+    setInput(q)
+    const caseId = searchParams.get('caseId') ?? undefined
+    const axis = searchParams.get('axis') ?? undefined
+    setPendingContext(caseId || axis ? { caseId, axis } : null)
+    requestAnimationFrame(() => inputRef.current?.focus())
+  }, [activeId, searchParams])
 
   // Resolve current session
   const activeSession = sessions.find((s) => s.id === activeId)
@@ -193,8 +220,15 @@ export default function Assistant() {
     try {
       const data = await apiFetch<ChatResponse>('/api/ai/chat', {
         method: 'POST',
-        body: JSON.stringify({ sessionId: activeId, message: msg }),
+        body: JSON.stringify({
+          sessionId: activeId,
+          message: msg,
+          // 来自结算页的追问：把案件与短板一并交给服务端，
+          // 否则回答只能泛泛而谈（这个字段此前一直被解析后丢掉）
+          ...(pendingContext ? { context: pendingContext } : {}),
+        }),
       })
+      setPendingContext(null)
 
       const aiMsg: Message = {
         role: 'assistant',

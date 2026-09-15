@@ -13,6 +13,7 @@
  */
 
 import { prisma } from './prisma.js'
+import { env } from './env.js'
 import {
   ABILITY_AXES,
   ABILITY_LABELS,
@@ -319,13 +320,119 @@ export async function diagnoseAfterGame(
 
   const trimmed = findings.slice(0, MAX_FINDINGS)
 
-  return {
+  const intervention: Intervention = {
     agent: '青知智能体',
     headline: buildHeadline(trimmed, weak.length, strong.length),
     findings: trimmed,
     recommendations: recommendations.slice(0, MAX_RECOMMENDATIONS),
     generatedBy: 'RULE',
   }
+
+  return phraseWithLlm(intervention)
+}
+
+// ── LLM 措辞层 ─────────────────────────────────────
+
+/** 措辞预算。学生正等着「揭晓真相」出结果，不能让它无限等 */
+const PHRASE_TIMEOUT_MS = 2500
+/** 一句话标题的上限，超了说明模型没听指令，宁可退回模板 */
+const HEADLINE_MAX = 40
+
+/**
+ * 只让模型改写 headline 这一句。
+ *
+ * 边界是刻意的，而且是这个设计里最重要的部分：
+ * - **只给结构，不给 id**。模型拿到的是已经算好的结论，没有发挥空间。
+ * - **findings 与 recommendations 一律用规则生成的原文本**，不进模型。
+ *   一旦让模型碰这些，它就会开始编「你忽略了手机短信」——而那个案件里
+ *   根本没有短信。诊断层编造是不可接受的。
+ * - 输出长度、换行、空值都校验，不合格就退回模板。
+ *
+ * 失败（没配 key、超时、上游报错、输出不合格）时原样返回模板文案，
+ * `generatedBy` 保持 'RULE' —— 闭环在任何情况下都成立。
+ */
+async function phraseWithLlm(intervention: Intervention): Promise<Intervention> {
+  if (intervention.findings.length === 0) return intervention
+  if (!env.OPENAI_API_KEY || !env.OPENAI_BASE_URL) return intervention
+
+  const payload = {
+    findings: intervention.findings.map((f) => f.text),
+    advice: intervention.recommendations.map((r) => r.label),
+  }
+
+  const system =
+    '你在为一名中学生写一句学习复盘的开场白。\n' +
+    '要求：\n' +
+    '- 只输出这一句话本身，不要引号、不要换行、不要解释。\n' +
+    '- 不超过 30 个字。\n' +
+    '- **必须点出具体弱在哪一项**（用 JSON 里出现过的说法）。空泛的鼓励没有价值 ——' +
+    '「这次可以再加强一下」这种等于没说。\n' +
+    '- 语气自然、不训斥、不说教。\n' +
+    '**只能改写措辞。绝对不能引入下面 JSON 里没有出现的事实、线索名、数字或结论。**'
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), PHRASE_TIMEOUT_MS)
+
+  const url = `${env.OPENAI_BASE_URL.replace(/\/$/, '')}/v1/chat/completions`
+  const baseBody = {
+    model: env.OPENAI_MODEL,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: JSON.stringify(payload) },
+    ],
+    temperature: 0.6,
+  }
+
+  /** 推理模型不关思考的话，一句话的改写要 26 秒（实测）。关了是 0.7~1.5 秒。 */
+  const withThinkingOff = env.OPENAI_DISABLE_THINKING
+    ? { ...baseBody, chat_template_kwargs: { enable_thinking: false } }
+    : baseBody
+
+  const post = (body: unknown) =>
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+
+  try {
+    let r = await post(withThinkingOff)
+    // 服务商不认这个字段（严格校验的会给 400）就摘掉重试一次 ——
+    // 退化成默认行为，而不是因此彻底失败
+    if (r.status === 400 && env.OPENAI_DISABLE_THINKING) r = await post(baseBody)
+    if (!r.ok) return intervention
+
+    const data = (await r.json()) as unknown
+    const headline = readOpenAiAnswer(data)?.trim().replace(/\s+/g, ' ')
+
+    // 没拿到、太长、或者明显是模型在复述提示词 —— 都退回模板
+    if (!headline || headline.length > HEADLINE_MAX) return intervention
+    if (headline.includes('要求') || headline.includes('JSON')) return intervention
+
+    return { ...intervention, headline, generatedBy: 'LLM' }
+  } catch {
+    // 超时、网络错误、上游 5xx —— 一律退回模板，绝不让措辞层影响结算
+    return intervention
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/** 与 ai.ts 里同名函数一致：从 OpenAI 兼容响应里取第一个 choice 的正文 */
+function readOpenAiAnswer(data: unknown): string | null {
+  if (typeof data !== 'object' || data === null) return null
+  const choices = (data as Record<string, unknown>).choices
+  if (!Array.isArray(choices) || choices.length === 0) return null
+  const first = choices[0]
+  if (typeof first !== 'object' || first === null) return null
+  const msg = (first as Record<string, unknown>).message
+  if (typeof msg !== 'object' || msg === null) return null
+  const content = (msg as Record<string, unknown>).content
+  return typeof content === 'string' ? content : null
 }
 
 /**
