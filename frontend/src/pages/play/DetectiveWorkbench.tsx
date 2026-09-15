@@ -317,14 +317,24 @@ export default function DetectiveWorkbench() {
         )}
 
         {phase === 'deduction' && (
-          <DeductionView
-            theCase={theCase}
-            answers={state.deductionAnswers}
-            submitting={submitting}
-            allDone={allDeductionDone}
-            onAnswer={answerDeduction}
-            onSubmit={submitResult}
-          />
+          <div className="flex h-full min-h-0 gap-3 px-3 pb-3">
+            <section className="flex min-w-0 flex-1 flex-col">
+              <DeductionView
+                theCase={theCase}
+                answers={state.deductionAnswers}
+                submitting={submitting}
+                allDone={allDeductionDone}
+                onAnswer={answerDeduction}
+                onSubmit={submitResult}
+              />
+            </section>
+            {/* 推理时把证据墙留在旁边：让学生对着自己收集到的线索作答，
+                而不是凭记忆。评分口径完全不变 —— REASONING 仍是这四题的对错，
+                改动那条轴会牵动诊断引擎的输入。 */}
+            <aside className="hidden w-80 shrink-0 flex-col rounded-3xl bg-white/[0.03] p-2 ring-1 ring-white/10 lg:flex">
+              <EvidenceWall scenes={theCase.scenes} foundClues={state.foundClues} />
+            </aside>
+          </div>
         )}
 
         {phase === 'result' && (
@@ -758,6 +768,10 @@ function DeductionView({
             <div className="text-base font-extrabold">{theCase.deduction.title}</div>
             <div className="text-sm text-white/80">{theCase.deduction.description}</div>
           </div>
+        </div>
+        <div className="mt-3 rounded-2xl bg-black/15 px-3.5 py-2.5 text-xs leading-relaxed text-white/85">
+          右边是你收集到的证据墙 —— <span className="font-bold">对着线索作答，别凭记忆</span>。
+          <span className="lg:hidden">手机上点顶栏的放大镜图标打开它。</span>
         </div>
       </div>
 
