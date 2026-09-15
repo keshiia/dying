@@ -8,9 +8,20 @@ import { useAuthStore } from "@/stores/auth";
 import { getComicById, type ComicStory } from "@/data/comics";
 import { readComicIds, writeComicIds } from "@/utils/comicReads";
 
+/**
+ * 漫画阅读器。
+ *
+ * 配色走**浅色**，与应用其余部分同一套：中性灰页面 + 白色「页」+ 天蓝主色。
+ * 此前做过暗色（还加过一层取画面颜色的环境光），但学生端别处全是浅色，
+ * 只有这里黑着，读起来像另一个产品。
+ *
+ * 画面本身按原始比例居中显示，四周留白 —— 不是把它拉满屏。图片只有 970px 宽，
+ * 拉满 1440 只会糊；全屏的意义是把干扰拿掉，不是把图放大。
+ */
+
 /** 图片原始比例。容器锁这个比例，翻页时画面不会跳动 */
 const FRAME_ASPECT = "970 / 672";
-/** 图片实际宽度。全屏的意义是把干扰拿掉，不是把 970px 的图拉到 1440px 去糊 */
+/** 图片实际宽度。超过它就开始糊 */
 const FRAME_MAX_W = "min(100%, 970px)";
 
 type QuizState = {
@@ -189,70 +200,49 @@ export default function ComicReader() {
     [panel, totalPanels, goNext, goPrev, revealSummary],
   );
 
-  if (!story) return <div className="min-h-screen bg-zinc-950" />;
+  if (!story) return <div className="min-h-screen bg-zinc-50" />;
 
   const current = story.panels[panel];
-  // 小结屏没有当前格，沿用最后一格当环境光，翻过去时背景不跳
-  const backdrop = story.panels[Math.min(panel, totalPanels - 1)]?.image;
 
   return (
     <div
-      // 底色仍然是深的 —— 漫画图在深底上才跳出来，这是阅读器与浅色工作台分工的理由。
-      // 但**纯黑不行**：画面是暖橙的，四周冷黑，两者打架，看起来像没做完。
-      // 解法是给整页铺一层「环境光」（下面那张放大模糊的图），四周的颜色跟着画面走。
-      // 这一格是暖阳，周围就是暖光；换一格偏冷的，周围自动变冷。
-      className="relative flex h-[100dvh] flex-col overflow-hidden bg-zinc-950 text-white"
+      className="flex h-[100dvh] flex-col bg-zinc-50 text-zinc-900"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      {/* 环境光 */}
-      {backdrop && (
-        <>
-          <img
-            key={backdrop}
-            src={backdrop}
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-55 blur-3xl"
-          />
-          {/* 压暗 + 中心留亮，保证文字与画面都有对比 */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,rgba(9,9,11,0.28),rgba(9,9,11,0.82))]" />
-        </>
-      )}
-
       {/* 顶栏 */}
-      <header className="relative z-10 flex shrink-0 items-center gap-3 px-4 py-3">
+      <header className="flex shrink-0 items-center gap-3 border-b border-zinc-200/70 bg-white/85 px-4 py-3 backdrop-blur">
         <button
           type="button"
           onClick={exit}
           aria-label="返回漫画列表"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-800"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-bold">
+          <div className="truncate text-sm font-extrabold">
             {story.emoji} {story.title}
           </div>
           {/* 细进度条：全屏下 7 个圆点太寒酸 */}
-          <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/15">
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-200">
             <div
               className="h-full rounded-full bg-[var(--p-primary)] transition-all duration-300"
               style={{ width: `${progress * 100}%` }}
             />
           </div>
         </div>
-        <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-white/70 backdrop-blur">
+        <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-bold text-zinc-500">
           {onSummary ? "小结" : `${panel + 1} / ${totalPanels}`}
         </span>
       </header>
 
       {/* 舞台 */}
-      <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+      <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         {!onSummary && current ? (
           <figure className="mx-auto flex h-full max-w-[970px] flex-col justify-center gap-3">
             <div
-              className="relative w-full overflow-hidden rounded-2xl bg-black ring-1 ring-white/15 shadow-[0_28px_70px_rgba(0,0,0,0.6)]"
+              className="relative w-full overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-900/[0.08] shadow-[0_10px_40px_rgba(15,23,42,0.14)]"
               style={{ aspectRatio: FRAME_ASPECT, maxWidth: FRAME_MAX_W, margin: "0 auto" }}
             >
               {/* 原始比例 + contain：改造前是 aspect-[4/3] + cover，每张图被裁掉约 7.6% 宽度 */}
@@ -262,10 +252,10 @@ export default function ComicReader() {
                 className="h-full w-full object-contain"
               />
               {xpAnim && (
-                <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/40">
-                  <div className="animate-[xpPop_2s_ease-out_forwards] text-center">
+                <div className="pointer-events-none absolute inset-0 grid place-items-center bg-white/70 backdrop-blur-[2px]">
+                  <div className="animate-[xpPop_2s_ease-out_forwards] rounded-3xl bg-white px-8 py-5 text-center shadow-xl ring-1 ring-amber-200">
                     <div className="text-4xl">🎉</div>
-                    <div className="text-2xl font-black drop-shadow-lg">
+                    <div className="text-2xl font-black text-amber-600">
                       {lastXpGain > 0 ? `+${lastXpGain} XP` : "已阅读过"}
                     </div>
                   </div>
@@ -273,7 +263,7 @@ export default function ComicReader() {
               )}
             </div>
             {current.caption && (
-              <figcaption className="mx-auto w-full max-w-[970px] rounded-2xl bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white/90 ring-1 ring-white/10 backdrop-blur">
+              <figcaption className="mx-auto w-full max-w-[970px] rounded-2xl border border-zinc-100 bg-white px-5 py-3 text-center text-sm font-semibold text-zinc-600 shadow-sm">
                 {current.caption}
               </figcaption>
             )}
@@ -293,7 +283,7 @@ export default function ComicReader() {
       </main>
 
       {/* 底栏 */}
-      <footer className="relative z-10 flex shrink-0 items-center justify-between gap-3 px-4 py-3">
+      <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-zinc-200/70 bg-white/85 px-4 py-3 backdrop-blur">
         <button
           type="button"
           onClick={goPrev}
@@ -301,8 +291,8 @@ export default function ComicReader() {
           className={clsx(
             "flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-colors",
             panel === 0
-              ? "text-white/20"
-              : "bg-white/10 text-white/90 backdrop-blur hover:bg-white/20",
+              ? "text-zinc-300"
+              : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900",
           )}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -316,8 +306,8 @@ export default function ComicReader() {
           className={clsx(
             "flex items-center gap-1 rounded-full px-5 py-2 text-sm font-bold transition-all",
             onSummary
-              ? "text-white/20"
-              : "bg-[var(--p-primary)] text-white shadow-lg shadow-black/30 hover:opacity-90",
+              ? "text-zinc-300"
+              : "bg-[var(--p-primary)] text-white shadow-sm hover:opacity-90",
           )}
         >
           {panel === totalPanels - 1 ? "看小结" : "下一页"}
@@ -353,41 +343,41 @@ function SummaryScreen({
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-4 py-2">
       {readDone && (
-        <div className="flex items-center gap-2.5 rounded-2xl bg-amber-500/15 px-4 py-3 ring-1 ring-amber-400/30 backdrop-blur-md">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
           <span className="text-2xl">🎉</span>
           <div>
-            <div className="text-sm font-extrabold text-amber-200">
+            <div className="text-sm font-extrabold text-amber-800">
               {lastXpGain > 0 ? `阅读完成！获得 ${lastXpGain} XP` : "已阅读过本漫画"}
             </div>
-            <div className="text-xs text-amber-200/70">答对下面的总结题可再得 5 XP</div>
+            <div className="text-xs text-amber-700/80">答对下面的总结题可再得 5 XP</div>
           </div>
         </div>
       )}
 
-      <div className="rounded-2xl bg-emerald-500/10 p-5 ring-1 ring-emerald-400/25 backdrop-blur-md">
-        <div className="flex items-center gap-2 text-base font-extrabold text-emerald-200">
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+        <div className="flex items-center gap-2 text-base font-extrabold text-emerald-800">
           <Lightbulb className="h-5 w-5" />
           法律小课堂
         </div>
-        <div className="mt-3 text-sm font-semibold leading-relaxed text-emerald-50/90">
+        <div className="mt-3 text-sm font-semibold leading-relaxed text-emerald-900/85">
           {story.lawTip}
         </div>
       </div>
 
-      <div className="rounded-2xl bg-sky-500/10 p-5 ring-1 ring-sky-400/25 backdrop-blur-md">
-        <div className="flex items-center gap-2 text-base font-extrabold text-sky-200">
+      <div className="rounded-2xl border border-sky-200 bg-sky-50 p-5">
+        <div className="flex items-center gap-2 text-base font-extrabold text-sky-800">
           <Scale className="h-5 w-5" />
           相关法律
         </div>
-        <div className="mt-3 text-sm font-semibold leading-relaxed text-sky-50/90">
+        <div className="mt-3 text-sm font-semibold leading-relaxed text-sky-900/85">
           {story.relatedLaw}
         </div>
       </div>
 
       {/* 总结题 —— 从故事上升到一般规则，答案必须能指回具体某一格 */}
-      <div className="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 backdrop-blur-md">
-        <div className="text-xs font-bold uppercase tracking-wide text-white/50">总结一下</div>
-        <div className="mt-2 text-base font-extrabold">{story.quiz.question}</div>
+      <div className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm">
+        <div className="text-xs font-bold uppercase tracking-wide text-zinc-400">总结一下</div>
+        <div className="mt-2 text-base font-extrabold text-zinc-900">{story.quiz.question}</div>
         <div className="mt-4 grid gap-2">
           {story.quiz.options.map((opt, i) => {
             const selected = quiz.chosen === opt.id;
@@ -400,14 +390,14 @@ function SummaryScreen({
                 disabled={answered || submitting}
                 onClick={() => onAnswer(opt.id)}
                 className={clsx(
-                  "flex items-start gap-3 rounded-2xl px-4 py-3 text-left text-sm transition-all ring-1",
+                  "flex items-start gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition-all",
                   showCorrect
-                    ? "bg-emerald-500/20 ring-emerald-400/50"
+                    ? "border-emerald-300 bg-emerald-50"
                     : showWrongPick
-                      ? "bg-rose-500/15 ring-rose-400/40"
+                      ? "border-rose-300 bg-rose-50"
                       : selected
-                        ? "bg-white/15 ring-white/30"
-                        : "bg-white/5 ring-white/10 hover:bg-white/10",
+                        ? "border-sky-300 bg-sky-50"
+                        : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50",
                   (answered || submitting) && "cursor-default",
                 )}
               >
@@ -418,7 +408,7 @@ function SummaryScreen({
                       ? "bg-emerald-500 text-white"
                       : showWrongPick
                         ? "bg-rose-500 text-white"
-                        : "bg-white/10 text-white/60",
+                        : "bg-zinc-100 text-zinc-500",
                   )}
                 >
                   {showCorrect ? (
@@ -429,7 +419,7 @@ function SummaryScreen({
                     String.fromCharCode(65 + i)
                   )}
                 </span>
-                <span className="font-semibold leading-relaxed">{opt.text}</span>
+                <span className="font-semibold leading-relaxed text-zinc-700">{opt.text}</span>
               </button>
             );
           })}
@@ -438,14 +428,14 @@ function SummaryScreen({
         {answered && (
           <div
             className={clsx(
-              "mt-4 rounded-2xl px-4 py-3 text-sm leading-relaxed ring-1",
+              "mt-4 rounded-2xl border px-4 py-3 text-sm leading-relaxed",
               quiz.correct
-                ? "bg-emerald-500/10 text-emerald-50/90 ring-emerald-400/25"
-                : "bg-white/5 text-white/80 ring-white/10",
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-sky-100 bg-sky-50 text-zinc-700",
             )}
           >
             <div className="mb-1 font-extrabold">
-              {quiz.correct ? `✅ 答对了，+5 XP` : "再看一眼故事里的这一步"}
+              {quiz.correct ? "✅ 答对了，+5 XP" : "再看一眼故事里的这一步"}
             </div>
             {story.quiz.explanation}
 
@@ -454,7 +444,7 @@ function SummaryScreen({
             <button
               type="button"
               onClick={() => onJumpToPanel(story.quiz.evidencePanel - 1)}
-              className="mt-3 inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/80 transition-colors hover:bg-white/20"
+              className="mt-3 inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-bold text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
             >
               ← 回到第 {story.quiz.evidencePanel} 格看看
             </button>
@@ -465,7 +455,7 @@ function SummaryScreen({
       <button
         type="button"
         onClick={onExit}
-        className="w-full rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold text-white/85 backdrop-blur-md hover:bg-white/15 transition-colors"
+        className="w-full rounded-2xl bg-zinc-100 px-4 py-3 text-sm font-bold text-zinc-600 transition-colors hover:bg-zinc-200 hover:text-zinc-900"
       >
         返回漫画列表
       </button>
