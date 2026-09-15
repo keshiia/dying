@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button'
 import Tag from '@/components/ui/Tag'
 import ChallengeModal from '@/components/student/ChallengeModal'
 import { apiFetch, errorMessage } from '@/utils/api'
-import { useToast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/toastContext'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import type { LearningUnit, ReviewLevel, StudentTask } from '@/types'
 

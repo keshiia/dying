@@ -25,13 +25,18 @@ export default function BannerCarousel({ slides, interval = 5000, rounded = '3xl
   const timerRef = useRef<number>(0)
 
   // --- positioning: ONLY via this function, React never touches transform ---
-  function applyTransform(idx: number, animate = true) {
-    const el = trackRef.current
-    if (!el) return
-    const pct = slides.length > 1 ? (idx * 100) / slides.length : 0
-    el.style.transition = animate ? TRANSITION : 'none'
-    el.style.transform = `translateX(-${pct}%)`
-  }
+  // 用 useCallback 稳住：它只依赖 slides.length 和 ref，稳定之后下面几处依赖
+  // 数组才写得进去 —— 否则每次渲染都是新函数，加进依赖反而会反复触发。
+  const applyTransform = useCallback(
+    (idx: number, animate = true) => {
+      const el = trackRef.current
+      if (!el) return
+      const pct = slides.length > 1 ? (idx * 100) / slides.length : 0
+      el.style.transition = animate ? TRANSITION : 'none'
+      el.style.transform = `translateX(-${pct}%)`
+    },
+    [slides.length],
+  )
 
   const slideTo = useCallback(
     (idx: number, animate = true) => {
@@ -41,13 +46,13 @@ export default function BannerCarousel({ slides, interval = 5000, rounded = '3xl
       setCurrent(next)
       applyTransform(next, animate)
     },
-    [slides.length],
+    [slides.length, applyTransform],
   )
 
   // initial position
   useEffect(() => {
     if (slides.length > 1) applyTransform(0, false)
-  }, [slides.length])
+  }, [slides.length, applyTransform])
 
   // auto-play
   useEffect(() => {
@@ -75,7 +80,7 @@ export default function BannerCarousel({ slides, interval = 5000, rounded = '3xl
     if (!el) return
     el.style.transition = 'none'
     el.style.transform = `translateX(calc(-${(currentRef.current * 100) / slides.length}% + ${diff}px))`
-  }, [])
+  }, [slides.length])
 
   const onPointerUp = useCallback(() => {
     const d = dragRef.current
@@ -86,7 +91,7 @@ export default function BannerCarousel({ slides, interval = 5000, rounded = '3xl
     if (diff < -50) slideTo(currentRef.current + 1)
     else if (diff > 50) slideTo(currentRef.current - 1)
     else applyTransform(currentRef.current)
-  }, [slideTo])
+  }, [slideTo, applyTransform])
 
   if (slides.length === 0) return null
   const single = slides.length === 1

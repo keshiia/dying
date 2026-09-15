@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Check, ChevronLeft, ChevronRight, Lightbulb, Scale, X } from "lucide-react";
 import { clsx } from "clsx";
-import { useToast } from "@/components/ui/Toast";
+import { useToast } from "@/components/ui/toastContext";
 import { apiFetch, errorMessage } from "@/utils/api";
 import { useAuthStore } from "@/stores/auth";
 import { getComicById, type ComicStory } from "@/data/comics";

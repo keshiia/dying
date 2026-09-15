@@ -1,23 +1,20 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { clsx } from 'clsx'
 import {
   ArrowLeft,
-  ArrowRight,
   CheckCircle2,
   ChevronRight,
   Gavel,
   Search,
   Scale,
-  Sparkles,
   Trophy,
-  XCircle,
   Zap,
 } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import ProgressBar from '@/components/ui/ProgressBar'
 import Tag from '@/components/ui/Tag'
-import { courtCases, type CourtCaseData, type SceneHotspot, type EvidenceItem, type DebateStage } from '@/data/courtCases'
+import { courtCases, type CourtCaseData, type SceneHotspot, type EvidenceItem } from '@/data/courtCases'
 import InterventionCard, { type Intervention } from '@/components/student/InterventionCard'
 import { clueKind, clipLabel, MISSED_LIMIT, type GameDetail } from '@/utils/gameDetail'
 import { apiFetch, errorMessage } from '@/utils/api'

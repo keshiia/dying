@@ -1,25 +1,12 @@
-import { useEffect, useState, useCallback, createContext, useContext, type ReactNode } from 'react'
+import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import { clsx } from 'clsx'
 import { CheckCircle2, Info, AlertTriangle, X } from 'lucide-react'
-
-// error 原先缺失 —— 最需要提示的失败场景在这个体系里没有位置，
-// 各处只能自己造内联的红色卡片。
-type ToastType = 'success' | 'info' | 'warning' | 'error'
+import { ToastContext, type ToastType } from './toastContext'
 
 type Toast = {
   id: number
   type: ToastType
   message: string
-}
-
-type ToastCtx = {
-  toast: (message: string, type?: ToastType) => void
-}
-
-const Ctx = createContext<ToastCtx>({ toast: () => {} })
-
-export function useToast() {
-  return useContext(Ctx)
 }
 
 const iconMap: Record<ToastType, typeof CheckCircle2> = {
@@ -102,7 +89,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <Ctx.Provider value={{ toast }}>
+    <ToastContext.Provider value={{ toast }}>
       {children}
       <div
         role="status"
@@ -115,6 +102,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           </div>
         ))}
       </div>
-    </Ctx.Provider>
+    </ToastContext.Provider>
   )
 }

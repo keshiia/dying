@@ -21,7 +21,7 @@ type Block =
 const UL = /^[-*]\s+(.*)$/
 const OL = /^\d+[.)]\s+(.*)$/
 
-export function parseSimpleMarkdown(source: string): Block[] {
+function parseSimpleMarkdown(source: string): Block[] {
   const blocks: Block[] = []
   let list: { kind: 'ul' | 'ol'; items: string[] } | null = null
   let para: string[] = []

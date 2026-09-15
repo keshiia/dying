@@ -1,15 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import {
-  BookOpen,
-  CircleHelp,
-  CheckCircle2,
-  ChevronRight,
-  Flame,
-  RotateCcw,
-  Scale,
-  Trophy,
-  Sparkles,
-} from "lucide-react";
+import { CheckCircle2, Flame, Scale, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { clsx } from "clsx";
 import Card from "@/components/ui/Card";
@@ -203,22 +193,6 @@ export default function Learn() {
     void load();
     void loadProfile();
   }, []);
-
-  const totalLevels = useMemo(
-    () => units.reduce((acc, u) => acc + u.levels.length, 0),
-    [units],
-  );
-
-  const completedLevels = useMemo(
-    () =>
-      units.reduce(
-        (acc, u) =>
-          acc +
-          u.levels.filter((l) => l.progress?.status === "COMPLETED").length,
-        0,
-      ),
-    [units],
-  );
 
   const categories = useMemo(() => {
     const set = new Set(units.map((u) => u.category));

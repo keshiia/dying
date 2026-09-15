@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowUp, Bot, User, ChevronLeft, RefreshCw, BookOpen, MessageSquare, Plus, Trash2, LogOut, ShieldAlert } from 'lucide-react'
 import { clsx } from 'clsx'
@@ -77,7 +77,7 @@ function saveSessions(sessions: Session[]) {
 // ── Component ──
 export default function Assistant() {
   const navigate = useNavigate()
-  const { user, clear } = useAuthStore()
+  const { clear } = useAuthStore()
   const [sessions, setSessions] = useState<Session[]>(() => loadSessions())
   // 待确认删除的会话（删除不可撤销，先确认再执行）
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string; count: number } | null>(null)
@@ -90,7 +90,9 @@ export default function Assistant() {
 
   // Resolve current session
   const activeSession = sessions.find((s) => s.id === activeId)
-  const messages = activeSession?.messages ?? []
+  // 必须 memo：`?? []` 每次渲染都是新数组，会让下面依赖 [messages] 的自动滚动
+  // effect 每渲染一次就跑一次（原来就是这样，不是理论问题）。
+  const messages = useMemo(() => activeSession?.messages ?? [], [activeSession])
   const showQuick = messages.length === 0
 
   function upsertSession(id: string, updater: (s: Session) => Session) {
@@ -101,7 +103,9 @@ export default function Assistant() {
     })
   }
 
-  function newSession() {
+  // 用 useCallback 稳住：它被下面的初始化 effect 依赖。函数本身只调用几个 setter
+  // 和模块级的 makeId/saveSessions，没有响应式依赖，空依赖数组是准确的。
+  const newSession = useCallback(() => {
     const id = makeId()
     const session: Session = {
       id,
@@ -117,7 +121,7 @@ export default function Assistant() {
     setActiveId(id)
     setInput('')
     setLoading(false)
-  }
+  }, [])
 
   function switchSession(id: string) {
     setActiveId(id)
@@ -159,7 +163,7 @@ export default function Assistant() {
     if (!activeId && sessions.length === 0) {
       newSession()
     }
-  }, [activeId, sessions.length])
+  }, [activeId, sessions, newSession])
 
   // Auto-scroll
   useEffect(() => {

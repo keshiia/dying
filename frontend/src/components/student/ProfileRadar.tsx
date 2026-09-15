@@ -25,9 +25,9 @@ const TOPIC_COLORS = [
 ]
 
 export default function ProfileRadar({ profile, loading, failed, className }: Props) {
-  const { points, labels, center } = useMemo(() => {
+  const { points, labels } = useMemo(() => {
     if (!profile || profile.topicMasteries.length === 0) {
-      return { points: [], labels: [], center: { x: 120, y: 120 } }
+      return { points: [], labels: [] }
     }
 
     const cx = 120
@@ -60,7 +60,7 @@ export default function ProfileRadar({ profile, loading, failed, className }: Pr
       }
     })
 
-    return { points: pts, labels: lbls, center: { x: cx, y: cy } }
+    return { points: pts, labels: lbls }
   }, [profile])
 
   if (loading) {
