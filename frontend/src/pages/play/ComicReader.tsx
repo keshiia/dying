@@ -265,6 +265,7 @@ export default function ComicReader() {
             quiz={quiz}
             submitting={quizSubmitting}
             onAnswer={answerQuiz}
+            onJumpToPanel={(idx) => setPanel(idx)}
             onExit={exit}
           />
         )}
@@ -312,6 +313,7 @@ function SummaryScreen({
   quiz,
   submitting,
   onAnswer,
+  onJumpToPanel,
   onExit,
 }: {
   story: ComicStory;
@@ -320,6 +322,8 @@ function SummaryScreen({
   quiz: QuizState;
   submitting: boolean;
   onAnswer: (optionId: string) => void;
+  /** 跳回故事里支撑答案的那一格（0 基） */
+  onJumpToPanel: (index: number) => void;
   onExit: () => void;
 }) {
   const answered = quiz.chosen !== null;
@@ -421,6 +425,16 @@ function SummaryScreen({
               {quiz.correct ? `✅ 答对了，+5 XP` : "再看一眼故事里的这一步"}
             </div>
             {story.quiz.explanation}
+
+            {/* 护栏：这道题的答案必须能指回故事里具体一格。
+                答错时先让学生回去看那一步，比直接告诉他答案更有效。 */}
+            <button
+              type="button"
+              onClick={() => onJumpToPanel(story.quiz.evidencePanel - 1)}
+              className="mt-3 inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/80 transition-colors hover:bg-white/20"
+            >
+              ← 回到第 {story.quiz.evidencePanel} 格看看
+            </button>
           </div>
         )}
       </div>
