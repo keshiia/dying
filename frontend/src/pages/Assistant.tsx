@@ -540,7 +540,10 @@ export default function Assistant() {
                   onKeyDown={handleKeyDown}
                   placeholder="描述你的问题或场景…"
                   rows={1}
-                  className="h-12 w-full resize-none rounded-2xl border border-zinc-200/80 bg-white px-4 py-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-200/40 transition-all"
+                  // `block` 不是可有可无：textarea 默认是 inline-block，会坐在文字基线上，
+                  // 外层块容器因此多出约 7px 的下沉空隙。右侧发送按钮用 items-end 对齐的
+                  // 是那个被撑高的容器，于是比输入框低 7px —— 看起来就是「没对齐」。
+                  className="block h-12 w-full resize-none rounded-2xl border border-zinc-200/80 bg-white px-4 py-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-200/40 transition-all"
                   style={{ scrollbarWidth: 'none' }}
                   onInput={(e) => {
                     const el = e.currentTarget

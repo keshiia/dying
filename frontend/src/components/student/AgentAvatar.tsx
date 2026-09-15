@@ -29,13 +29,14 @@ export default function AgentAvatar({
   return (
     <span
       className={clsx(
+        // 白底 + 细描边。做成深色实心块会在浅色页面上压出一个很重的黑点，
+        // 而且与应用其余部分的浅色组件不是一套语言。
         'relative grid shrink-0 place-items-center overflow-hidden',
-        'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-sm',
+        'border border-zinc-200 bg-white text-slate-600 shadow-sm',
         s.box,
         className,
       )}
     >
-      <span className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-white/20" />
       <Bot className={s.icon} strokeWidth={2.2} />
     </span>
   )
