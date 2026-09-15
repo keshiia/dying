@@ -192,23 +192,41 @@ export default function ComicReader() {
   if (!story) return <div className="min-h-screen bg-zinc-950" />;
 
   const current = story.panels[panel];
+  // 小结屏没有当前格，沿用最后一格当环境光，翻过去时背景不跳
+  const backdrop = story.panels[Math.min(panel, totalPanels - 1)]?.image;
 
   return (
     <div
-      // 整屏纯黑会显得像样式没加载。加一层极淡的中心辉光把视线收拢到画面上，
-      // 同时保持「暗房」的聚焦感 —— 这是阅读器与浅色工作台分工的理由：
-      // 漫画图在深底上才跳出来。
-      className="flex h-[100dvh] flex-col bg-zinc-950 bg-[radial-gradient(ellipse_at_50%_32%,rgba(56,189,248,0.10),transparent_62%)] text-white"
+      // 底色仍然是深的 —— 漫画图在深底上才跳出来，这是阅读器与浅色工作台分工的理由。
+      // 但**纯黑不行**：画面是暖橙的，四周冷黑，两者打架，看起来像没做完。
+      // 解法是给整页铺一层「环境光」（下面那张放大模糊的图），四周的颜色跟着画面走。
+      // 这一格是暖阳，周围就是暖光；换一格偏冷的，周围自动变冷。
+      className="relative flex h-[100dvh] flex-col overflow-hidden bg-zinc-950 text-white"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
+      {/* 环境光 */}
+      {backdrop && (
+        <>
+          <img
+            key={backdrop}
+            src={backdrop}
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-55 blur-3xl"
+          />
+          {/* 压暗 + 中心留亮，保证文字与画面都有对比 */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,rgba(9,9,11,0.28),rgba(9,9,11,0.82))]" />
+        </>
+      )}
+
       {/* 顶栏 */}
-      <header className="shrink-0 flex items-center gap-3 px-4 py-3">
+      <header className="relative z-10 flex shrink-0 items-center gap-3 px-4 py-3">
         <button
           type="button"
           onClick={exit}
           aria-label="返回漫画列表"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -224,17 +242,17 @@ export default function ComicReader() {
             />
           </div>
         </div>
-        <span className="shrink-0 text-xs font-semibold text-white/50">
+        <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-white/70 backdrop-blur">
           {onSummary ? "小结" : `${panel + 1} / ${totalPanels}`}
         </span>
       </header>
 
       {/* 舞台 */}
-      <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+      <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         {!onSummary && current ? (
           <figure className="mx-auto flex h-full max-w-[970px] flex-col justify-center gap-3">
             <div
-              className="relative w-full overflow-hidden rounded-2xl bg-black shadow-2xl"
+              className="relative w-full overflow-hidden rounded-2xl bg-black ring-1 ring-white/15 shadow-[0_28px_70px_rgba(0,0,0,0.6)]"
               style={{ aspectRatio: FRAME_ASPECT, maxWidth: FRAME_MAX_W, margin: "0 auto" }}
             >
               {/* 原始比例 + contain：改造前是 aspect-[4/3] + cover，每张图被裁掉约 7.6% 宽度 */}
@@ -255,7 +273,7 @@ export default function ComicReader() {
               )}
             </div>
             {current.caption && (
-              <figcaption className="mx-auto max-w-[970px] rounded-2xl bg-white/5 px-4 py-3 text-sm font-semibold text-white/85 ring-1 ring-white/10">
+              <figcaption className="mx-auto w-full max-w-[970px] rounded-2xl bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white/90 ring-1 ring-white/10 backdrop-blur">
                 {current.caption}
               </figcaption>
             )}
@@ -275,14 +293,16 @@ export default function ComicReader() {
       </main>
 
       {/* 底栏 */}
-      <footer className="shrink-0 flex items-center justify-between gap-3 px-4 py-3">
+      <footer className="relative z-10 flex shrink-0 items-center justify-between gap-3 px-4 py-3">
         <button
           type="button"
           onClick={goPrev}
           disabled={panel === 0}
           className={clsx(
             "flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-colors",
-            panel === 0 ? "text-white/25" : "text-white/85 hover:bg-white/10",
+            panel === 0
+              ? "text-white/20"
+              : "bg-white/10 text-white/90 backdrop-blur hover:bg-white/20",
           )}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -294,10 +314,10 @@ export default function ComicReader() {
           onClick={goNext}
           disabled={onSummary}
           className={clsx(
-            "flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-colors",
+            "flex items-center gap-1 rounded-full px-5 py-2 text-sm font-bold transition-all",
             onSummary
-              ? "text-white/25"
-              : "bg-[var(--p-primary)] text-white hover:opacity-90 shadow-lg",
+              ? "text-white/20"
+              : "bg-[var(--p-primary)] text-white shadow-lg shadow-black/30 hover:opacity-90",
           )}
         >
           {panel === totalPanels - 1 ? "看小结" : "下一页"}
@@ -333,7 +353,7 @@ function SummaryScreen({
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-4 py-2">
       {readDone && (
-        <div className="flex items-center gap-2.5 rounded-2xl bg-amber-500/15 px-4 py-3 ring-1 ring-amber-400/30">
+        <div className="flex items-center gap-2.5 rounded-2xl bg-amber-500/15 px-4 py-3 ring-1 ring-amber-400/30 backdrop-blur-md">
           <span className="text-2xl">🎉</span>
           <div>
             <div className="text-sm font-extrabold text-amber-200">
@@ -344,7 +364,7 @@ function SummaryScreen({
         </div>
       )}
 
-      <div className="rounded-2xl bg-emerald-500/10 p-5 ring-1 ring-emerald-400/25">
+      <div className="rounded-2xl bg-emerald-500/10 p-5 ring-1 ring-emerald-400/25 backdrop-blur-md">
         <div className="flex items-center gap-2 text-base font-extrabold text-emerald-200">
           <Lightbulb className="h-5 w-5" />
           法律小课堂
@@ -354,7 +374,7 @@ function SummaryScreen({
         </div>
       </div>
 
-      <div className="rounded-2xl bg-sky-500/10 p-5 ring-1 ring-sky-400/25">
+      <div className="rounded-2xl bg-sky-500/10 p-5 ring-1 ring-sky-400/25 backdrop-blur-md">
         <div className="flex items-center gap-2 text-base font-extrabold text-sky-200">
           <Scale className="h-5 w-5" />
           相关法律
@@ -365,7 +385,7 @@ function SummaryScreen({
       </div>
 
       {/* 总结题 —— 从故事上升到一般规则，答案必须能指回具体某一格 */}
-      <div className="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+      <div className="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 backdrop-blur-md">
         <div className="text-xs font-bold uppercase tracking-wide text-white/50">总结一下</div>
         <div className="mt-2 text-base font-extrabold">{story.quiz.question}</div>
         <div className="mt-4 grid gap-2">
@@ -445,7 +465,7 @@ function SummaryScreen({
       <button
         type="button"
         onClick={onExit}
-        className="w-full rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold text-white/85 hover:bg-white/15 transition-colors"
+        className="w-full rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold text-white/85 backdrop-blur-md hover:bg-white/15 transition-colors"
       >
         返回漫画列表
       </button>
