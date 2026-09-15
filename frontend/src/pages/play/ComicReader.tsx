@@ -195,7 +195,10 @@ export default function ComicReader() {
 
   return (
     <div
-      className="flex h-[100dvh] flex-col bg-zinc-950 text-white"
+      // 整屏纯黑会显得像样式没加载。加一层极淡的中心辉光把视线收拢到画面上，
+      // 同时保持「暗房」的聚焦感 —— 这是阅读器与浅色工作台分工的理由：
+      // 漫画图在深底上才跳出来。
+      className="flex h-[100dvh] flex-col bg-zinc-950 bg-[radial-gradient(ellipse_at_50%_32%,rgba(56,189,248,0.10),transparent_62%)] text-white"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >

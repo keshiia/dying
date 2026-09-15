@@ -26,15 +26,20 @@ import { clueKind, clipLabel, MISSED_LIMIT, type GameDetail } from '@/utils/game
 /**
  * 案件侦查工作台。
  *
- * 挂在 `/play/detective/:caseId`，在 AppShell 之外 —— 侧边栏和顶栏杵在旁边的话
- * 「沉浸」是假的：学生还是觉得自己在网页里。
+ * 挂在 `/play/detective/:caseId`，在 AppShell 之外 —— 去掉侧边栏和顶栏是为了
+ * 让「进入案件」成为一个动作，而不是在网页里翻页。
+ *
+ * 视觉走**浅色案件板**：白卡片 + 天蓝主色 + 琥珀色点缀，与应用其余部分同一套
+ * 语言。此前这里是深色的，那是我的误判 —— 学生端别处全是浅色，只有工作台是黑的，
+ * 读起来像没做完；而且深底把案件数据里自带的场景配色（每个场景一个浅色渐变）
+ * 整个盖掉了。
  *
  * 三个刻意的结构决定：
  *
  * 1. **线索不再弹窗。** 点热点 → 卡片进右侧证据墙并永久留下。原来「点热点 →
  *    弹出居中模态 → 关掉 → 什么都没有」，线索是一次性的，侦查的累积感全丢了。
  * 2. **询问证人不再吃掉整个画面。** 中间栏切成对话视图，证据墙留在右边 ——
- *    学生可以一边听证词一边对照已经收集到的线索。原来是整块板子被替换掉。
+ *    学生可以一边听证词一边对照已经收集到的线索。
  * 3. **过程内不给提示。** 智能体只在结算时出现。一旦有提示可等，学生就不推理了，
  *    直接等喂答案 —— 那会污染「推理答题」这条能力轴的数据源。
  */
@@ -117,6 +122,37 @@ function buildDetail(
     ].slice(0, MISSED_LIMIT),
     durationMs,
   }
+}
+
+// ── 案件板共用的壳 ──────────────────────────────────
+
+/** 白卡片。与应用其余部分的 Card 视觉一致 */
+function Panel({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <div
+      className={clsx(
+        'rounded-3xl border border-zinc-100 bg-white p-5 shadow-sm',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
+/**
+ * 简报 / 推理 / 结算共用的滚动壳。
+ *
+ * 外层滚动、内层普通文档流。把两者合到一起（`grid h-full overflow-y-auto`）
+ * 会让 grid 容器拿到一个确定高度，行高就要和这个高度博弈：内容超出时行被压到
+ * 最小尺寸，展开的卡片会把内容溢出到下一行上面。
+ */
+function ScrollPane({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto grid max-w-2xl gap-4 px-4 pb-6">{children}</div>
+    </div>
+  )
 }
 
 export default function DetectiveWorkbench() {
@@ -247,10 +283,13 @@ export default function DetectiveWorkbench() {
     setPhase('result')
   }
 
-  if (!theCase) return <div className="min-h-screen bg-zinc-950" />
+  if (!theCase) return <div className="min-h-screen" />
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-zinc-950 text-white">
+    // 底色用中性灰而不是继承应用的蓝色渐变：场景框本身是各种浅色渐变
+    // （美术教室是暖橙、法庭的校园案是浅蓝），压在同样浅的蓝页面上会糊成一片。
+    // 中性底让「白卡片 / 浅色场景 / 页面」三层立刻分开。
+    <div className="flex h-[100dvh] flex-col bg-zinc-50 text-zinc-900">
       <TopBar
         theCase={theCase}
         found={state.foundClues.length}
@@ -263,13 +302,17 @@ export default function DetectiveWorkbench() {
 
       <main className="min-h-0 flex-1 overflow-hidden">
         {phase === 'briefing' && (
-          <BriefingView theCase={theCase} totalClues={totalClues} onStart={() => setPhase('investigation')} />
+          <BriefingView
+            theCase={theCase}
+            totalClues={totalClues}
+            onStart={() => setPhase('investigation')}
+          />
         )}
 
         {phase === 'investigation' && activeScene && (
           <div className="flex h-full min-h-0 gap-3 px-3 pb-3">
             {/* 左：案卷（桌面常驻 / 移动端抽屉） */}
-            <aside className="hidden w-60 shrink-0 flex-col overflow-y-auto rounded-3xl bg-white/[0.03] ring-1 ring-white/10 lg:flex">
+            <aside className="hidden w-60 shrink-0 flex-col overflow-y-auto rounded-3xl border border-zinc-100 bg-white shadow-sm lg:flex">
               <Dossier
                 theCase={theCase}
                 activeSceneId={activeSceneId}
@@ -293,24 +336,32 @@ export default function DetectiveWorkbench() {
                     onBack={() => setCurrentNpc(null)}
                   />
                 ) : (
-                  <SceneMap
-                    sceneId={activeScene.id}
-                    clues={activeScene.hotspots}
-                    foundClues={state.foundClues}
-                    npcs={sceneNpcs}
-                    interviewedNpcs={state.interviewedNpcs}
-                    secretsRevealed={state.npcSecretsRevealed}
-                    currentNpcId={currentNpc}
-                    locked={false}
-                    onFindClue={(hs) => findClue(hs.id)}
-                    onTalkToNpc={talkToNpc}
-                  />
+                  <div className="grid gap-3">
+                    <SceneMap
+                      sceneId={activeScene.id}
+                      bgColor={activeScene.bgColor}
+                      clues={activeScene.hotspots}
+                      foundClues={state.foundClues}
+                      npcs={sceneNpcs}
+                      interviewedNpcs={state.interviewedNpcs}
+                      secretsRevealed={state.npcSecretsRevealed}
+                      currentNpcId={currentNpc}
+                      locked={false}
+                      onFindClue={(hs) => findClue(hs.id)}
+                      onTalkToNpc={talkToNpc}
+                    />
+                    {/* 移动端把证据墙铺在地图下面。桌面端它在右栏常驻，
+                        手机上如果也塞进抽屉，地图下方会留一大片空白。 */}
+                    <div className="rounded-3xl border border-zinc-100 bg-white p-2 shadow-sm lg:hidden">
+                      <EvidenceWall scenes={theCase.scenes} foundClues={state.foundClues} />
+                    </div>
+                  </div>
                 )}
               </div>
             </section>
 
             {/* 右：证据墙（桌面常驻 / 移动端抽屉） */}
-            <aside className="hidden w-80 shrink-0 flex-col rounded-3xl bg-white/[0.03] p-2 ring-1 ring-white/10 lg:flex">
+            <aside className="hidden w-80 shrink-0 flex-col rounded-3xl border border-zinc-100 bg-white p-2 shadow-sm lg:flex">
               <EvidenceWall scenes={theCase.scenes} foundClues={state.foundClues} />
             </aside>
           </div>
@@ -331,7 +382,7 @@ export default function DetectiveWorkbench() {
             {/* 推理时把证据墙留在旁边：让学生对着自己收集到的线索作答，
                 而不是凭记忆。评分口径完全不变 —— REASONING 仍是这四题的对错，
                 改动那条轴会牵动诊断引擎的输入。 */}
-            <aside className="hidden w-80 shrink-0 flex-col rounded-3xl bg-white/[0.03] p-2 ring-1 ring-white/10 lg:flex">
+            <aside className="hidden w-80 shrink-0 flex-col rounded-3xl border border-zinc-100 bg-white p-2 shadow-sm lg:flex">
               <EvidenceWall scenes={theCase.scenes} foundClues={state.foundClues} />
             </aside>
           </div>
@@ -360,17 +411,15 @@ export default function DetectiveWorkbench() {
         )}
       </main>
 
-      {/* 底栏：进入推理。
-          还没解锁时不用 disabled 的主按钮（灰字压在按钮底色上几乎看不清），
-          改成一条中性提示 —— 也避免「一个按不动的按钮里面写着原因」这种别扭。 */}
+      {/* 底栏：进入推理 */}
       {phase === 'investigation' && (
-        <footer className="shrink-0 border-t border-white/10 px-3 py-3">
+        <footer className="shrink-0 border-t border-zinc-200/70 bg-white/80 px-3 py-3 backdrop-blur">
           {canDeduce ? (
             <Button onClick={() => setPhase('deduction')} className="w-full" size="lg">
               🧩 进入推理 — 还原真相！
             </Button>
           ) : (
-            <div className="rounded-2xl bg-white/[0.04] py-3 text-center text-sm font-bold text-white/50 ring-1 ring-white/10">
+            <div className="rounded-2xl bg-zinc-50 py-3 text-center text-sm font-bold text-zinc-400 ring-1 ring-zinc-200">
               还需找到 {theCase.minCluesToUnlock - state.foundClues.length} 条线索才能推理
             </div>
           )}
@@ -379,27 +428,25 @@ export default function DetectiveWorkbench() {
 
       {/* 移动端：案卷抽屉 */}
       <Sheet open={dossierOpen} title="案卷" onClose={() => setDossierOpen(false)}>
-        <div className="rounded-2xl bg-zinc-900 p-3 text-white">
-          <Dossier
-            theCase={theCase}
-            activeSceneId={activeSceneId}
-            state={state}
-            onPickScene={(id) => {
-              setActiveSceneId(id)
-              setCurrentNpc(null)
-              setDossierOpen(false)
-            }}
-            onPickNpc={(id) => {
-              talkToNpc(id)
-              setDossierOpen(false)
-            }}
-          />
-        </div>
+        <Dossier
+          theCase={theCase}
+          activeSceneId={activeSceneId}
+          state={state}
+          onPickScene={(id) => {
+            setActiveSceneId(id)
+            setCurrentNpc(null)
+            setDossierOpen(false)
+          }}
+          onPickNpc={(id) => {
+            talkToNpc(id)
+            setDossierOpen(false)
+          }}
+        />
       </Sheet>
 
       {/* 移动端：证据墙抽屉 */}
       <Sheet open={wallOpen} title="证据墙" onClose={() => setWallOpen(false)}>
-        <div className="rounded-2xl bg-zinc-900 p-3 text-white">
+        <div className="min-h-[50vh]">
           <EvidenceWall scenes={theCase.scenes} foundClues={state.foundClues} />
         </div>
       </Sheet>
@@ -428,12 +475,12 @@ function TopBar({
 }) {
   const pct = total === 0 ? 0 : (found / total) * 100
   return (
-    <header className="flex shrink-0 items-center gap-3 px-3 py-3">
+    <header className="flex shrink-0 items-center gap-3 border-b border-zinc-200/70 bg-white/85 px-3 py-3 backdrop-blur">
       <button
         type="button"
         onClick={onExit}
         aria-label="退出侦查"
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/20"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-800"
       >
         <ArrowLeft className="h-4 w-4" />
       </button>
@@ -442,13 +489,13 @@ function TopBar({
           {theCase.emoji} {theCase.title}
         </div>
         <div className="mt-1.5 flex items-center gap-2">
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/15">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200">
             <div
               className="h-full rounded-full bg-[var(--p-primary)] transition-all duration-300"
               style={{ width: `${pct}%` }}
             />
           </div>
-          <span className="shrink-0 text-[11px] font-bold text-white/50">
+          <span className="shrink-0 text-[11px] font-bold text-zinc-500">
             线索 {found}/{total}
           </span>
         </div>
@@ -458,7 +505,7 @@ function TopBar({
       <button
         type="button"
         onClick={onOpenDossier}
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/20 lg:hidden"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 lg:hidden"
         aria-label="打开案卷"
       >
         <BookOpen className="h-4 w-4" />
@@ -466,17 +513,17 @@ function TopBar({
       <button
         type="button"
         onClick={onOpenWall}
-        className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/20 lg:hidden"
+        className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 lg:hidden"
         aria-label="打开证据墙"
       >
         <Search className="h-4 w-4" />
-        <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-sky-500 px-1 text-[10px] font-bold">
+        <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-sky-500 px-1 text-[10px] font-bold text-white">
           {found}
         </span>
       </button>
 
-      <div className="hidden shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/70 lg:flex">
-        <Trophy className="h-3.5 w-3.5 text-amber-300" />
+      <div className="hidden shrink-0 items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-600 lg:flex">
+        <Trophy className="h-3.5 w-3.5 text-amber-500" />
         {xp} XP
       </div>
     </header>
@@ -501,7 +548,7 @@ function Dossier({
   return (
     <div className="grid gap-4 p-3">
       <div>
-        <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-white/35">
+        <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-zinc-400">
           场景
         </div>
         <div className="grid gap-1">
@@ -515,14 +562,16 @@ function Dossier({
                 onClick={() => onPickScene(s.id)}
                 className={clsx(
                   'flex items-center gap-2 rounded-2xl px-3 py-2 text-left text-xs font-bold transition-colors',
-                  active ? 'bg-sky-500 text-white' : 'text-white/70 hover:bg-white/10',
+                  active
+                    ? 'bg-gradient-to-r from-[var(--p-primary)] to-[var(--p-primary-dark)] text-white shadow-sm'
+                    : 'text-zinc-600 hover:bg-zinc-100',
                 )}
               >
                 <span className="truncate">{s.name}</span>
                 <span
                   className={clsx(
                     'ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px]',
-                    active ? 'bg-white/25' : 'bg-white/10 text-white/50',
+                    active ? 'bg-white/25' : 'bg-zinc-100 text-zinc-500',
                   )}
                 >
                   {foundHere}/{s.hotspots.length}
@@ -534,7 +583,7 @@ function Dossier({
       </div>
 
       <div>
-        <div className="mb-2 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-white/35">
+        <div className="mb-2 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-zinc-400">
           <Users className="h-3 w-3" />
           相关人物
         </div>
@@ -547,7 +596,7 @@ function Dossier({
                 key={n.id}
                 type="button"
                 onClick={() => onPickNpc(n.id)}
-                className="flex items-center gap-2 rounded-2xl px-3 py-2 text-left text-xs font-bold text-white/70 transition-colors hover:bg-white/10"
+                className="flex items-center gap-2 rounded-2xl px-3 py-2 text-left text-xs font-bold text-zinc-600 transition-colors hover:bg-zinc-100"
               >
                 <span className="text-base">{n.emoji}</span>
                 <span className="min-w-0 truncate">{n.name}</span>
@@ -555,7 +604,7 @@ function Dossier({
                   {secret ? (
                     <span title="已问出关键信息">🤫</span>
                   ) : talked ? (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-sky-400" />
+                    <CheckCircle2 className="h-3.5 w-3.5 text-sky-500" />
                   ) : null}
                 </span>
               </button>
@@ -564,9 +613,11 @@ function Dossier({
         </div>
       </div>
 
-      <div className="rounded-2xl bg-sky-500/10 p-3 ring-1 ring-sky-400/25">
-        <div className="text-[11px] font-extrabold text-sky-300">🎯 侦查目标</div>
-        <div className="mt-1.5 text-xs leading-relaxed text-white/75">{theCase.intro.briefing}</div>
+      <div className="rounded-2xl border border-sky-100 bg-sky-50 p-3">
+        <div className="text-[11px] font-extrabold text-sky-700">🎯 侦查目标</div>
+        <div className="mt-1.5 text-xs leading-relaxed text-sky-900/80">
+          {theCase.intro.briefing}
+        </div>
       </div>
     </div>
   )
@@ -596,40 +647,40 @@ function NpcDialogue({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-3xl bg-white/[0.03] ring-1 ring-white/10">
-      <div className="flex shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3">
-        <span className="grid h-11 w-11 place-items-center rounded-full bg-slate-100 text-xl">
+    <div className="flex h-full min-h-0 flex-col rounded-3xl border border-zinc-100 bg-white shadow-sm">
+      <div className="flex shrink-0 items-center gap-3 border-b border-zinc-100 px-4 py-3">
+        <span className="grid h-11 w-11 place-items-center rounded-full bg-sky-50 text-xl ring-1 ring-sky-100">
           {npc.emoji}
         </span>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-extrabold">{npc.name}</div>
-          <div className="truncate text-xs text-white/50">{npc.role}</div>
+          <div className="truncate text-sm font-extrabold text-zinc-900">{npc.name}</div>
+          <div className="truncate text-xs text-zinc-500">{npc.role}</div>
         </div>
         <button
           type="button"
           onClick={onBack}
           aria-label="回到现场"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/20"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
-        <div className="rounded-2xl bg-white/[0.06] px-4 py-3 text-sm leading-relaxed text-white/80">
+        <div className="rounded-2xl bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 ring-1 ring-zinc-100">
           💬 “{npc.dialogue}”
         </div>
 
         {!activeResponse && (
           <div className="grid gap-2">
-            <div className="text-[11px] font-bold uppercase tracking-wide text-white/40">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">
               选择如何询问
             </div>
             {!asked.has('secret') && !secretRevealed && (
               <button
                 type="button"
                 onClick={() => ask('secret', true)}
-                className="rounded-2xl border border-sky-400/40 bg-sky-500/10 px-4 py-3 text-left text-sm font-semibold text-sky-100 transition-colors hover:bg-sky-500/20"
+                className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-left text-sm font-semibold text-sky-900 transition-colors hover:border-sky-300 hover:bg-sky-100"
               >
                 🔍 {npc.triggerQuestion}
               </button>
@@ -642,7 +693,7 @@ function NpcDialogue({
                   key={key}
                   type="button"
                   onClick={() => ask(key, false)}
-                  className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold text-white/80 transition-colors hover:bg-white/10"
+                  className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
                 >
                   💬 {oq.question}
                 </button>
@@ -653,8 +704,8 @@ function NpcDialogue({
 
         {activeResponse && (
           <div className="grid gap-3">
-            <div className="rounded-2xl bg-sky-500/10 px-4 py-3 text-sm leading-relaxed text-white/85 ring-1 ring-sky-400/25">
-              <div className="mb-1 font-bold">
+            <div className="rounded-2xl bg-sky-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 ring-1 ring-sky-100">
+              <div className="mb-1 font-bold text-sky-800">
                 {activeResponse === 'secret' ? '🤫 他透露了一个秘密：' : '💬 回答：'}
               </div>
               {activeResponse === 'secret'
@@ -684,7 +735,7 @@ function BriefingView({
 }) {
   return (
     <ScrollPane>
-      <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-5">
+      <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-5 text-white shadow-lg shadow-sky-100">
         <div className="flex items-center gap-3">
           <span className="text-4xl">{theCase.emoji}</span>
           <div>
@@ -694,16 +745,18 @@ function BriefingView({
         </div>
       </div>
 
-      <div className="grid gap-3 rounded-3xl bg-white/[0.03] p-5 ring-1 ring-white/10">
-        {theCase.intro.narrative.map((p, i) => (
-          <p key={i} className="text-sm leading-relaxed text-white/75">
-            {p}
-          </p>
-        ))}
-        <div className="rounded-2xl bg-sky-500/10 px-4 py-3 text-sm font-semibold text-sky-100 ring-1 ring-sky-400/25">
-          🎯 {theCase.intro.briefing}
+      <Panel>
+        <div className="grid gap-3">
+          {theCase.intro.narrative.map((p, i) => (
+            <p key={i} className="text-sm leading-relaxed text-zinc-600">
+              {p}
+            </p>
+          ))}
+          <div className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-900">
+            🎯 {theCase.intro.briefing}
+          </div>
         </div>
-      </div>
+      </Panel>
 
       <div className="grid grid-cols-3 gap-2">
         <Stat value={theCase.scenes.length} label="可调查场景" />
@@ -718,26 +771,11 @@ function BriefingView({
   )
 }
 
-/**
- * 简报 / 推理 / 结算三个整页共用的滚动壳。
- *
- * 注意是**外层滚动、内层 grid**。把两者合到一起（`grid h-full overflow-y-auto`）
- * 会让 grid 容器拿到一个确定高度，行高就要和这个高度分配博弈：内容超出时行被
- * 压到最小尺寸，而展开的卡片会把内容溢出到下一行上面，叠成一团。
- */
-function ScrollPane({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="h-full overflow-y-auto">
-      <div className="mx-auto grid max-w-2xl gap-4 px-4 pb-6">{children}</div>
-    </div>
-  )
-}
-
 function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="rounded-2xl bg-white/[0.03] py-3 text-center ring-1 ring-white/10">
-      <div className="text-lg font-extrabold">{value}</div>
-      <div className="text-[11px] text-white/50">{label}</div>
+    <div className="rounded-2xl border border-zinc-100 bg-white py-3 text-center shadow-sm">
+      <div className="text-lg font-extrabold text-zinc-900">{value}</div>
+      <div className="text-[11px] text-zinc-500">{label}</div>
     </div>
   )
 }
@@ -761,7 +799,7 @@ function DeductionView({
 }) {
   return (
     <ScrollPane>
-      <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] to-[var(--p-primary-dark)] p-5">
+      <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] to-[var(--p-primary-dark)] p-5 text-white shadow-lg shadow-sky-100">
         <div className="flex items-center gap-3">
           <span className="text-3xl">🧩</span>
           <div>
@@ -769,7 +807,7 @@ function DeductionView({
             <div className="text-sm text-white/80">{theCase.deduction.description}</div>
           </div>
         </div>
-        <div className="mt-3 rounded-2xl bg-black/15 px-3.5 py-2.5 text-xs leading-relaxed text-white/85">
+        <div className="mt-3 rounded-2xl bg-white/15 px-3.5 py-2.5 text-xs leading-relaxed text-white/90">
           右边是你收集到的证据墙 —— <span className="font-bold">对着线索作答，别凭记忆</span>。
           <span className="lg:hidden">手机上点顶栏的放大镜图标打开它。</span>
         </div>
@@ -778,8 +816,8 @@ function DeductionView({
       {theCase.deduction.questions.map((q) => {
         const chosen = answers[q.id]
         return (
-          <div key={q.id} className="rounded-3xl bg-white/[0.03] p-5 ring-1 ring-white/10">
-            <div className="mb-3 text-sm font-extrabold text-white/90">{q.question}</div>
+          <Panel key={q.id}>
+            <div className="mb-3 text-sm font-extrabold text-zinc-900">{q.question}</div>
             <div className="grid gap-2">
               {q.options.map((opt, i) => {
                 const selected = chosen === opt.id
@@ -791,14 +829,14 @@ function DeductionView({
                     className={clsx(
                       'flex items-start gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition-colors',
                       selected
-                        ? 'border-sky-400/60 bg-sky-500/15 text-white'
-                        : 'border-white/10 bg-white/[0.03] text-white/80 hover:bg-white/[0.07]',
+                        ? 'border-sky-300 bg-sky-50 text-zinc-900 shadow-sm'
+                        : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50',
                     )}
                   >
                     <span
                       className={clsx(
                         'grid h-6 w-6 shrink-0 place-items-center rounded-lg text-xs font-extrabold',
-                        selected ? 'bg-sky-500 text-white' : 'bg-white/10 text-white/50',
+                        selected ? 'bg-sky-500 text-white' : 'bg-zinc-100 text-zinc-500',
                       )}
                     >
                       {String.fromCharCode(65 + i)}
@@ -809,11 +847,11 @@ function DeductionView({
               })}
             </div>
             {chosen && (
-              <div className="mt-3 rounded-2xl bg-sky-500/10 px-4 py-3 text-xs leading-relaxed text-white/80 ring-1 ring-sky-400/25">
+              <div className="mt-3 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-xs leading-relaxed text-zinc-700">
                 {q.options.find((o) => o.id === chosen)?.explanation}
               </div>
             )}
-          </div>
+          </Panel>
         )
       })}
 
@@ -850,7 +888,7 @@ function ResultView({
   const scoreData = calcScore(state, theCase)
   return (
     <ScrollPane>
-      <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-6 text-center">
+      <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-6 text-center text-white shadow-lg shadow-sky-100">
         <span className="text-5xl">🔍</span>
         <div className="mt-2 text-2xl font-black">案件告破！</div>
         <div className="mt-1 text-base font-bold text-white/80">{theCase.title}</div>
@@ -865,7 +903,7 @@ function ResultView({
       {submitError && (
         <div
           role="alert"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
         >
           <span>成绩未能保存：{submitError}</span>
           <Button size="sm" variant="secondary" onClick={onRetry} disabled={submitting}>
@@ -874,9 +912,9 @@ function ResultView({
         </div>
       )}
 
-      <div className="rounded-3xl bg-white/[0.03] p-5 ring-1 ring-white/10">
-        <div className="mb-1 text-base font-extrabold">📊 侦探评分</div>
-        <div className="mb-4 text-sm text-white/50">
+      <Panel>
+        <div className="mb-1 text-base font-extrabold text-zinc-900">📊 侦探评分</div>
+        <div className="mb-4 text-sm text-zinc-500">
           总分 {scoreData.score}/{scoreData.maxScore}
           {scoreData.score === scoreData.maxScore
             ? ' · 🎉 完美推理！你是名侦探！'
@@ -887,14 +925,14 @@ function ResultView({
         <div className="grid gap-2">
           {scoreData.details.map((d) => (
             <div key={d.label} className="flex items-center gap-3">
-              <span className="w-28 shrink-0 text-xs font-bold text-white/60">{d.label}</span>
+              <span className="w-28 shrink-0 text-xs font-bold text-zinc-600">{d.label}</span>
               <div className="flex-1">
                 <ProgressBar value={(d.earned / Math.max(1, d.max)) * 100} size="sm" color="blue" />
               </div>
               <span
                 className={clsx(
                   'w-12 text-right text-xs font-extrabold',
-                  d.earned === d.max ? 'text-sky-300' : 'text-white/50',
+                  d.earned === d.max ? 'text-sky-600' : 'text-zinc-500',
                 )}
               >
                 {d.earned}/{d.max}
@@ -902,24 +940,24 @@ function ResultView({
             </div>
           ))}
         </div>
-      </div>
+      </Panel>
 
-      <div className="rounded-3xl bg-sky-500/10 p-5 ring-1 ring-sky-400/25">
-        <div className="mb-3 flex items-center gap-2 text-sm font-extrabold text-sky-200">
+      <Panel className="border-sky-100 bg-sky-50">
+        <div className="mb-3 flex items-center gap-2 text-sm font-extrabold text-sky-800">
           <Lightbulb className="h-4 w-4" />
           真相大白
         </div>
-        <div className="text-sm leading-relaxed text-white/80">{theCase.result.summary}</div>
-      </div>
+        <div className="text-sm leading-relaxed text-zinc-700">{theCase.result.summary}</div>
+      </Panel>
 
-      <div className="rounded-3xl bg-white/[0.03] p-5 ring-1 ring-white/10">
-        <div className="whitespace-pre-line text-sm leading-relaxed text-white/70">
+      <Panel>
+        <div className="whitespace-pre-line text-sm leading-relaxed text-zinc-600">
           {theCase.result.fullStory}
         </div>
-      </div>
+      </Panel>
 
       {/* 智能体复盘。放在「真相大白」之后：先读完案子发生了什么，再看自己漏了什么 */}
-      <InterventionCard data={intervention} tone="dark" />
+      <InterventionCard data={intervention} />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Button variant="primary" onClick={onRestart} className="w-full">

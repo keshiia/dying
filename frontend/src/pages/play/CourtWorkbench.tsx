@@ -29,17 +29,17 @@ import { clueKind, clipLabel, MISSED_LIMIT, type GameDetail } from '@/utils/game
 /**
  * 模拟法庭工作台。
  *
- * 挂在 `/play/court/:caseId`，在 AppShell 之外 —— 与案件侦查同一套外壳语言。
+ * 挂在 `/play/court/:caseId`，在 AppShell 之外 —— 与案件侦查同一套外壳语言：
+ * 浅色案件板、白卡片、天蓝主色。
  *
- * 刻意保持不变的部分：**六个阶段内部的交互一律不动**。这是 P1 的边界 ——
- * 法庭的流程（收案→现场调查→法庭调查→法庭辩论→合议裁决→宣判）本身是设计好的，
- * 只换皮不换骨。重做一遍六阶段不会多拿一分，但会让交付晚两周。
+ * 刻意保持不变的部分：**六个阶段内部的交互一律不动**。法庭的流程本身是设计好的，
+ * 只换皮不换骨 —— 重做一遍六阶段不会多拿一分，但会让交付晚两周。
  *
  * 真正改掉的是两件事：
  * 1. **详情不再弹窗。** 原来是自绘的居中模态（连 Esc 和滚动锁都要自己写，
- *    与 ui/Modal 行为不一致）。现在是一个常驻的右栏详情面板 —— 点线索、点证据
- *    「查看详情」都往那里送。学生不必记住自己刚才点开了什么。
- * 2. **结算页的复盘卡是暗色版**，与侦查一致。
+ *    与 ui/Modal 行为不一致）。现在是一个常驻的右栏详情面板。
+ * 2. **现场不再是一个空盒子。** 用案件数据里自带的 `scene.bgColor` 做底色 ——
+ *    这份数据一直都有，此前被深色底盖掉了。
  */
 
 type StepId = 'intro' | 'scene' | 'trial' | 'debate' | 'deliberation' | 'result'
@@ -212,12 +212,12 @@ function buildDetail(
   }
 }
 
-// ── 暗色外壳的共用件 ────────────────────────────────
+// ── 案件板共用的壳 ──────────────────────────────────
 
-/** 暗色卡片。不复用 ui/Card —— 那是浅色组件，改它的类名会波及所有学生页 */
+/** 白卡片。与应用其余部分的 Card 视觉一致 */
 function Panel({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className={clsx('rounded-3xl bg-white/[0.03] p-5 ring-1 ring-white/10', className)}>
+    <div className={clsx('rounded-3xl border border-zinc-100 bg-white p-5 shadow-sm', className)}>
       {children}
     </div>
   )
@@ -236,8 +236,7 @@ function ScrollPane({ children }: { children: React.ReactNode }) {
  * 阶段推进按钮。
  *
  * 未解锁时不用 disabled 的主按钮 —— 灰字压在按钮本身的底色上几乎看不清，
- * 而且「一个按不动的按钮里面写着原因」本身就别扭。换成一条中性提示，
- * 解锁后才是真按钮。
+ * 而且「一个按不动的按钮里面写着原因」本身就别扭。换成一条中性提示。
  */
 function AdvanceButton({
   ready,
@@ -252,7 +251,7 @@ function AdvanceButton({
 }) {
   if (!ready) {
     return (
-      <div className="rounded-2xl bg-white/[0.04] py-3.5 text-center text-sm font-bold text-white/50 ring-1 ring-white/10">
+      <div className="rounded-2xl bg-zinc-50 py-3.5 text-center text-sm font-bold text-zinc-400 ring-1 ring-zinc-200">
         {hint}
       </div>
     )
@@ -277,19 +276,17 @@ function StepIndicator({ currentStep }: { currentStep: StepId }) {
               className={clsx(
                 'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all',
                 isNow
-                  ? 'bg-[var(--p-primary)] text-white'
+                  ? 'bg-gradient-to-r from-[var(--p-primary)] to-[var(--p-primary-dark)] text-white shadow-sm'
                   : isPast
-                    ? 'bg-emerald-500/20 text-emerald-300'
-                    : 'bg-white/[0.06] text-white/35',
+                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                    : 'bg-zinc-100 text-zinc-400',
               )}
             >
               <span className="text-xs">{isPast ? '✅' : s.emoji}</span>
               <span className="hidden sm:inline">{s.label}</span>
             </div>
             {i < STEPS.length - 1 && (
-              <ChevronRight
-                className={clsx('h-3 w-3', isPast ? 'text-emerald-500/60' : 'text-white/20')}
-              />
+              <ChevronRight className={clsx('h-3 w-3', isPast ? 'text-emerald-400' : 'text-zinc-300')} />
             )}
           </div>
         )
@@ -303,10 +300,10 @@ function DetailPanel({ target, onClear }: { target: DetailTarget | null; onClear
   if (!target) {
     return (
       <div className="grid gap-3 p-4">
-        <div className="text-[11px] font-extrabold uppercase tracking-wide text-white/35">
+        <div className="text-[11px] font-extrabold uppercase tracking-wide text-zinc-400">
           案卷详情
         </div>
-        <div className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-xs leading-relaxed text-white/30">
+        <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/70 px-4 py-8 text-center text-xs leading-relaxed text-zinc-400">
           点现场里的线索，
           <br />
           或证据上的「查看详情」，
@@ -324,29 +321,29 @@ function DetailPanel({ target, onClear }: { target: DetailTarget | null; onClear
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 items-start gap-2.5 border-b border-white/10 px-4 py-3">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/10 text-lg">
+      <div className="flex shrink-0 items-start gap-2.5 border-b border-zinc-100 px-4 py-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-sky-50 text-lg ring-1 ring-sky-100">
           {emoji}
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-bold text-white/40">
+          <div className="text-[11px] font-bold text-zinc-400">
             {isHotspot ? '现场线索' : '证据材料'}
           </div>
-          <div className="text-sm font-extrabold text-white/90">{title}</div>
+          <div className="text-sm font-extrabold text-zinc-900">{title}</div>
         </div>
         <button
           type="button"
           onClick={onClear}
           aria-label="关闭详情"
-          className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/20"
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
         >
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <p className="text-sm leading-relaxed text-white/75">{detail}</p>
+        <p className="text-sm leading-relaxed text-zinc-600">{detail}</p>
         {!isHotspot && !(target.data as EvidenceItem).correctAccept && (
-          <div className="mt-3 rounded-2xl bg-amber-500/10 px-3.5 py-3 text-xs leading-relaxed text-amber-100 ring-1 ring-amber-400/25">
+          <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-900">
             ⚠️ 该证据因{(target.data as EvidenceItem).inadmissibleReason}不应被采纳。
           </div>
         )}
@@ -500,7 +497,7 @@ export default function CourtWorkbench() {
     setStartedAt(Date.now())
   }
 
-  if (!theCase) return <div className="min-h-screen bg-zinc-950" />
+  if (!theCase) return <div className="min-h-screen" />
 
   const allHotspotsFound = choices.foundHotspots.length >= theCase.scene.hotspots.length
   const allEvidenceJudged =
@@ -515,23 +512,24 @@ export default function CourtWorkbench() {
   const showDetailColumn = step === 'scene' || step === 'trial'
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-zinc-950 text-white">
+    // 中性灰底，理由同侦查工作台：场景框自带浅色渐变，压在应用的蓝色页面上会糊
+    <div className="flex h-[100dvh] flex-col bg-zinc-50 text-zinc-900">
       {/* 顶栏 */}
-      <header className="shrink-0 border-b border-white/10 px-3 pb-2 pt-3">
+      <header className="shrink-0 border-b border-zinc-200/70 bg-white/85 px-3 pb-2 pt-3 backdrop-blur">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => (step === 'intro' || step === 'result' ? exit() : goToStep('intro'))}
             aria-label={step === 'intro' || step === 'result' ? '返回案件列表' : '回到收案'}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/20"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-800"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0 flex-1 truncate text-sm font-extrabold">
             {theCase.emoji} {theCase.title}
           </div>
-          <div className="hidden shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/70 sm:flex">
-            <Trophy className="h-3.5 w-3.5 text-amber-300" />
+          <div className="hidden shrink-0 items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-600 sm:flex">
+            <Trophy className="h-3.5 w-3.5 text-amber-500" />
             {user?.xp ?? 0} XP
           </div>
           {/* 移动端：打开详情抽屉 */}
@@ -539,7 +537,7 @@ export default function CourtWorkbench() {
             <button
               type="button"
               onClick={() => setDetailOpen(true)}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/20 lg:hidden"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 lg:hidden"
               aria-label="打开案卷详情"
             >
               <Search className="h-4 w-4" />
@@ -556,7 +554,7 @@ export default function CourtWorkbench() {
         <section className="min-w-0 flex-1">
           {step === 'intro' && (
             <ScrollPane>
-              <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-5">
+              <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-5 text-white shadow-lg shadow-sky-100">
                 <div className="flex items-center gap-3">
                   <span className="text-4xl">📜</span>
                   <div>
@@ -567,35 +565,39 @@ export default function CourtWorkbench() {
               </div>
 
               <Panel>
-                <div className="mb-3 text-sm font-bold text-white/70">📖 案件背景</div>
+                <div className="mb-3 text-sm font-bold text-zinc-700">📖 案件背景</div>
                 <div className="grid gap-3">
                   {theCase.intro.narrative.map((para, i) => (
-                    <p key={i} className="text-sm leading-relaxed text-white/75">
+                    <p key={i} className="text-sm leading-relaxed text-zinc-600">
                       {para}
                     </p>
                   ))}
                 </div>
 
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                  <div className="rounded-2xl bg-sky-500/10 p-3.5 ring-1 ring-sky-400/25">
+                  <div className="rounded-2xl border border-sky-100 bg-sky-50 p-3.5">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{theCase.intro.plaintiff.avatar}</span>
                       <div className="min-w-0">
-                        <div className="text-sm font-extrabold text-sky-100">
+                        <div className="text-sm font-extrabold text-sky-900">
                           👤 原告：{theCase.intro.plaintiff.name}
                         </div>
-                        <div className="text-xs text-white/50">{theCase.intro.plaintiff.info}</div>
+                        <div className="text-xs text-zinc-500">
+                          {theCase.intro.plaintiff.info}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-2xl bg-rose-500/10 p-3.5 ring-1 ring-rose-400/25">
+                  <div className="rounded-2xl border border-rose-100 bg-rose-50 p-3.5">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{theCase.intro.defendant.avatar}</span>
                       <div className="min-w-0">
-                        <div className="text-sm font-extrabold text-rose-100">
+                        <div className="text-sm font-extrabold text-rose-900">
                           👤 被告：{theCase.intro.defendant.name}
                         </div>
-                        <div className="text-xs text-white/50">{theCase.intro.defendant.info}</div>
+                        <div className="text-xs text-zinc-500">
+                          {theCase.intro.defendant.info}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -614,29 +616,32 @@ export default function CourtWorkbench() {
               <Panel className="py-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-base font-extrabold text-white/90">
+                    <div className="text-base font-extrabold text-zinc-900">
                       {theCase.scene.title}
                     </div>
-                    <div className="mt-1 text-sm text-white/60">{theCase.scene.description}</div>
+                    <div className="mt-1 text-sm text-zinc-600">{theCase.scene.description}</div>
                   </div>
-                  <span className="shrink-0 rounded-full bg-sky-500/15 px-2.5 py-1 text-xs font-bold text-sky-200">
+                  <span className="shrink-0 rounded-full border border-sky-100 bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-700">
                     收集 {choices.foundHotspots.length}/{theCase.scene.hotspots.length}
                   </span>
                 </div>
               </Panel>
 
-              {/* 现场。六个阶段内部不动：仍是原来那套胶囊热点 */}
+              {/* 现场。六个阶段内部不动：仍是原来那套胶囊热点，
+                  但底色换回案件数据自带的 bgColor，不再是黑洞 */}
+              {/* 这个校园案的 bgColor 是浅蓝，与页面底色几乎一样，只靠极淡的描边
+                  看不出「现场」的边界。用一圈白边把它像照片一样「裱」起来。 */}
               <div
                 className={clsx(
-                  'relative w-full overflow-hidden rounded-3xl ring-1 ring-white/10',
-                  'bg-[radial-gradient(circle_at_30%_20%,rgba(56,189,248,0.10),transparent_60%)] bg-zinc-900',
+                  'relative w-full overflow-hidden rounded-3xl bg-gradient-to-br',
+                  'ring-4 ring-white shadow-[0_8px_28px_rgba(15,23,42,0.10)]',
+                  theCase.scene.bgColor,
                 )}
                 style={{ minHeight: 380 }}
               >
-                <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px] opacity-[0.06]">
+                <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[130px] opacity-[0.07]">
                   {theCase.emoji}
                 </span>
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/30 to-transparent" />
 
                 {theCase.scene.hotspots.map((hs) => {
                   const found = choices.foundHotspots.includes(hs.id)
@@ -655,19 +660,14 @@ export default function CourtWorkbench() {
                     >
                       <div
                         className={clsx(
-                          'flex items-center gap-1.5 rounded-full px-3 py-2 shadow-lg ring-2 transition-all',
+                          'flex items-center gap-1.5 rounded-full px-3 py-2 ring-2 transition-all',
                           found
-                            ? 'bg-emerald-500/90 text-white ring-emerald-400/50'
-                            : 'bg-white/95 text-zinc-700 ring-sky-400/60',
+                            ? 'bg-sky-50 text-sky-800 shadow-sm ring-sky-300'
+                            : 'bg-white text-zinc-700 shadow-[0_4px_14px_rgba(15,23,42,0.14)] ring-sky-400',
                         )}
                       >
-                        <span className="text-lg">{found ? '✅' : hs.emoji}</span>
-                        <span
-                          className={clsx(
-                            'max-w-[80px] truncate text-xs font-bold',
-                            found && 'text-white',
-                          )}
-                        >
+                        <span className="text-lg">{hs.emoji}</span>
+                        <span className="max-w-[80px] truncate text-xs font-bold">
                           {found ? '已发现' : hs.label}
                         </span>
                       </div>
@@ -677,8 +677,8 @@ export default function CourtWorkbench() {
               </div>
 
               <Panel className="py-4">
-                <div className="flex items-center gap-2 text-sm font-bold text-white/70">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <div className="flex items-center gap-2 text-sm font-bold text-zinc-700">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                   已收集线索
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -695,8 +695,8 @@ export default function CourtWorkbench() {
                         className={clsx(
                           'rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors',
                           found
-                            ? 'bg-emerald-500/15 text-emerald-100 ring-1 ring-emerald-400/25 hover:bg-emerald-500/25'
-                            : 'bg-white/[0.04] text-white/25 ring-1 ring-white/10',
+                            ? 'border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                            : 'border border-zinc-100 bg-zinc-50 text-zinc-300',
                         )}
                       >
                         {found ? `${hs.emoji} ${hs.content.title}` : '❓ 未发现'}
@@ -711,7 +711,7 @@ export default function CourtWorkbench() {
                     color="blue"
                     animated
                   />
-                  <div className="mt-1 text-xs text-white/45">
+                  <div className="mt-1 text-xs text-zinc-500">
                     找到 {choices.foundHotspots.length}/{theCase.scene.hotspots.length} 个线索即可进入下一关
                   </div>
                 </div>
@@ -730,10 +730,10 @@ export default function CourtWorkbench() {
           {step === 'trial' && (
             <ScrollPane>
               <Panel className="py-4">
-                <div className="text-base font-extrabold text-white/90">
+                <div className="text-base font-extrabold text-zinc-900">
                   {theCase.evidence.title}
                 </div>
-                <div className="mt-1 text-sm text-white/60">{theCase.evidence.description}</div>
+                <div className="mt-1 text-sm text-zinc-600">{theCase.evidence.description}</div>
               </Panel>
 
               {theCase.evidence.items.map((ev) => {
@@ -745,17 +745,14 @@ export default function CourtWorkbench() {
                     key={ev.id}
                     className={clsx(
                       'transition-colors',
-                      judged &&
-                        (accepted
-                          ? 'bg-emerald-500/10 ring-emerald-400/25'
-                          : 'bg-rose-500/10 ring-rose-400/25'),
+                      judged && (accepted ? 'border-emerald-200' : 'border-rose-200'),
                     )}
                   >
                     <div className="flex items-start gap-3">
                       <span className="shrink-0 text-2xl">{ev.emoji}</span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-extrabold text-white/90">{ev.title}</div>
-                        <div className="mt-0.5 text-xs text-white/45">
+                        <div className="text-sm font-extrabold text-zinc-900">{ev.title}</div>
+                        <div className="mt-0.5 text-xs text-zinc-400">
                           {ev.type === 'physical'
                             ? '物证'
                             : ev.type === 'digital'
@@ -764,25 +761,25 @@ export default function CourtWorkbench() {
                                 ? '证人证言'
                                 : '书证'}
                         </div>
-                        <div className="mt-2 text-sm leading-relaxed text-white/70">
+                        <div className="mt-2 text-sm leading-relaxed text-zinc-600">
                           {ev.description}
                         </div>
 
                         {judged && (
                           <div
                             className={clsx(
-                              'mt-2 rounded-xl px-3 py-2.5 text-xs ring-1',
+                              'mt-2 rounded-xl px-3 py-2.5 text-xs',
                               accepted
-                                ? 'bg-emerald-500/10 text-emerald-100 ring-emerald-400/25'
-                                : 'bg-rose-500/10 text-rose-100 ring-rose-400/25',
+                                ? 'bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200'
+                                : 'bg-rose-50 text-rose-900 ring-1 ring-rose-200',
                             )}
                           >
                             <div className="flex items-center gap-1.5 font-semibold">
                               {accepted ? '✅ 已采纳' : '❌ 已驳回'}
                             </div>
-                            <div className="mt-1 leading-relaxed text-white/65">{ev.detail}</div>
+                            <div className="mt-1 leading-relaxed text-zinc-600">{ev.detail}</div>
                             {!ev.correctAccept && (
-                              <div className="mt-1 text-amber-200">
+                              <div className="mt-1 font-semibold text-amber-700">
                                 ⚠️ 该证据因{ev.inadmissibleReason}不应被采纳。
                               </div>
                             )}
@@ -805,10 +802,8 @@ export default function CourtWorkbench() {
                         </Button>
                         <button
                           type="button"
-                          onClick={() => {
-                            showDetail({ type: 'evidence', data: ev })
-                          }}
-                          className="ml-1 text-xs font-semibold text-white/45 hover:text-white/80"
+                          onClick={() => showDetail({ type: 'evidence', data: ev })}
+                          className="ml-1 text-xs font-semibold text-zinc-400 hover:text-zinc-700"
                         >
                           查看详情
                         </button>
@@ -844,30 +839,27 @@ export default function CourtWorkbench() {
           {step === 'debate' && (
             <ScrollPane>
               <Panel className="py-4">
-                <div className="text-base font-extrabold text-white/90">{theCase.debate.title}</div>
-                <div className="mt-1 text-sm text-white/60">{theCase.debate.description}</div>
+                <div className="text-base font-extrabold text-zinc-900">{theCase.debate.title}</div>
+                <div className="mt-1 text-sm text-zinc-600">{theCase.debate.description}</div>
               </Panel>
 
               {theCase.debate.stages.map((stage) => {
                 const chosenId = choices.debateChoices[stage.id]
                 const chosen = stage.choices.find((c) => c.id === chosenId)
                 return (
-                  <Panel
-                    key={stage.id}
-                    className={clsx(chosen && 'bg-emerald-500/[0.07] ring-emerald-400/20')}
-                  >
+                  <Panel key={stage.id} className={clsx(chosen && 'border-emerald-200')}>
                     <div className="mb-3 flex items-center gap-2">
                       <span className="text-xl">{stage.speakerEmoji}</span>
-                      <div className="text-sm font-extrabold text-white/90">{stage.speaker}</div>
+                      <div className="text-sm font-extrabold text-zinc-900">{stage.speaker}</div>
                     </div>
 
-                    <div className="rounded-2xl bg-white/[0.06] px-4 py-3 text-sm leading-relaxed text-white/80">
+                    <div className="rounded-2xl bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-700 ring-1 ring-zinc-100">
                       “{stage.dialogue}”
                     </div>
 
                     {!chosen ? (
                       <div className="mt-3 grid gap-2">
-                        <div className="text-[11px] font-bold uppercase tracking-wide text-white/40">
+                        <div className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">
                           你选择如何追问？
                         </div>
                         {stage.choices.map((c) => (
@@ -875,7 +867,7 @@ export default function CourtWorkbench() {
                             key={c.id}
                             type="button"
                             onClick={() => pickDebateChoice(stage.id, c.id)}
-                            className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold text-white/80 transition-colors hover:border-sky-400/40 hover:bg-sky-500/10"
+                            className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-semibold text-zinc-700 transition-colors hover:border-sky-300 hover:bg-sky-50"
                           >
                             {c.text}
                           </button>
@@ -883,17 +875,17 @@ export default function CourtWorkbench() {
                       </div>
                     ) : (
                       <div className="mt-3 grid gap-2">
-                        <div className="rounded-2xl bg-sky-500/10 px-3.5 py-2.5 text-sm font-semibold text-sky-100 ring-1 ring-sky-400/25">
+                        <div className="rounded-2xl border border-sky-100 bg-sky-50 px-3.5 py-2.5 text-sm font-semibold text-sky-900">
                           🎯 你选择了：{chosen.text}
                         </div>
-                        <div className="rounded-2xl bg-white/[0.04] px-3.5 py-3 text-sm leading-relaxed text-white/75 ring-1 ring-white/10">
-                          <div className="mb-1 font-bold text-white/85">📢 结果：</div>
+                        <div className="rounded-2xl bg-zinc-50 px-3.5 py-3 text-sm leading-relaxed text-zinc-600 ring-1 ring-zinc-100">
+                          <div className="mb-1 font-bold text-zinc-800">📢 结果：</div>
                           {chosen.reveal}
                         </div>
                         <div
                           className={clsx(
                             'text-xs font-semibold',
-                            chosen.isRecommended ? 'text-emerald-300' : 'text-amber-300',
+                            chosen.isRecommended ? 'text-emerald-600' : 'text-amber-600',
                           )}
                         >
                           {chosen.feedback}
@@ -926,14 +918,14 @@ export default function CourtWorkbench() {
           {step === 'deliberation' && (
             <ScrollPane>
               <Panel className="py-4">
-                <div className="text-base font-extrabold text-white/90">
+                <div className="text-base font-extrabold text-zinc-900">
                   {theCase.deliberation.title}
                 </div>
-                <div className="mt-1 text-sm text-white/60">{theCase.deliberation.description}</div>
+                <div className="mt-1 text-sm text-zinc-600">{theCase.deliberation.description}</div>
               </Panel>
 
               <Panel>
-                <div className="mb-3 text-sm font-extrabold text-white/85">
+                <div className="mb-3 text-sm font-extrabold text-zinc-900">
                   📜 适用法律（选择你认为最适用的法条）
                 </div>
                 <div className="grid gap-2.5">
@@ -947,22 +939,22 @@ export default function CourtWorkbench() {
                         className={clsx(
                           'rounded-2xl border px-4 py-3.5 text-left transition-colors',
                           selected
-                            ? 'border-emerald-400/50 bg-emerald-500/12'
-                            : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.07]',
+                            ? 'border-emerald-300 bg-emerald-50 shadow-sm'
+                            : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50',
                         )}
                       >
                         <div className="flex items-start gap-3">
                           <div
                             className={clsx(
                               'grid h-6 w-6 shrink-0 place-items-center rounded-lg text-xs font-extrabold',
-                              selected ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/45',
+                              selected ? 'bg-emerald-500 text-white' : 'bg-zinc-100 text-zinc-500',
                             )}
                           >
                             {selected ? '✓' : law.name.charAt(0)}
                           </div>
                           <div className="min-w-0">
-                            <div className="text-sm font-bold text-white/90">{law.name}</div>
-                            <div className="mt-1 text-xs leading-relaxed text-white/60">
+                            <div className="text-sm font-bold text-zinc-900">{law.name}</div>
+                            <div className="mt-1 text-xs leading-relaxed text-zinc-500">
                               {law.summary}
                             </div>
                           </div>
@@ -974,7 +966,7 @@ export default function CourtWorkbench() {
               </Panel>
 
               <Panel>
-                <div className="mb-3 text-sm font-extrabold text-white/85">
+                <div className="mb-3 text-sm font-extrabold text-zinc-900">
                   ⚖️ {theCase.deliberation.verdict.question}
                 </div>
                 <div className="grid gap-2.5">
@@ -984,28 +976,26 @@ export default function CourtWorkbench() {
                       <button
                         key={opt.id}
                         type="button"
-                        onClick={() =>
-                          setChoices((prev) => ({ ...prev, verdictChoice: opt.id }))
-                        }
+                        onClick={() => setChoices((prev) => ({ ...prev, verdictChoice: opt.id }))}
                         className={clsx(
                           'rounded-2xl border px-4 py-3.5 text-left transition-colors',
                           selected
-                            ? 'border-emerald-400/50 bg-emerald-500/12'
-                            : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.07]',
+                            ? 'border-emerald-300 bg-emerald-50 shadow-sm'
+                            : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50',
                         )}
                       >
                         <div className="flex items-start gap-3">
                           <div
                             className={clsx(
                               'grid h-8 w-8 shrink-0 place-items-center rounded-xl text-sm font-extrabold',
-                              selected ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/45',
+                              selected ? 'bg-emerald-500 text-white' : 'bg-zinc-100 text-zinc-500',
                             )}
                           >
                             {opt.label.charAt(0)}
                           </div>
                           <div className="min-w-0">
-                            <div className="text-sm font-bold text-white/90">{opt.label}</div>
-                            <div className="mt-0.5 text-xs leading-relaxed text-white/60">
+                            <div className="text-sm font-bold text-zinc-900">{opt.label}</div>
+                            <div className="mt-0.5 text-xs leading-relaxed text-zinc-500">
                               {opt.desc}
                             </div>
                           </div>
@@ -1017,8 +1007,8 @@ export default function CourtWorkbench() {
               </Panel>
 
               {theCase.deliberation.penalty && choices.verdictChoice !== null && (
-                <Panel className="ring-sky-400/25">
-                  <div className="mb-3 text-sm font-extrabold text-white/85">
+                <Panel className="border-sky-100">
+                  <div className="mb-3 text-sm font-extrabold text-zinc-900">
                     📋 {theCase.deliberation.penalty.question}
                   </div>
                   <div className="grid gap-2.5">
@@ -1028,18 +1018,16 @@ export default function CourtWorkbench() {
                         <button
                           key={opt.id}
                           type="button"
-                          onClick={() =>
-                            setChoices((prev) => ({ ...prev, penaltyChoice: opt.id }))
-                          }
+                          onClick={() => setChoices((prev) => ({ ...prev, penaltyChoice: opt.id }))}
                           className={clsx(
                             'rounded-2xl border px-4 py-3.5 text-left transition-colors',
                             selected
-                              ? 'border-emerald-400/50 bg-emerald-500/12'
-                              : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.07]',
+                              ? 'border-emerald-300 bg-emerald-50 shadow-sm'
+                              : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50',
                           )}
                         >
-                          <div className="text-sm font-bold text-white/90">{opt.label}</div>
-                          <div className="mt-0.5 text-xs leading-relaxed text-white/60">
+                          <div className="text-sm font-bold text-zinc-900">{opt.label}</div>
+                          <div className="mt-0.5 text-xs leading-relaxed text-zinc-500">
                             {opt.desc}
                           </div>
                         </button>
@@ -1055,7 +1043,7 @@ export default function CourtWorkbench() {
                   {!submitting && <Gavel className="h-4 w-4 ml-1.5" />}
                 </Button>
               ) : (
-                <div className="rounded-2xl bg-white/[0.04] py-3.5 text-center text-sm font-bold text-white/50 ring-1 ring-white/10">
+                <div className="rounded-2xl bg-zinc-50 py-3.5 text-center text-sm font-bold text-zinc-400 ring-1 ring-zinc-200">
                   请先选出适用法律与裁决结果
                 </div>
               )}
@@ -1064,7 +1052,7 @@ export default function CourtWorkbench() {
 
           {step === 'result' && scoreData && (
             <ScrollPane>
-              <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-6 text-center">
+              <div className="rounded-3xl bg-gradient-to-br from-[var(--p-primary)] via-[#4bb5e5] to-[var(--p-primary-dark)] p-6 text-center text-white shadow-lg shadow-sky-100">
                 <span className="text-5xl">🏆</span>
                 <div className="mt-2 text-2xl font-black">判决完成！</div>
                 <div className="mt-1 text-lg font-bold text-white/80">{theCase.title}</div>
@@ -1079,7 +1067,7 @@ export default function CourtWorkbench() {
               {submitError && (
                 <div
                   role="alert"
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
                 >
                   <span>成绩未能保存：{submitError}</span>
                   <Button size="sm" variant="secondary" onClick={submitResult} disabled={submitting}>
@@ -1089,8 +1077,8 @@ export default function CourtWorkbench() {
               )}
 
               <Panel>
-                <div className="mb-1 text-base font-extrabold text-white/90">📊 评分报告</div>
-                <div className="mb-4 text-sm text-white/50">
+                <div className="mb-1 text-base font-extrabold text-zinc-900">📊 评分报告</div>
+                <div className="mb-4 text-sm text-zinc-500">
                   总分 {scoreData.score}/{scoreData.maxScore}
                   {scoreData.score === scoreData.maxScore
                     ? ' · 🎉 完美判决！你是个出色的法官！'
@@ -1101,7 +1089,7 @@ export default function CourtWorkbench() {
                 <div className="grid gap-2">
                   {scoreData.details.map((d) => (
                     <div key={d.label} className="flex items-center gap-3">
-                      <span className="w-28 shrink-0 text-xs font-bold text-white/60">
+                      <span className="w-28 shrink-0 text-xs font-bold text-zinc-600">
                         {d.label}
                       </span>
                       <div className="flex-1">
@@ -1114,7 +1102,7 @@ export default function CourtWorkbench() {
                       <span
                         className={clsx(
                           'w-12 text-right text-xs font-extrabold',
-                          d.earned === d.max ? 'text-emerald-300' : 'text-white/50',
+                          d.earned === d.max ? 'text-emerald-600' : 'text-zinc-500',
                         )}
                       >
                         {d.earned}/{d.max}
@@ -1124,40 +1112,40 @@ export default function CourtWorkbench() {
                 </div>
               </Panel>
 
-              <Panel className="bg-emerald-500/10 ring-emerald-400/25">
-                <div className="mb-3 flex items-center gap-2 text-sm font-extrabold text-emerald-200">
+              <Panel className="border-emerald-100 bg-emerald-50">
+                <div className="mb-3 flex items-center gap-2 text-sm font-extrabold text-emerald-800">
                   <CheckCircle2 className="h-4 w-4" />
                   正确答案
                 </div>
                 <div className="grid gap-2.5">
-                  <div className="rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/10">
-                    <div className="text-xs font-bold uppercase text-white/45">裁决结果</div>
-                    <div className="mt-1 text-base font-extrabold text-emerald-200">
+                  <div className="rounded-2xl border border-emerald-200 bg-white px-4 py-3">
+                    <div className="text-xs font-bold uppercase text-zinc-400">裁决结果</div>
+                    <div className="mt-1 text-base font-extrabold text-emerald-700">
                       {theCase.result.correctVerdict}
                     </div>
                   </div>
-                  <div className="rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/10">
-                    <div className="text-xs font-bold uppercase text-white/45">适用法律</div>
-                    <div className="mt-1 text-sm font-bold text-white/90">
+                  <div className="rounded-2xl border border-emerald-200 bg-white px-4 py-3">
+                    <div className="text-xs font-bold uppercase text-zinc-400">适用法律</div>
+                    <div className="mt-1 text-sm font-bold text-zinc-900">
                       {theCase.result.correctLaw}
                     </div>
                   </div>
                 </div>
               </Panel>
 
-              <Panel className="bg-sky-500/10 ring-sky-400/25">
-                <div className="mb-3 flex items-center gap-2 text-sm font-extrabold text-sky-200">
+              <Panel className="border-sky-100 bg-gradient-to-br from-sky-50 to-blue-50">
+                <div className="mb-3 flex items-center gap-2 text-sm font-extrabold text-sky-800">
                   <Scale className="h-4 w-4" />
                   法律小课堂
                 </div>
-                <div className="whitespace-pre-line text-sm leading-relaxed text-white/80">
+                <div className="whitespace-pre-line text-sm leading-relaxed text-zinc-700">
                   {theCase.result.lawExplanation}
                 </div>
               </Panel>
 
               {/* 智能体复盘。放在宣判与法律小课堂之后 —— 学生先看完「正确答案是
                   什么、为什么」，再看自己哪一步偏了。 */}
-              <InterventionCard data={intervention} tone="dark" />
+              <InterventionCard data={intervention} />
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button variant="primary" onClick={restart} className="w-full">
@@ -1173,7 +1161,7 @@ export default function CourtWorkbench() {
 
         {/* 右栏详情。取代原先那份自绘的居中模态 */}
         {showDetailColumn && (
-          <aside className="hidden w-80 shrink-0 overflow-hidden rounded-3xl bg-white/[0.03] ring-1 ring-white/10 lg:block">
+          <aside className="hidden w-80 shrink-0 overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-sm lg:block">
             <DetailPanel target={detail} onClear={() => setDetail(null)} />
           </aside>
         )}
@@ -1182,7 +1170,7 @@ export default function CourtWorkbench() {
       {/* 移动端：详情抽屉 */}
       {showDetailColumn && (
         <Sheet open={detailOpen && !isDesktop} title="案卷详情" onClose={() => setDetailOpen(false)}>
-          <div className="rounded-2xl bg-zinc-900 text-white">
+          <div className="min-h-[50vh]">
             <DetailPanel target={detail} onClear={() => setDetail(null)} />
           </div>
         </Sheet>

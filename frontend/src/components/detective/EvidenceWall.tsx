@@ -18,6 +18,9 @@ import type { ClueType, DetectiveScene } from '@/data/detectiveCases'
  * 附带的教学价值在筛选器上：学生能一眼看到「我收集的全是物证，一条电子证据都
  * 没有」。这正是诊断引擎里「类型盲区」规则要说的东西 —— 先让学生自己看见，
  * 再由智能体说出来。
+ *
+ * 配色走浅色：收集到的线索是白底卡片（像贴在板上的证物袋），未发现的是灰底虚线
+ * 空槽（缺口感来自「这里本该有东西」而不是靠暗色）。
  */
 
 const TYPE_LABEL: Record<ClueType, string> = {
@@ -32,12 +35,9 @@ const TYPE_ORDER: ClueType[] = ['physical', 'digital', 'testimony', 'observation
 export default function EvidenceWall({
   scenes,
   foundClues,
-  onQuizAxisHint,
 }: {
   scenes: DetectiveScene[]
   foundClues: string[]
-  /** 墙上凑齐某类证据时的轻度提示，用于引导观察 —— 可选 */
-  onQuizAxisHint?: (type: ClueType) => void
 }) {
   const [filter, setFilter] = useState<ClueType | 'all'>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -55,8 +55,8 @@ export default function EvidenceWall({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between gap-2 px-1 pb-2">
-        <div className="text-xs font-extrabold uppercase tracking-wide text-white/40">证据墙</div>
-        <div className="text-[11px] font-bold text-white/50">
+        <div className="text-xs font-extrabold uppercase tracking-wide text-zinc-400">证据墙</div>
+        <div className="text-[11px] font-bold text-zinc-500">
           {foundTotal}/{all.length}
         </div>
       </div>
@@ -72,11 +72,8 @@ export default function EvidenceWall({
             <FilterChip
               key={t}
               active={filter === t}
-              dim={c.total === 0}
-              onClick={() => {
-                setFilter(t)
-                if (c.found === 0) onQuizAxisHint?.(t)
-              }}
+              dim={c.total === 0 || c.found === 0}
+              onClick={() => setFilter(t)}
             >
               {TYPE_LABEL[t]} {c.found}/{c.total}
             </FilterChip>
@@ -93,13 +90,13 @@ export default function EvidenceWall({
             return (
               <div
                 key={h.id}
-                className="flex items-center gap-2 rounded-2xl border border-dashed border-white/10 px-3 py-2.5"
+                className="flex items-center gap-2 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/70 px-3 py-2.5"
               >
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/5 text-sm text-white/25">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white text-sm text-zinc-300 ring-1 ring-zinc-200">
                   ?
                 </span>
-                <span className="text-xs font-semibold text-white/25">未发现</span>
-                <span className="ml-auto rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-bold text-white/25">
+                <span className="text-xs font-semibold text-zinc-300">未发现</span>
+                <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-zinc-300 ring-1 ring-zinc-200">
                   {TYPE_LABEL[h.type]}
                 </span>
               </div>
@@ -109,36 +106,36 @@ export default function EvidenceWall({
             <div
               key={h.id}
               className={clsx(
-                'overflow-hidden rounded-2xl border transition-colors',
-                expanded ? 'border-sky-400/40 bg-sky-500/10' : 'border-white/10 bg-white/[0.04]',
+                'overflow-hidden rounded-2xl border shadow-sm transition-colors',
+                expanded ? 'border-sky-300 bg-sky-50/70' : 'border-zinc-200 bg-white',
               )}
             >
               <button
                 type="button"
                 onClick={() => setExpandedId(expanded ? null : h.id)}
                 aria-expanded={expanded}
-                className="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-white/[0.03]"
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition-colors hover:bg-sky-50/50"
               >
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/10 text-base">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-50 text-base ring-1 ring-sky-100">
                   {h.emoji}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-xs font-bold text-white/90">
+                <span className="min-w-0 flex-1 truncate text-xs font-bold text-zinc-800">
                   {h.content.title}
                 </span>
-                <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/50">
+                <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-500">
                   {TYPE_LABEL[h.type]}
                 </span>
               </button>
 
               {expanded && (
-                <div className="grid gap-2 border-t border-white/10 px-3 py-3">
-                  <p className="text-xs leading-relaxed text-white/75">{h.content.detail}</p>
+                <div className="grid gap-2 border-t border-sky-100 px-3 py-3">
+                  <p className="text-xs leading-relaxed text-zinc-600">{h.content.detail}</p>
                   {h.content.insight && (
-                    <div className="flex items-start gap-2 rounded-xl bg-sky-500/10 px-3 py-2 ring-1 ring-sky-400/25">
-                      <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" />
+                    <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
+                      <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
                       <div>
-                        <div className="text-[10px] font-bold text-sky-300">🔎 推理提示</div>
-                        <div className="mt-0.5 text-xs leading-relaxed text-white/80">
+                        <div className="text-[10px] font-bold text-amber-700">🔎 推理提示</div>
+                        <div className="mt-0.5 text-xs leading-relaxed text-amber-900">
                           {h.content.insight}
                         </div>
                       </div>
@@ -172,10 +169,10 @@ function FilterChip({
       className={clsx(
         'rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors',
         active
-          ? 'bg-sky-500 text-white'
+          ? 'bg-sky-500 text-white shadow-sm'
           : dim
-            ? 'bg-white/5 text-white/25'
-            : 'bg-white/10 text-white/60 hover:bg-white/15',
+            ? 'bg-white text-zinc-300 ring-1 ring-zinc-200'
+            : 'bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50',
       )}
     >
       {children}
