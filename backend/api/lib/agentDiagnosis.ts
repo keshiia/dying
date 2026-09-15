@@ -98,6 +98,27 @@ const RECENT_GAMES = 3
 const MAX_FINDINGS = 3
 const MAX_RECOMMENDATIONS = 2
 
+/**
+ * 每条能力轴该拿哪一类「漏掉的东西」当举证。
+ *
+ * 之前是 `missed.find(m => m.kind.startsWith('clue-')) ?? missed[0]` —— 兜底那一半
+ * 会把第一条无关的漏项拿来当证据，于是出现过「法律适用弱，漏掉的是『原告律师的
+ * 发言』」：那条是辩论项，跟法条适用没关系。**举证对不上轴，那句话就是噪音。**
+ *
+ * 找不到对应类型的漏项时宁可留空 —— 少一句比说错一句好。
+ */
+const AXIS_MISSED_KINDS: Record<AbilityAxis, MissedKind[]> = {
+  // 侦查的线索搜集、法庭的现场搜证
+  OBSERVE: ['clue-physical', 'clue-digital', 'clue-observation', 'clue-testimony'],
+  // 只有侦查的「询问证人」贡献这条轴，对应证言类线索
+  INTERVIEW: ['clue-testimony'],
+  // 法庭的证据审查，以及侦查的推理答题（那边把选错的题标成 evidence）
+  EVIDENCE: ['evidence'],
+  REASONING: ['evidence'],
+  LAW: ['law', 'verdict'],
+  ARGUE: ['debate'],
+}
+
 // ── 能力轴聚合 ─────────────────────────────────────
 
 /**
@@ -214,7 +235,8 @@ export async function diagnoseAfterGame(
       return a && a.total >= MIN_SAMPLES_PER_GAME && a.correct / a.total < PASS_RATE
     }).length
 
-    const sample = detail.missed.find((m) => m.kind.startsWith('clue-')) ?? detail.missed[0]
+    const relevantKinds = AXIS_MISSED_KINDS[w.axis]
+    const sample = detail.missed.find((m) => relevantKinds.includes(m.kind))
     // 只有真正垫底的那条能说「最弱」，否则两条并列时每句都在自称最弱
     const ranking = w === weak[0] ? '，是这局最弱的一环。' : '，也低于及格线。'
     findings.push({

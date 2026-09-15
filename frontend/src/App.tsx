@@ -19,6 +19,7 @@ const Detective = lazy(() => import('@/pages/student/games/Detective'))
 // 沉浸式页面挂在 /play/* 下，不套 AppShell —— 侧边栏和顶栏会让「全屏」变成假的
 const ComicReader = lazy(() => import('@/pages/play/ComicReader'))
 const DetectiveWorkbench = lazy(() => import('@/pages/play/DetectiveWorkbench'))
+const CourtWorkbench = lazy(() => import('@/pages/play/CourtWorkbench'))
 const Dashboard = lazy(() => import('@/pages/teacher/Dashboard'))
 const Classes = lazy(() => import('@/pages/teacher/Classes'))
 const Assignments = lazy(() => import('@/pages/teacher/Assignments'))
@@ -67,6 +68,14 @@ export default function App() {
           element={
             <RequireAuth>
               <DetectiveWorkbench />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/play/court/:caseId"
+          element={
+            <RequireAuth>
+              <CourtWorkbench />
             </RequireAuth>
           }
         />
